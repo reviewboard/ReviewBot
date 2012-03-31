@@ -1,0 +1,3 @@
+REVIEWBOARD_URL = "http://reviews.reviewboard.org"
+REPOSITORY = "ReviewBot"
+
