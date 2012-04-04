@@ -44,10 +44,12 @@ class Review(object):
     body_top = ""
     body_bottom = ""
 
-    def __init__(self, server, review_request_id, diff_revision=None):
+    def __init__(self, server, request):
         self.server = server
-        self.request_id = review_request_id
-        self.diff_revision = diff_revision
+        self.request_id = request['review_request_id']
+        self.diff_revision = None
+        if request['has_diff']:
+            self.diff_revision = request['diff_revision']
 
         try:
             self._review_request = self.server.get_review_request(
@@ -62,7 +64,7 @@ class Review(object):
         # TODO: Allow arbitrary number of files (This will return max
         # of 25 at the moment).
         self._files = None
-        if diff_revision:
+        if self.diff_revision:
             try:
                 self._files = server.get_diff_files(self.request_id,
                                                     self.diff_revision)
