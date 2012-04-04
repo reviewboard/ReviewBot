@@ -4,7 +4,7 @@ from reviewbot.tools.process import execute
 def pep8Tool(file):
     print "checking: %s" % file.file_path
     if file.dest_file.endswith('.py'):
-        output = execute(['pep8', (file.file_path)],
+        output = execute(['pep8', '-r', (file.file_path)],
                 split_lines=True,
                 ignore_errors=True)
 

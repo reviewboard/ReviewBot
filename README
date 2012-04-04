@@ -1,6 +1,6 @@
 Review Bot, the automated code reviewer.
 
-Aknowledgments:
+Acknowledgements:
     RBTools (https://github.com/reviewboard/rbtools)
         Much of the code for Review Bot is taken from or based off RBTools.
 
