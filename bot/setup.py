@@ -11,15 +11,11 @@ setup(name=PACKAGE_NAME,
       author_email="steven@smacleod.ca",
       packages=find_packages(),
       entry_points={
-          'console_scripts': [
-              'reviewbot = reviewbot.main:main',
-          ],
           'reviewbot.tools': [
               'pep8 = reviewbot.tools.pep8:pep8Tool',
           ]
       },
       install_requires=[
-          'tornado>=2.2',
-          'celery',
+          'celery>=2.5',
       ],
 )
