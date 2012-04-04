@@ -21,22 +21,40 @@ class File(object):
                                                      self.review.diff_revision,
                                                      self.id)
 
-    def comment(self, line, num_lines, text, issue=False):
-        data = {
-            'filediff_id': self.id,
-            'first_line': self._translate_line_num(line),
-            'num_lines': num_lines,
-            'text': text,
-            'issue_opened': issue,
-        }
-        self.review.server.post_diff_comment(self.review.request_id,
-                                             self.review.review_id, data)
+    def comment(self, line, num_lines, text):
+        real_line = self._translate_line_num(line)
+        modified = self._is_modified(line)
+        if modified or self.review.settings['comment_unmodified']:
+            data = {
+                'filediff_id': self.id,
+                'first_line': real_line,
+                'num_lines': num_lines,
+                'text': text,
+                'issue_opened': self.review.settings['open_issues'],
+            }
+            if self.review.settings['open_issues']:
+                self.review.ship_it = False
+            self.review.server.post_diff_comment(self.review.request_id,
+                                                 self.review.review_id, data)
 
+    # TODO: Convert these line functions to faster algorithms.
     def _translate_line_num(self, line_num):
         for chunk in self.diff_data['diff_data']['chunks']:
             for row in chunk['lines']:
                 if row[4] == line_num:
                     return row[0]
+
+    def _is_modified(self, line_num):
+        """
+        Returns a Boolean indicating if the filediff row is modified or new
+        """
+        # TODO: Change this to check all chunks within a range for
+        # a modification. Currently the pep8 tool will only single
+        # line comment, but future tools might multi-line.
+        for chunk in self.diff_data['diff_data']['chunks']:
+            for row in chunk['lines']:
+                if row[4] == line_num:
+                    return not (chunk['change'] == 'equal')
 
 
 class Review(object):
@@ -44,8 +62,9 @@ class Review(object):
     body_top = ""
     body_bottom = ""
 
-    def __init__(self, server, request):
+    def __init__(self, server, request, settings):
         self.server = server
+        self.settings = settings
         self.request_id = request['review_request_id']
         self.diff_revision = None
         if request['has_diff']:
@@ -81,6 +100,8 @@ class Review(object):
             except:
                 print "failed on a file"
                 pass
+
+        self.ship_it = self.settings['ship_it']
 
     def publish(self):
         cleanup_tempfiles()

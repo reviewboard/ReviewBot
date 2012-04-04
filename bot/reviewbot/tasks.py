@@ -1,44 +1,47 @@
+import pkg_resources
+
 from celery.task import task
 
 from reviewbot.processing.api import APIError, ReviewBoardServer
 from reviewbot.processing.review import Review
-from reviewbot.tools.pep8 import pep8Tool
 
 
 @task(ignore_result=True)
 def ProcessReviewRequest(payload):
-    url = 'http://localhost:8080/'
     cookie_file = 'reviewbot-cookies.txt'
 
     try:
-        server = ReviewBoardServer(url, cookie_file, payload['user'],
-                                   payload['password'])
+        server = ReviewBoardServer(payload['url'], cookie_file,
+                                   payload['user'], payload['password'])
         server.check_api_version()
         server.login()
     except:
         return False
 
-    if not payload['request']['has_diff']:
-        return True
+    tools = []
+    for ep in pkg_resources.iter_entry_points(group='reviewbot.tools'):
+        tools.append(ep.load())
 
-    try:
-        review = Review(server, payload['request'])
-    except:
-        # Something went wrong when creating the review,
-        # just give up.
-        return False
+    for tool in tools:
+        try:
+            review = Review(server, payload['request'], payload['settings'])
+        except:
+            # Something went wrong when creating the review,
+            # just ignore it and skip the tool.
+            continue
 
-    # Put some bogus values in to test
-    review.body_top = "This is a Review from Review Bot"
+        try:
+            tool(review)
+        except:
+            # Something went wrong with that tool,
+            # just ignore it continue.
+            continue
 
-    # Put some bogus comments in.
-    for file in review.files:
-        pep8Tool(file)
+        try:
+            review.publish()
+        except:
+            # Something went wrong when publishing,
+            # just ignore it and continue.
+            continue
 
-    # Publish the review
-    try:
-        return review.publish()
-    except:
-        return False
-
-
+    return True
