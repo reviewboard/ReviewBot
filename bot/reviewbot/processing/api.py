@@ -285,6 +285,35 @@ class ReviewBoardServer(object):
 
         return rsp
 
+    def post_bot_review(self, review_request_id, body_top="", body_bottom="",
+                   ship_it=False, public=False, diff_comments=[]):
+        """
+        Creates a review using a single request.
+        """
+        try:
+            ext_template = self.root_resource['uri_templates']['extension']
+            url = "%sreview-bot-reviews/" % ext_template.replace(
+                '{extension_name}',
+                'reviewbotext.extension.ReviewBotExtension')
+
+        except APIError:
+            raise
+
+        data = {
+            'review_request_id': review_request_id,
+            'body_top': body_top,
+            'body_bottom': body_bottom,
+            'ship_it': ship_it,
+            'diff_comments': diff_comments,
+        }
+
+        try:
+            rsp = self.api_post(url, data)
+        except APIError, e:
+            raise e
+
+        return rsp
+
     def publish_review(self, review):
         self.api_put(review['links']['update']['href'], {
             'public': 1,

@@ -4,6 +4,7 @@ from celery.execute import send_task
 from reviewboard.extensions.base import Extension
 
 from reviewbotext.handlers import SignalHandlers
+from reviewbotext.resources import review_bot_review_resource
 
 
 class ReviewBotExtension(Extension):
@@ -18,6 +19,7 @@ class ReviewBotExtension(Extension):
         'user': '',
         'password': '',
     }
+    resources = [review_bot_review_resource]
 
     def __init__(self, *args, **kwargs):
         super(ReviewBotExtension, self).__init__()
