@@ -37,6 +37,21 @@ class File(object):
             self.review.server.post_diff_comment(self.review.request_id,
                                                  self.review.review_id, data)
 
+    def comment_b(self, line, num_lines, text):
+        real_line = self._translate_line_num(line)
+        modified = self._is_modified(line)
+        if modified or self.review.settings['comment_unmodified']:
+            data = {
+                'filediff_id': self.id,
+                'first_line': real_line,
+                'num_lines': num_lines,
+                'text': text,
+                'issue_opened': self.review.settings['open_issues'],
+            }
+            self.review.comments.append(data)
+            if self.review.settings['open_issues']:
+                self.review.ship_it = False
+
     # TODO: Convert these line functions to faster algorithms.
     def _translate_line_num(self, line_num):
         for chunk in self.diff_data['diff_data']['chunks']:
@@ -67,6 +82,7 @@ class Review(object):
         self.settings = settings
         self.request_id = request['review_request_id']
         self.diff_revision = None
+        self.comments = []
         if request['has_diff']:
             self.diff_revision = request['diff_revision']
 
