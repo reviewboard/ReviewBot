@@ -1,18 +1,20 @@
 from reviewbot.tools.process import execute
+from reviewbot.tools import Tool
 
 
-def pep8Tool(review):
+class pep8Tool(Tool):
+    name = "PEP8 Style Checker"
 
-    ignored_files = []
-    processed_files = []
+    def handle_file(self, f):
+        if not f.dest_file.endswith('.py'):
+            # Ignore the file.
+            return False
 
-    for file in review.files:
-        if not file.dest_file.endswith('.py'):
-            ignored_files.append(file.dest_file)
-            continue
+        path = f.get_patched_file_path()
+        if not path:
+            return False
 
-        processed_files.append(file.dest_file)
-        output = execute(['pep8', '-r', (file.file_path)],
+        output = execute(['pep8', '-r', path],
                 split_lines=True,
                 ignore_errors=True)
 
@@ -21,14 +23,6 @@ def pep8Tool(review):
             lnum = int(parsed[1])
             col = int(parsed[2])
             msg = parsed[3]
-            file.comment(lnum, 1, 'Col: %s\n%s' % (col, msg))
+            f.comment('Col: %s\n%s' % (col, msg), lnum)
 
-    review.body_top += "This is a review from Review Bot.\n\n"
-    review.body_top += "Tool: pep8\n"
-    review.body_top += "\nProcessed Files:\n"
-    for file in processed_files:
-        review.body_top += "  %s\n" % file
-
-    review.body_top += "\nIgnored Files:\n"
-    for file in ignored_files:
-        review.body_top += "  %s\n" % file
+        return True

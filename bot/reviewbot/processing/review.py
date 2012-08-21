@@ -1,75 +1,121 @@
-from reviewbot.processing.api import APIError, ReviewBoardServer
+import json
+
 from reviewbot.processing.filesystem import cleanup_tempfiles, make_tempfile
 
 
 class File(object):
+    """Represents a file in the review.
 
-    def __init__(self, review, filediff):
+    Information about the file can be retreived through this class,
+    including retrieving the actual body of the original or patched
+    file.
+
+    Allows comments to be made to the file in the review.
+    """
+    def __init__(self, review, api_filediff):
         self.review = review
-        self.id = int(filediff['id'])
-        self.source_file = filediff['source_file']
-        self.dest_file = filediff['dest_file']
+        self.id = int(api_filediff.id)
+        self.source_file = api_filediff.source_file
+        self.dest_file = api_filediff.dest_file
+        self.diff_data = api_filediff.get_diff_data()
+        self._api_filediff = api_filediff
 
-        # I'm assuming the patched file exists here.
-        self.file_path = make_tempfile(
-            review.server.get_patched_file(self.review.request_id,
-                                           self.review.diff_revision, self.id))
+    @property
+    def patched_file_contents(self):
+        if not hasattr(self._api_filediff, 'get_patched_file'):
+            return None
 
-        # It's also necessary to retrieve the diff data to
-        # translate line numbers for commenting.
-        self.diff_data = review.server.get_diff_data(self.review.request_id,
-                                                     self.review.diff_revision,
-                                                     self.id)
+        patched_file = self._api_filediff.get_patched_file()
+        return patched_file.text
 
-    def comment(self, line, num_lines, text):
-        real_line = self._translate_line_num(line)
-        modified = self._is_modified(line)
+    @property
+    def original_file_contents(self):
+        if not hasattr(self._api_filediff, 'get_original_file'):
+            return None
+
+        original_file = self._api_filediff.get_original_file()
+        return original_file.text
+
+    def get_patched_file_path(self):
+        contents = self.patched_file_contents
+        if contents:
+            return make_tempfile(contents)
+        else:
+            return None
+
+    def get_original_file_path(self):
+        contents = self.original_file_contents
+        if contents:
+            return make_tempfile(contents)
+        else:
+            return None
+
+    def comment(self, text, first_line, num_lines=1, issue=None,
+                        original=False):
+        """Make a comment on the file.
+
+        If original is True, the line number will correspond to the
+        original file, instead of the patched file.
+        """
+        real_line = self._translate_line_num(first_line)
+        modified = self._is_modified(first_line, num_lines)
+        if issue is None:
+            issue = self.review.settings['open_issues']
+
         if modified or self.review.settings['comment_unmodified']:
-            data = {
-                'filediff_id': self.id,
-                'first_line': real_line,
-                'num_lines': num_lines,
-                'text': text,
-                'issue_opened': self.review.settings['open_issues'],
-            }
-            if self.review.settings['open_issues']:
-                self.review.ship_it = False
-            self.review.server.post_diff_comment(self.review.request_id,
-                                                 self.review.review_id, data)
-
-    def comment_b(self, line, num_lines, text):
-        real_line = self._translate_line_num(line)
-        modified = self._is_modified(line)
-        if modified or self.review.settings['comment_unmodified']:
-            data = {
-                'filediff_id': self.id,
-                'first_line': real_line,
-                'num_lines': num_lines,
-                'text': text,
-                'issue_opened': self.review.settings['open_issues'],
-            }
-            self.review.comments.append(data)
-            if self.review.settings['open_issues']:
+            if issue:
                 self.review.ship_it = False
 
-    # TODO: Convert these line functions to faster algorithms.
-    def _translate_line_num(self, line_num):
-        for chunk in self.diff_data['diff_data']['chunks']:
-            for row in chunk['lines']:
-                if row[4] == line_num:
+            self._comment(text, real_line, num_lines, issue)
+
+    def _comment(self, text, first_line, num_lines, issue):
+        """Add a comment to the list of comments."""
+        data = {
+            'filediff_id': self.id,
+            'first_line': first_line,
+            'num_lines': num_lines,
+            'text': text,
+            'issue_opened': issue,
+        }
+        self.review.comments.append(data)
+
+    def _translate_line_num(self, line_num, original=False):
+        """Convert a file line number to a filediff line number.
+
+        If original is True, will convert based on the original
+        file numbers, instead of the patched.
+
+        TODO: Convert to a faster search algorithm.
+        """
+        line_num_index = 4
+        if original:
+            line_num_index = 1
+
+        for chunk in self.diff_data.chunks:
+            for row in chunk.lines:
+                if row[line_num_index] == line_num:
                     return row[0]
 
-    def _is_modified(self, line_num):
+    def _is_modified(self, line_num, num_lines, original=False):
+        """Indicates if the filediff row is modified or new.
+
+        Will return True if the row is modified, or new, false
+        otherwise
+
+        TODO: Convert to a faster search algorithm.
+
+        TODO: Change this to check all chunks within a range for a
+        modification. Currently the pep8 tool will only single line
+        comment, but future tools might multi-line.
         """
-        Returns a Boolean indicating if the filediff row is modified or new
-        """
-        # TODO: Change this to check all chunks within a range for
-        # a modification. Currently the pep8 tool will only single
-        # line comment, but future tools might multi-line.
-        for chunk in self.diff_data['diff_data']['chunks']:
-            for row in chunk['lines']:
-                if row[4] == line_num:
-                    return not (chunk['change'] == 'equal')
+        line_num_index = 4
+        if original:
+            line_num_index = 1
+
+        for chunk in self.diff_data.chunks:
+            for row in chunk.lines:
+                if row[line_num_index] == line_num:
+                    return not (chunk.change == 'equal')
 
 
 class Review(object):
@@ -77,57 +123,47 @@ class Review(object):
     body_top = ""
     body_bottom = ""
 
-    def __init__(self, server, request, settings):
-        self.server = server
+    def __init__(self, api_root, request, settings):
+        self.api_root = api_root
         self.settings = settings
         self.request_id = request['review_request_id']
-        self.diff_revision = None
+        self.diff_revision = request.get('diff_revision', None)
         self.comments = []
-        if request['has_diff']:
-            self.diff_revision = request['diff_revision']
-
-        try:
-            self._review_request = self.server.get_review_request(
-                self.request_id)
-            self._review = server.new_review(self._review_request, "", "",
-                                             False, False)['review']
-            self.review_id = self._review['id']
-        except:
-            raise
-
-        # Get the list of files.
-        # TODO: Allow arbitrary number of files (This will return max
-        # of 25 at the moment).
-        self._files = None
-        if self.diff_revision:
-            try:
-                self._files = server.get_diff_files(self.request_id,
-                                                    self.diff_revision)
-            except:
-                raise
-
-        self.files = []
-        for file in self._files['files']:
-            # For now, only get files which have
-            # a patched version.
-            try:
-                if 'patched_file' in file['links']:
-                    self.files.append(File(self, file))
-            except:
-                print "failed on a file"
-                pass
-
         self.ship_it = self.settings['ship_it']
 
+        # Get the list of files.
+        self.files = []
+        if self.diff_revision:
+            files = api_root.get_files(values={
+                    'review_request_id': self.request_id,
+                    'diff_revision': self.diff_revision,
+                })
+            try:
+                while True:
+                    for f in files:
+                        self.files.append(File(self, f))
+
+                    files = files.get_next()
+            except StopIteration:
+                pass
+
     def publish(self):
+        """Upload the review to Review Board."""
         cleanup_tempfiles()
         try:
-            self.server.set_review_fields(self._review, {
-                'body_top': self.body_top,
-                'body_bottom': self.body_bottom,
-                'ship_it': self.ship_it,
-            })
-            self.server.publish_review(self._review)
+            bot_reviews = self.api_root.get_extension(
+                values={
+                    'extension_name':
+                        'reviewbotext.extension.ReviewBotExtension',
+                }).get_review_bot_reviews()
+            bot_reviews.create(
+                data={
+                    'review_request_id': self.request_id,
+                    'ship_it': self.ship_it,
+                    'body_top': self.body_top,
+                    'body_bottom': self.body_bottom,
+                    'diff_comments': json.dumps(self.comments),
+                })
             return True
         except:
             return False

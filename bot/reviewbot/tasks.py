@@ -1,20 +1,26 @@
 import pkg_resources
 
 from celery.task import task
+from rbtools.api.client import RBClient
+from rbtools.api.errors import APIError
 
-from reviewbot.processing.api import APIError, ReviewBoardServer
 from reviewbot.processing.review import Review
+
+COOKIE_FILE = 'reviewbot-cookies.txt'
+AGENT = 'ReviewBot'
 
 
 @task(ignore_result=True)
 def ProcessReviewRequest(payload):
-    cookie_file = 'reviewbot-cookies.txt'
-
+    """Execute an automated review on a review request."""
     try:
-        server = ReviewBoardServer(payload['url'], cookie_file,
-                                   payload['user'], payload['password'])
-        server.check_api_version()
-        server.login()
+        api_client = RBClient(
+            payload['url'] + 'api/',
+            cookie_file=COOKIE_FILE,
+            username=payload['user'],
+            password=payload['password'],
+            agent='ReviewBot')
+        api_root = api_client.get_root()
     except:
         return False
 
@@ -24,24 +30,14 @@ def ProcessReviewRequest(payload):
 
     for tool in tools:
         try:
-            review = Review(server, payload['request'], payload['settings'])
-        except:
-            # Something went wrong when creating the review,
-            # just ignore it and skip the tool.
-            continue
-
-        try:
-            tool(review)
-        except:
-            # Something went wrong with that tool,
-            # just ignore it continue.
-            continue
-
-        try:
+            review = Review(api_root, payload['request'], payload['settings'])
+            t = tool(review)
+            t.execute()
             review.publish()
         except:
-            # Something went wrong when publishing,
-            # just ignore it and continue.
+            # Something went wrong with this tool.
+            # TODO: Stop ignoring errors and do something
+            # about them.
             continue
 
     return True

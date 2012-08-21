@@ -9,7 +9,7 @@ from djblets.webapi.errors import DOES_NOT_EXIST, INVALID_FORM_DATA, \
                                   NOT_LOGGED_IN, PERMISSION_DENIED
 
 from reviewboard.diffviewer.models import FileDiff
-from reviewboard.reviews.models import Comment, BaseComment, Review
+from reviewboard.reviews.models import BaseComment, Review
 from reviewboard.webapi.decorators import webapi_check_local_site
 from reviewboard.webapi.resources import WebAPIResource, \
                                          review_request_resource
