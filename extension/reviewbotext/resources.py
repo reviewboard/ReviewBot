@@ -1,3 +1,5 @@
+import json
+
 from django.core.exceptions import ObjectDoesNotExist
 
 from djblets.webapi.decorators import webapi_login_required, \
@@ -70,24 +72,33 @@ class ReviewBotReviewResource(WebAPIResource):
         except ObjectDoesNotExist:
             return DOES_NOT_EXIST
 
-        new_review = Review(review_request=review_request, user=request.user,
-                           body_top=body_top, body_bottom=body_bottom,
-                           ship_it=ship_it)
-        new_review.save()
+        if not body_top:
+            body_top = ''
+
+        if not body_bottom:
+            body_bottom = ''
+
+        new_review = Review.objects.create(
+            review_request=review_request,
+            user=request.user,
+            body_top=body_top,
+            body_bottom=body_bottom,
+            ship_it=ship_it)
 
         if diff_comments:
             try:
+                diff_comments = json.loads(diff_comments)
                 for comment in diff_comments:
                     filediff = FileDiff.objects.get(
                         pk=comment['filediff_id'],
                         diffset__history__review_request=review_request)
 
-                    new_comment = Comment(filediff=filediff,
-                                 interfilediff=None,
-                                 text=comment['text'],
-                                 first_line=comment['first_line'],
-                                 num_lines=comment['num_lines'],
-                                 issue_opened=comment['issue_opened'])
+                    new_comment = new_review.comments.create(
+                        filediff=filediff,
+                        interfilediff=None,
+                        text=comment['text'],
+                        first_line=comment['first_line'],
+                        num_lines=comment['num_lines'])
 
                     if comment['issue_opened']:
                         new_comment.issue_status = BaseComment.OPEN
@@ -95,12 +106,18 @@ class ReviewBotReviewResource(WebAPIResource):
                         new_comment.issue_status = None
 
                     new_comment.save()
-                    new_review.comments.add(new_comment)
-            except (ObjectDoesNotExist, KeyError):
+                    #new_review.comments.add(new_comment)
+            except KeyError:
                 # TODO: Reject the DB transaction.
                 return INVALID_FORM_DATA, {
                     'fields': {
                         'diff_comments': 'Diff comments were malformed',
+                    },
+                }
+            except ObjectDoesNotExist:
+                return INVALID_FORM_DATA, {
+                    'fields': {
+                        'diff_comments': 'Invalid filediff_id',
                     },
                 }
 
