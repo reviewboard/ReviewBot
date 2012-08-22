@@ -2,12 +2,14 @@ from celery import Celery
 from reviewboard.extensions.base import Extension
 
 from reviewbotext.handlers import SignalHandlers
-from reviewbotext.resources import review_bot_review_resource
+from reviewbotext.resources import review_bot_review_resource, \
+                                   review_bot_tool_resource
 
 
 class ReviewBotExtension(Extension):
     """An extension for communicating with Review Bot"""
     is_configurable = True
+    has_admin_site = True
     default_settings = {
         'ship_it': False,
         'comment_unmodified': False,
@@ -17,7 +19,10 @@ class ReviewBotExtension(Extension):
         'user': '',
         'password': '',
     }
-    resources = [review_bot_review_resource]
+    resources = [
+        review_bot_review_resource,
+        review_bot_tool_resource,
+    ]
 
     def __init__(self, *args, **kwargs):
         super(ReviewBotExtension, self).__init__()

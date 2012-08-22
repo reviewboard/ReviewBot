@@ -14,6 +14,8 @@ from reviewboard.webapi.decorators import webapi_check_local_site
 from reviewboard.webapi.resources import WebAPIResource, \
                                          review_request_resource
 
+from reviewbotext.models import ReviewBotTool
+
 
 class ReviewBotReviewResource(WebAPIResource):
     """Resource for creating reviews with a single request.
@@ -128,3 +130,72 @@ class ReviewBotReviewResource(WebAPIResource):
         }
 
 review_bot_review_resource = ReviewBotReviewResource()
+
+
+class ReviewBotToolResource(WebAPIResource):
+    """Resource for workers to update the installed tools list."""
+    name = 'review_bot_tool'
+    allowed_methods = ('GET', 'POST',)
+
+    @webapi_check_local_site
+    @webapi_login_required
+    @webapi_response_errors(DOES_NOT_EXIST, INVALID_FORM_DATA,
+                            NOT_LOGGED_IN, PERMISSION_DENIED)
+    @webapi_request_fields(
+        required={
+            'hostname': {
+                'type': str,
+                'description': 'The hostname of the POSTing worker.',
+            },
+            'tools': {
+                'type': str,
+                'description': 'A JSON payload containing tool information.',
+            },
+        },
+    )
+    def create(self, request, hostname, tools, *args, **kwargs):
+        """Add to the list of installed tools.
+
+        The hostname field should contain the hostname the celery
+        worker is using (This should be unique to that worker under
+        proper configuration).
+
+        The tools file should contain a JSON payload describing the
+        list of tools installed at the worker. This payload should
+        correspond to a list of dictionaries, with each dictionary
+        corresponding to a tool. The dictionary should contain the
+        following information:
+            - 'name': The descriptive name of the tool.
+            - 'entry_point': The entry point corresponding to the tool.
+            - 'version': The tool version.
+            - 'description': Longer description of the tool.
+            - 'tool_options': A JSON payload describing the custom
+              options the tool provides.
+        """
+        try:
+            tools = json.loads(tools)
+        except:
+            return INVALID_FORM_DATA, {
+                    'fields': {
+                        'dtools': 'Malformed JSON.',
+                    },
+                }
+
+        for tool in tools:
+            obj, created = ReviewBotTool.objects.get_or_create(
+                entry_point=tool['entry_point'],
+                version=tool['version'],
+                defaults={
+                    'name': tool['name'],
+                    'description': tool['description'],
+                    'tool_options': tool['tool_options'],
+                    'in_last_update': True,
+                })
+            if not created and not obj.in_last_update:
+                obj.in_last_update = True
+                obj.save()
+
+        # TODO: Fix the result key here.
+        return 201, {}
+
+review_bot_tool_resource = ReviewBotToolResource()
