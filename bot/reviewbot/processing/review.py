@@ -22,6 +22,7 @@ class File(object):
 
     @property
     def patched_file_contents(self):
+        # TODO: Cache the contents.
         if not hasattr(self._api_filediff, 'get_patched_file'):
             return None
 
@@ -30,6 +31,7 @@ class File(object):
 
     @property
     def original_file_contents(self):
+        # TODO Cache the contents
         if not hasattr(self._api_filediff, 'get_original_file'):
             return None
 
