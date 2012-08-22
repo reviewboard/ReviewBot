@@ -1,6 +1,6 @@
 import os
 
-from celery.execute import send_task
+from celery import Celery
 from reviewboard.extensions.base import Extension
 
 from reviewbotext.handlers import SignalHandlers
@@ -24,18 +24,14 @@ class ReviewBotExtension(Extension):
     def __init__(self, *args, **kwargs):
         super(ReviewBotExtension, self).__init__()
         self.settings.load()
+        self.celery = Celery('reviewbot.tasks')
         self.signal_handlers = SignalHandlers(self)
 
     def notify(self, request_payload):
         """
         Add the request to the queue
         """
-
-        # Set up the Celery configuration.
-        temp = ''
-        if 'CELERY_CONFIG_MODULE' in os.environ:
-            temp = os.environ['CELERY_CONFIG_MODULE']
-        os.environ['CELERY_CONFIG_MODULE'] = 'reviewbotext.celeryconfig'
+        self.celery.conf.BROKER_URL = self.settings['BROKER_URL']
 
         # Add the request to the queue.
         review_settings = {
@@ -53,10 +49,7 @@ class ReviewBotExtension(Extension):
         }
 
         try:
-            send_task("reviewbot.tasks.ProcessReviewRequest",
-                      [payload])
+            self.celery.send_task("reviewbot.tasks.ProcessReviewRequest",
+                                  [payload])
         except:
             raise
-
-        # Restore the previous Celery configuration.
-        os.environ['CELERY_CONFIG_MODULE'] = temp

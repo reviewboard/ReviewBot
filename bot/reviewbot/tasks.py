@@ -1,16 +1,17 @@
+from __future__ import absolute_import
 import pkg_resources
 
-from celery.task import task
+from reviewbot.celery import celery
 from rbtools.api.client import RBClient
-from rbtools.api.errors import APIError
 
 from reviewbot.processing.review import Review
+
 
 COOKIE_FILE = 'reviewbot-cookies.txt'
 AGENT = 'ReviewBot'
 
 
-@task(ignore_result=True)
+@celery.task(ignore_result=True)
 def ProcessReviewRequest(payload):
     """Execute an automated review on a review request."""
     try:

@@ -1,6 +1,10 @@
-Review Bot, the automated code reviewer.
+Review Bot is a tool for automating static analysis of code posted to
+a Review Board instance. When a review request is posted, Review Bot
+executes the installed static analysis plugins, and posts the results
+as code comments in a new review.
 
-Acknowledgements:
-    RBTools (https://github.com/reviewboard/rbtools)
-        Much of the code for Review Bot is taken from or based off RBTools.
+Review Bot consists of two parts: a Review Board extension for
+triggering reviews, and worker code to execute the static analysis
+tools. Execution of the tools is accomplished by distributed task
+workers using Celery (http://www.celeryproject.org/).
 
