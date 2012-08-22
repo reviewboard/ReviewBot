@@ -25,20 +25,28 @@ def ProcessReviewRequest(payload):
     except:
         return False
 
+    routing_key = ProcessReviewRequest.request.delivery_info['routing_key']
+    ep_name = routing_key.partition('.')[0]
     tools = []
-    for ep in pkg_resources.iter_entry_points(group='reviewbot.tools'):
+    for ep in pkg_resources.iter_entry_points(group='reviewbot.tools',
+                                              name=ep_name):
         tools.append(ep.load())
 
-    for tool in tools:
-        try:
-            review = Review(api_root, payload['request'], payload['settings'])
-            t = tool(review)
-            t.execute()
-            review.publish()
-        except:
-            # Something went wrong with this tool.
-            # TODO: Stop ignoring errors and do something
-            # about them.
-            continue
+    if len(tools) != 1:
+        # There was either no Tool, or too many tools.
+        # TODO: Properly report the errors.
+        return False
+
+    tool = tools[0]
+    try:
+        review = Review(api_root, payload['request'], payload['settings'])
+        t = tool(review)
+        t.execute()
+        review.publish()
+    except:
+        # Something went wrong with this tool.
+        # TODO: Stop ignoring errors and do something
+        # about them.
+        return False
 
     return True

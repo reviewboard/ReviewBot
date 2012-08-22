@@ -3,7 +3,9 @@ from reviewbot.tools import Tool
 
 
 class pep8Tool(Tool):
-    name = "PEP8 Style Checker"
+    key = 'pep8'
+    name = 'PEP8 Style Checker'
+    version = '0.1'
 
     def handle_file(self, f):
         if not f.dest_file.endswith('.py'):

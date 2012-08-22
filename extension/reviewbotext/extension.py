@@ -1,5 +1,3 @@
-import os
-
 from celery import Celery
 from reviewboard.extensions.base import Extension
 
@@ -28,12 +26,9 @@ class ReviewBotExtension(Extension):
         self.signal_handlers = SignalHandlers(self)
 
     def notify(self, request_payload):
-        """
-        Add the request to the queue
-        """
+        """Add the request to the queue."""
         self.celery.conf.BROKER_URL = self.settings['BROKER_URL']
 
-        # Add the request to the queue.
         review_settings = {
             'ship_it': self.settings['ship_it'],
             'comment_unmodified': self.settings['comment_unmodified'],
@@ -48,8 +43,19 @@ class ReviewBotExtension(Extension):
             'settings': review_settings,
         }
 
-        try:
-            self.celery.send_task("reviewbot.tasks.ProcessReviewRequest",
-                                  [payload])
-        except:
-            raise
+        # TODO: Change this to use supported tools sent
+        # from the workers using a mangement command.
+        tools = [
+            {
+                'ep_name': 'pep8',
+                'version': '0.1',
+            },
+        ]
+        for tool in tools:
+            try:
+                self.celery.send_task(
+                    "reviewbot.tasks.ProcessReviewRequest",
+                    [payload],
+                    queue='%s.%s' % (tool['ep_name'], tool['version']))
+            except:
+                raise

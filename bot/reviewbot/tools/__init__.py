@@ -5,8 +5,12 @@ class Tool(object):
     process each file separately. If a tool would like to perform a
     different style of analysis, it may override the 'handle_files'
     method.
+
+    The key attribute should not contain period '.' characters.
     """
+    key = "Tool"
     name = "Tool"
+    version = "1"
 
     def __init__(self, review):
         self.review = review
