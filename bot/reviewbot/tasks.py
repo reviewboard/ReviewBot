@@ -1,13 +1,16 @@
 from __future__ import absolute_import
+import json
 import pkg_resources
 
+from celery.worker.control import Panel
 from reviewbot.celery import celery
 from rbtools.api.client import RBClient
 
 from reviewbot.processing.review import Review
 
-
+# TODO: Make the cookie file configurable.
 COOKIE_FILE = 'reviewbot-cookies.txt'
+# TODO: Include version information in the agent.
 AGENT = 'ReviewBot'
 
 
@@ -50,3 +53,54 @@ def ProcessReviewRequest(payload):
         return False
 
     return True
+
+
+@Panel.register
+def update_tools_list(panel, payload):
+    """Update the RB server with installed tools.
+
+    This will detect the installed analysis tool plugins
+    and inform Review Board of them.
+    """
+    tools = []
+    for ep in pkg_resources.iter_entry_points(group='reviewbot.tools'):
+        entry_point = ep.name
+        tool = ep.load()
+        tools.append({
+            'name': tool.name,
+            'entry_point': entry_point,
+            'version': tool.version,
+            'description': tool.description,
+            'tool_options': json.dumps(tool.options),
+        })
+
+    tools = json.dumps(tools)
+    # TODO: Get the actual hostname.
+    hostname = 'hostname'
+
+    try:
+        api_client = RBClient(
+            payload['url'] + 'api/',
+            cookie_file=COOKIE_FILE,
+            username=payload['user'],
+            password=payload['password'],
+            agent='ReviewBot')
+        api_root = api_client.get_root()
+    except:
+        return {'error': 'Could not reach RB server.'}
+
+    try:
+        api_tools = api_root.get_extension(
+            values={
+                'extension_name': 'reviewbotext.extension.ReviewBotExtension',
+            }).get_review_bot_tools()
+
+        api_tools.create(
+            data={
+                'hostname': hostname,
+                'tools': tools,
+            })
+    except:
+        return {'error': 'Problem POSTing tools.'}
+
+    return {'ok': 'Tool list update complete.'}

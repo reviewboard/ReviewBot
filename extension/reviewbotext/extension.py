@@ -64,3 +64,13 @@ class ReviewBotExtension(Extension):
                     queue='%s.%s' % (tool['ep_name'], tool['version']))
             except:
                 raise
+
+    def send_refresh_tools(self):
+        """Request workers to update tool list."""
+        self.celery.conf.BROKER_URL = self.settings['BROKER_URL']
+        payload = {
+            'user': self.settings['user'],
+            'password': self.settings['password'],
+            'url': self.settings['rb_url'],
+        }
+        self.celery.control.broadcast('update_tools_list', payload=payload)

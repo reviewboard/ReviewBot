@@ -171,6 +171,8 @@ class ReviewBotToolResource(WebAPIResource):
             - 'description': Longer description of the tool.
             - 'tool_options': A JSON payload describing the custom
               options the tool provides.
+
+        TODO: Use the hostname.
         """
         try:
             tools = json.loads(tools)
