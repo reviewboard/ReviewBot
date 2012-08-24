@@ -11,9 +11,9 @@ class Tool(object):
     version = "1"
     options = []
 
-    def __init__(self, review):
+    def __init__(self, review, settings={}):
         self.review = review
-
+        self.settings = settings
         self.processed_files = set()
         self.ignored_files = set()
 

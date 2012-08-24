@@ -2,6 +2,7 @@ from celery import Celery
 from reviewboard.extensions.base import Extension
 
 from reviewbotext.handlers import SignalHandlers
+from reviewbotext.models import ReviewBotTool
 from reviewbotext.resources import review_bot_review_resource, \
                                    review_bot_tool_resource
 
@@ -47,21 +48,14 @@ class ReviewBotExtension(Extension):
             'request': request_payload,
             'settings': review_settings,
         }
-
-        # TODO: Change this to use supported tools sent
-        # from the workers using a mangement command.
-        tools = [
-            {
-                'ep_name': 'pep8',
-                'version': '0.1',
-            },
-        ]
+        tools = ReviewBotTool.objects.filter(enabled=True,
+                                             run_automatically=True)
         for tool in tools:
             try:
                 self.celery.send_task(
                     "reviewbot.tasks.ProcessReviewRequest",
-                    [payload],
-                    queue='%s.%s' % (tool['ep_name'], tool['version']))
+                    [payload, tool.tool_settings],
+                    queue='%s.%s' % (tool.entry_point, tool.version))
             except:
                 raise
 

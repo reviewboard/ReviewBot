@@ -15,7 +15,7 @@ AGENT = 'ReviewBot'
 
 
 @celery.task(ignore_result=True)
-def ProcessReviewRequest(payload):
+def ProcessReviewRequest(payload, tool_settings):
     """Execute an automated review on a review request."""
     try:
         api_client = RBClient(
@@ -43,7 +43,7 @@ def ProcessReviewRequest(payload):
     tool = tools[0]
     try:
         review = Review(api_root, payload['request'], payload['settings'])
-        t = tool(review)
+        t = tool(review, settings=tool_settings)
         t.execute()
         review.publish()
     except:

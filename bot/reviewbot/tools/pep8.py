@@ -6,7 +6,18 @@ class pep8Tool(Tool):
     name = 'PEP8 Style Checker'
     version = '0.1'
     description = "Checks code for style errors using the PEP8 tool."
-    options = []
+    options = [
+        {
+            'name': 'max_line_length',
+            'field_type': 'django.forms.IntegerField',
+            'default': 79,
+            'field_options': {
+                'label': 'Maximum Line Length',
+                'help_text': 'The maximum line length PEP8 will check for.',
+                'required': True,
+            },
+        },
+    ]
 
     def handle_file(self, f):
         if not f.dest_file.endswith('.py'):
@@ -17,9 +28,15 @@ class pep8Tool(Tool):
         if not path:
             return False
 
-        output = execute(['pep8', '-r', path],
-                split_lines=True,
-                ignore_errors=True)
+        output = execute(
+            [
+                'pep8',
+                '-r',
+                '--max-line-length=%i' % self.settings['max_line_length'],
+                path
+            ],
+            split_lines=True,
+            ignore_errors=True)
 
         for line in output:
             parsed = line.split(':')

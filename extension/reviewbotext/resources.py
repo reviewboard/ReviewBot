@@ -184,6 +184,15 @@ class ReviewBotToolResource(WebAPIResource):
                 }
 
         for tool in tools:
+            # TODO: Defaulting the settings should maybe
+            # occure when sending out payloads, not here.
+            # or it could be taken care of on the tool
+            # side.
+            options = json.loads(str(tool['tool_options']))
+            settings = {}
+            for opt in options:
+                settings[opt['name']] = opt.get('default', None)
+
             obj, created = ReviewBotTool.objects.get_or_create(
                 entry_point=tool['entry_point'],
                 version=tool['version'],
@@ -191,6 +200,7 @@ class ReviewBotToolResource(WebAPIResource):
                     'name': tool['name'],
                     'description': tool['description'],
                     'tool_options': tool['tool_options'],
+                    'tool_settings': json.dumps(settings),
                     'in_last_update': True,
                 })
             if not created and not obj.in_last_update:

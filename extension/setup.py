@@ -17,4 +17,11 @@ setup(
     install_requires=[
           'celery',
     ],
+    package_data={
+        'reviewbotext': [
+            'htdocs/css/*.css',
+            'htdocs/js/*.js',
+            'templates/admin/reviewbotext/reviewbottool/*.html',
+        ],
+    }
 )

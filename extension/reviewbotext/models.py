@@ -14,3 +14,6 @@ class ReviewBotTool(models.Model):
     in_last_update = models.BooleanField()
     tool_options = JSONField()
     tool_settings = JSONField()
+
+    class Meta:
+        unique_together = ('entry_point', 'version')

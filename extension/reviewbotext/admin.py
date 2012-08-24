@@ -3,11 +3,49 @@ from django.contrib import admin
 from reviewboard.extensions.base import get_extension_manager
 
 from reviewbotext.extension import ReviewBotExtension
+from reviewbotext.forms import ReviewBotToolForm
 from reviewbotext.models import ReviewBotTool
 
 
 class ReviewBotToolAdmin(admin.ModelAdmin):
-    list_display = ('name', 'version', 'enabled')
+    form = ReviewBotToolForm
+    list_display = [
+        'name',
+        'version',
+        'enabled',
+    ]
+    readonly_fields = [
+        'name',
+        'entry_point',
+        'version',
+        'description',
+        'in_last_update',
+    ]
+
+    fieldsets = (
+        ('Tool Information', {
+            'fields': (
+                'name',
+                'version',
+                'entry_point',
+                'description',
+                'in_last_update',
+                'enabled',
+            ),
+            'classes': ('wide',),
+        }),
+        ('Settings', {
+            'fields': (
+                'run_automatically',
+                'allow_run_manually',
+            ),
+            'classes': ('wide',),
+        }),
+        (ReviewBotToolForm.TOOL_OPTIONS_FIELDSET, {
+            'fields': (),
+            'classes': ('wide',),
+        }),
+    )
 
 
 # Get the ReviewBotExtension instance. We can assume it exists because
