@@ -1,5 +1,7 @@
 from django.conf.urls import patterns
 from django.contrib import admin
+from django.shortcuts import render_to_response
+from django.template.context import RequestContext
 
 from reviewboard.extensions.base import get_extension_manager
 
@@ -14,11 +16,24 @@ class ReviewBotToolAdmin(admin.ModelAdmin):
     list_display = [
         'name',
         'version',
+        'run_automatically',
+        'in_last_update',
+    ]
+    list_editable = [
+        'run_automatically',
+    ]
+    list_filter = [
+        'in_last_update',
+        'run_automatically',
+    ]
+    ordering = [
         'enabled',
+        'in_last_update',
+        'name',
+        'version',
     ]
     readonly_fields = [
         'name',
-        'entry_point',
         'version',
         'description',
         'in_last_update',
@@ -29,10 +44,8 @@ class ReviewBotToolAdmin(admin.ModelAdmin):
             'fields': (
                 'name',
                 'version',
-                'entry_point',
                 'description',
                 'in_last_update',
-                'enabled',
             ),
             'classes': ('wide',),
         }),
@@ -49,10 +62,26 @@ class ReviewBotToolAdmin(admin.ModelAdmin):
         }),
     )
 
+    def refresh_tools_view(self, request, template_name="refresh.html"):
+        extension_manager = get_extension_manager()
+        extension = extension_manager.get_enabled_extension(
+            ReviewBotExtension.id)
+
+        ReviewBotTool.objects.all().update(in_last_update=False)
+        extension.send_refresh_tools()
+
+        return render_to_response(
+            template_name,
+            RequestContext(request, current_app=self.admin_site.name))
+
     def get_urls(self):
         urls = super(ReviewBotToolAdmin, self).get_urls()
+
         my_urls = patterns('',
-            (r'^refresh/$', self.admin_site.admin_view(refresh_tools))
+            (
+                r'^refresh/$',
+                self.admin_site.admin_view(self.refresh_tools_view),
+            ),
         )
         return my_urls + urls
 
