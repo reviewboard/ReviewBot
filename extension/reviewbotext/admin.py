@@ -47,6 +47,9 @@ class ReviewBotToolAdmin(admin.ModelAdmin):
         }),
     )
 
+    def has_add_permission(self, request):
+        return False
+
 
 # Get the ReviewBotExtension instance. We can assume it exists because
 # this code is executed after the extension has been registered with
