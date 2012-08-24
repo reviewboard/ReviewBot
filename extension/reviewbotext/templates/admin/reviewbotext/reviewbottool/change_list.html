@@ -1,0 +1,12 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_static admin_list %}
+{% load url from future %}
+{% load admin_urls %}
+
+{% block object-tools %}
+{% if not is_popup %}
+  <ul class="object-tools">
+    <li><a href="refresh/">Refresh Installed Tools</a></li>
+  </ul>
+{% endif %}
+{% endblock %}
