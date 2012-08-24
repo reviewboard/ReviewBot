@@ -1,3 +1,4 @@
+from django.conf.urls import patterns
 from django.contrib import admin
 
 from reviewboard.extensions.base import get_extension_manager
@@ -5,6 +6,7 @@ from reviewboard.extensions.base import get_extension_manager
 from reviewbotext.extension import ReviewBotExtension
 from reviewbotext.forms import ReviewBotToolForm
 from reviewbotext.models import ReviewBotTool
+from reviewbotext.views import refresh_tools
 
 
 class ReviewBotToolAdmin(admin.ModelAdmin):
@@ -46,6 +48,13 @@ class ReviewBotToolAdmin(admin.ModelAdmin):
             'classes': ('wide',),
         }),
     )
+
+    def get_urls(self):
+        urls = super(ReviewBotToolAdmin, self).get_urls()
+        my_urls = patterns('',
+            (r'^refresh/$', self.admin_site.admin_view(refresh_tools))
+        )
+        return my_urls + urls
 
     def has_add_permission(self, request):
         return False

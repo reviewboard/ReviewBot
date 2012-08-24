@@ -22,6 +22,7 @@ setup(
             'htdocs/css/*.css',
             'htdocs/js/*.js',
             'templates/admin/reviewbotext/reviewbottool/*.html',
+            'templates/*.html',
         ],
     }
 )
