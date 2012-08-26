@@ -31,6 +31,10 @@ class ReviewBotExtension(Extension):
         self.celery = Celery('reviewbot.tasks')
         self.signal_handlers = SignalHandlers(self)
 
+    def shutdown(self):
+        self.signal_handlers.disconnect()
+        super(ReviewBotExtension, self).shutdown()
+
     def notify(self, request_payload):
         """Add the request to the queue."""
         self.celery.conf.BROKER_URL = self.settings['BROKER_URL']

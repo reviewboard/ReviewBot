@@ -1,6 +1,3 @@
-from django.utils.translation import ugettext as _
-
-from reviewboard.reviews.models import ReviewRequest
 from reviewboard.reviews.signals import review_request_published
 
 
@@ -15,6 +12,10 @@ class SignalHandlers(object):
 
         # Connect the handlers.
         review_request_published.connect(self._review_request_published)
+
+    def disconnect(self):
+        """Disconnect the signal handlers"""
+        review_request_published.disconnect(self._review_request_published)
 
     def _review_request_published(self, **kwargs):
         review_request = kwargs.get('review_request')
