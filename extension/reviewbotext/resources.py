@@ -95,20 +95,22 @@ class ReviewBotReviewResource(WebAPIResource):
                         pk=comment['filediff_id'],
                         diffset__history__review_request=review_request)
 
-                    new_comment = new_review.comments.create(
+                    if comment['issue_opened']:
+                        issue = True
+                        issue_status = BaseComment.OPEN
+                    else:
+                        issue = False
+                        issue_status = None
+
+                    new_review.comments.create(
                         filediff=filediff,
                         interfilediff=None,
                         text=comment['text'],
                         first_line=comment['first_line'],
-                        num_lines=comment['num_lines'])
+                        num_lines=comment['num_lines'],
+                        issue_opened=issue,
+                        issue_status=issue_status)
 
-                    if comment['issue_opened']:
-                        new_comment.issue_status = BaseComment.OPEN
-                    else:
-                        new_comment.issue_status = None
-
-                    new_comment.save()
-                    #new_review.comments.add(new_comment)
             except KeyError:
                 # TODO: Reject the DB transaction.
                 return INVALID_FORM_DATA, {
