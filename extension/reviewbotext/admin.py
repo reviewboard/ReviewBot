@@ -8,7 +8,6 @@ from reviewboard.extensions.base import get_extension_manager
 from reviewbotext.extension import ReviewBotExtension
 from reviewbotext.forms import ReviewBotToolForm
 from reviewbotext.models import ReviewBotTool
-from reviewbotext.views import refresh_tools
 
 
 class ReviewBotToolAdmin(admin.ModelAdmin):
@@ -72,7 +71,7 @@ class ReviewBotToolAdmin(admin.ModelAdmin):
 
         return render_to_response(
             template_name,
-            RequestContext(request, current_app=self.admin_site.name))
+            RequestContext(request, {},  current_app=self.admin_site.name))
 
     def get_urls(self):
         urls = super(ReviewBotToolAdmin, self).get_urls()

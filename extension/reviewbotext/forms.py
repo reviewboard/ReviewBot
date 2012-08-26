@@ -104,6 +104,9 @@ class ReviewBotToolForm(forms.ModelForm):
 
         Given the module path to a field class in class_str,
         imports the class and returns it.
+
+        TODO: It might be a good idea to check if the class
+        is actually a field.
         """
         field_class_path = str(class_str).split('.')
         if len(field_class_path) > 1:
