@@ -16,7 +16,7 @@ setup(name=PACKAGE_NAME,
           ]
       },
       install_requires=[
-          'celery>=2.5',
+          'celery>=3.0',
           'pep8>=0.7.0',
       ],
 )
