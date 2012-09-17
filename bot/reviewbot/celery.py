@@ -22,5 +22,8 @@ for ep in pkg_resources.iter_entry_points(group='reviewbot.tools'):
         Queue(qname, Exchange(qname, type='direct'), routing_key=qname))
 
 
-if __name__ == '__main__':
+def main():
     celery.start()
+
+if __name__ == '__main__':
+    main()
