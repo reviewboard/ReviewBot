@@ -32,8 +32,6 @@ def ProcessReviewRequest(payload, tool_settings):
         api_client = RBClient(
             payload['url'] + 'api/',
             cookie_file=COOKIE_FILE,
-            username=None,
-            password=None,
             agent='ReviewBot',
             session=payload['session'])
         api_root = api_client.get_root()
@@ -116,9 +114,8 @@ def update_tools_list(panel, payload):
         api_client = RBClient(
             payload['url'] + 'api/',
             cookie_file=COOKIE_FILE,
-            username=payload['user'],
-            password=payload['password'],
-            agent='ReviewBot')
+            agent='ReviewBot',
+            session=payload['session'])
         api_root = api_client.get_root()
     except:
         return {'error': 'Could not reach RB server.'}

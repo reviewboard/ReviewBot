@@ -92,8 +92,7 @@ class ReviewBotExtension(Extension):
         """Request workers to update tool list."""
         self.celery.conf.BROKER_URL = self.settings['BROKER_URL']
         payload = {
-            'user': self.settings['user'],
-            'password': self.settings['password'],
             'url': self.settings['rb_url'],
+            'session': self._login_user(self.settings['user']),
         }
         self.celery.control.broadcast('update_tools_list', payload=payload)
