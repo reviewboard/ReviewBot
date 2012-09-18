@@ -26,12 +26,9 @@ class ReviewBotSettingsForm(SettingsForm):
     rb_url = forms.URLField(
         label=_("Review Board URL"),
         help_text=_("URL of this Review Board instance."))
-    user = forms.CharField(
-        label=_("Username"),
-        help_text=_("Username of the account Review Bot will use."))
-    password = forms.CharField(
-        label=_("Password"),
-        help_text=_("Password of the account Review Bot will use."))
+    user = forms.IntegerField(
+        label=_("User id"),
+        help_text=_("The id of the user account Review Bot will use."))
 
 
 class ReviewBotToolForm(forms.ModelForm):

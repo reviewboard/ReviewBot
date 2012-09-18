@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 import json
-import logging
 import pkg_resources
 
 from celery.utils.log import get_task_logger
@@ -33,9 +32,10 @@ def ProcessReviewRequest(payload, tool_settings):
         api_client = RBClient(
             payload['url'] + 'api/',
             cookie_file=COOKIE_FILE,
-            username=payload['user'],
-            password=payload['password'],
-            agent='ReviewBot')
+            username=None,
+            password=None,
+            agent='ReviewBot',
+            session=payload['session'])
         api_root = api_client.get_root()
     except:
         logger.error("Could not contact RB server at '%s'" % payload['url'])

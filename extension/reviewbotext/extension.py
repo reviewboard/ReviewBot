@@ -1,3 +1,9 @@
+from django.conf import settings
+from django.contrib.auth import login
+from django.contrib.auth.models import User
+from django.http import HttpRequest
+from django.utils.importlib import import_module
+
 from celery import Celery
 from reviewboard.extensions.base import Extension
 
@@ -17,8 +23,7 @@ class ReviewBotExtension(Extension):
         'open_issues': False,
         'BROKER_URL': '',
         'rb_url': '',
-        'user': '',
-        'password': '',
+        'user': None,
     }
     resources = [
         review_bot_review_resource,
@@ -45,12 +50,11 @@ class ReviewBotExtension(Extension):
             'open_issues': self.settings['open_issues'],
         }
         payload = {
-            'user': self.settings['user'],
-            'password': self.settings['password'],
             'url': self.settings['rb_url'],
             'ship_it': self.settings['ship_it'],
             'request': request_payload,
             'settings': review_settings,
+            'session': self._login_user(self.settings['user']),
         }
         tools = ReviewBotTool.objects.filter(enabled=True,
                                              run_automatically=True)
@@ -62,6 +66,27 @@ class ReviewBotExtension(Extension):
                     queue='%s.%s' % (tool.entry_point, tool.version))
             except:
                 raise
+
+    def _login_user(self, user_id):
+        """
+        Login as specified user, does not depend on auth backend (hopefully).
+
+        This is based on Client.login() with a small hack that does not
+        require the call to authenticate().
+
+        Will return the session id of the login.
+        """
+        user = User.objects.get(id=user_id)
+        user.backend = "%s.%s" % ("django.contrib.auth.backends",
+                                  "ModelBackend")
+        engine = import_module(settings.SESSION_ENGINE)
+
+        # Create a fake request to store login details.
+        request = HttpRequest()
+        request.session = engine.SessionStore()
+        login(request, user)
+        request.session.save()
+        return request.session.session_key
 
     def send_refresh_tools(self):
         """Request workers to update tool list."""
