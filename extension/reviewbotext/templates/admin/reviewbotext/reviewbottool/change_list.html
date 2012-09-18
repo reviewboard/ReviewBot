@@ -3,10 +3,34 @@
 {% load url from future %}
 {% load admin_urls %}
 
+{% block scripts %}
+{{ block.super }}
+<script type="text/javascript">
+$(document).ready(function() {
+  $("#refresh_tools").bind('click',function(e) {
+    e.preventDefault();
+    $(this).unbind(e);
+
+    $("#refresh_tools").empty().prepend('<img src="' +
+        STATIC_URLS['rb/images/star_on.png'] +
+        '" /> Refreshing')
+
+    $.get('refresh/', function() {
+      window.setTimeout(function() {
+        location.reload()
+      }, 5000);
+    });
+  });
+});
+</script>
+{% endblock %}
+
 {% block object-tools %}
 {% if not is_popup %}
   <ul class="object-tools">
-    <li><a href="refresh/">Refresh Installed Tools</a></li>
+    <li>
+      <a id="refresh_tools" href="#">Refresh Installed Tools</a>
+    </li>
   </ul>
 {% endif %}
 {% endblock %}
