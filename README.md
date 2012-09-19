@@ -46,7 +46,7 @@ Review Board Extension
 *Review Bot requires a version 1.7 Review Board installation.*
 
 To install Review Bot's Review Board extension, clone this repository
-and install with easy_install:
+and install with the following commands:
 
     git clone git://github.com/smacleod/ReviewBot.git
     cd ReviewBot/extension
@@ -66,7 +66,7 @@ Workers
 of rbtools*
 
 To install the Review Bot worker to a server, clone this repository
-and install with easy_install:
+and install with the following commands:
 
     git clone git://github.com/smacleod/ReviewBot.git
     cd ReviewBot/bot
