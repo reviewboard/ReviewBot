@@ -12,7 +12,7 @@ $(document).ready(function() {
     $(this).unbind(e);
 
     $("#refresh_tools").empty().prepend('<img src="' +
-        STATIC_URLS['rb/images/star_on.png'] +
+        STATIC_URLS['rb/images/spinner.gif'] +
         '" /> Refreshing')
 
     $.get('refresh/', function() {
