@@ -30,7 +30,7 @@ def ProcessReviewRequest(payload, tool_settings):
     try:
         logger.info("Initializing RB API")
         api_client = RBClient(
-            payload['url'] + 'api/',
+            payload['url'],
             cookie_file=COOKIE_FILE,
             agent='ReviewBot',
             session=payload['session'])
@@ -112,7 +112,7 @@ def update_tools_list(panel, payload):
 
     try:
         api_client = RBClient(
-            payload['url'] + 'api/',
+            payload['url'],
             cookie_file=COOKIE_FILE,
             agent='ReviewBot',
             session=payload['session'])
