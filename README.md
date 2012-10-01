@@ -72,12 +72,38 @@ and install with the following commands:
     cd ReviewBot/bot
     python setup.py install
 
-The worker can be started using the 'reviewbot' command:
+The worker can be started using the `reviewbot` command:
 
     reviewbot worker -b <broker_url>
 
-'reviewbot' starts an instance of the 'celery' command using Review
+`reviewbot` starts an instance of the `celery` command using Review
 Bot's 'app'. For more information please see documentation
 on [Celery Application's](http://docs.celeryproject.org/en/latest/userguide/application.html)
 and [Workers](http://docs.celeryproject.org/en/latest/userguide/workers.html).
 
+
+Installing and Registering Tasks
+--------------------------------
+
+Workers are able to find installed tools using
+[Entry Points](http://packages.python.org/distribute/pkg_resources.html#entry-points).
+New tool classes should add a `reviewbot.tools` entry point. The entry
+point for the pep8 tool is part of the review bot installation, here
+is an example showing its definition:
+
+    'reviewbot.tools': [
+            'pep8 = reviewbot.tools.pep8:pep8Tool',
+    ],
+
+After a tool has been installed on a worker, it must be registered
+with the Review Bot extension, and configured in the admin panel.
+Registering tools is accomplished in the following manner:
+
+  1. Go to the extension list in the admin panel.
+  2. Click the 'DATABASE' button for the 'Review-Bot-Extension'.
+  3. Click the 'Review bot tools' link.
+  4. Click 'REFRESH INSTALLED TOOLS' in the upper right of the page.
+
+This will trigger tool registration for all of the currently running
+workers, and refresh the page. You will now see the list of installed
+tools and may configure them using this admin panel.
