@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import json
+import logging
 import pkg_resources
 
 from celery.utils.log import get_task_logger
@@ -94,6 +95,10 @@ def update_tools_list(panel, payload):
     This will detect the installed analysis tool plugins
     and inform Review Board of them.
     """
+    logging.info("Request to refresh installed tools from '%s'" %
+        payload['url'])
+
+    logging.info("Iterating Tools")
     tools = []
     for ep in pkg_resources.iter_entry_points(group='reviewbot.tools'):
         entry_point = ep.name
@@ -105,7 +110,9 @@ def update_tools_list(panel, payload):
             'description': tool.description,
             'tool_options': json.dumps(tool.options),
         })
+        logging.info("Tool: %s" % entry_point)
 
+    logging.info("Done iterating Tools")
     tools = json.dumps(tools)
     # TODO: Get the actual hostname.
     hostname = 'hostname'
@@ -117,7 +124,8 @@ def update_tools_list(panel, payload):
             agent='ReviewBot',
             session=payload['session'])
         api_root = api_client.get_root()
-    except:
+    except Exception, e:
+        logging.error("Could not reach RB server: %s" % str(e))
         return {'error': 'Could not reach RB server.'}
 
     try:
@@ -131,7 +139,8 @@ def update_tools_list(panel, payload):
                 'hostname': hostname,
                 'tools': tools,
             })
-    except:
+    except Exception, e:
+        logging.error("Problem POSTing tools: %s" % str(e))
         return {'error': 'Problem POSTing tools.'}
 
     return {'ok': 'Tool list update complete.'}
