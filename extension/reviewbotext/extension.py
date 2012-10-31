@@ -1,10 +1,12 @@
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 from django.http import HttpRequest
 from django.utils.importlib import import_module
 
 from celery import Celery
+from djblets.siteconfig.models import SiteConfiguration
 from reviewboard.extensions.base import Extension
 
 from reviewbotext.handlers import SignalHandlers
@@ -22,7 +24,6 @@ class ReviewBotExtension(Extension):
         'comment_unmodified': False,
         'open_issues': False,
         'BROKER_URL': '',
-        'rb_url': '',
         'user': None,
     }
     resources = [
@@ -50,11 +51,11 @@ class ReviewBotExtension(Extension):
             'open_issues': self.settings['open_issues'],
         }
         payload = {
-            'url': self.settings['rb_url'],
             'ship_it': self.settings['ship_it'],
             'request': request_payload,
             'settings': review_settings,
             'session': self._login_user(self.settings['user']),
+            'url': self._rb_url(),
         }
         tools = ReviewBotTool.objects.filter(enabled=True,
                                              run_automatically=True)
@@ -92,7 +93,14 @@ class ReviewBotExtension(Extension):
         """Request workers to update tool list."""
         self.celery.conf.BROKER_URL = self.settings['BROKER_URL']
         payload = {
-            'url': self.settings['rb_url'],
             'session': self._login_user(self.settings['user']),
+            'url': self._rb_url(),
         }
         self.celery.control.broadcast('update_tools_list', payload=payload)
+
+    def _rb_url(self):
+        """Returns a valid reviewbot url including http protocol."""
+        protocol = SiteConfiguration.objects.get_current().get(
+            "site_domain_method")
+        domain = Site.objects.get_current().domain
+        return '%s://%s' % (protocol, domain)

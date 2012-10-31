@@ -33,7 +33,7 @@ def ProcessReviewRequest(payload, tool_settings):
         api_client = RBClient(
             payload['url'],
             cookie_file=COOKIE_FILE,
-            agent='ReviewBot',
+            agent=AGENT,
             session=payload['session'])
         api_root = api_client.get_root()
     except:
@@ -62,8 +62,8 @@ def ProcessReviewRequest(payload, tool_settings):
         return False
 
     try:
-        logger.info("Initializing tool '%s' version '%s'" %
-            (tool.name, tool.version))
+        logger.info("Initializing tool '%s' version '%s'" % (tool.name,
+                                                             tool.version))
         t = tool(review, settings=tool_settings)
     except Exception, e:
         logger.error("Error initializing tool: %s" % str(e))
@@ -114,14 +114,13 @@ def update_tools_list(panel, payload):
 
     logging.info("Done iterating Tools")
     tools = json.dumps(tools)
-    # TODO: Get the actual hostname.
-    hostname = 'hostname'
+    hostname = panel.hostname
 
     try:
         api_client = RBClient(
             payload['url'],
             cookie_file=COOKIE_FILE,
-            agent='ReviewBot',
+            agent=AGENT,
             session=payload['session'])
         api_root = api_client.get_root()
     except Exception, e:

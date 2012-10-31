@@ -23,9 +23,6 @@ class ReviewBotSettingsForm(SettingsForm):
         required=False,
         label=_("Comment on unmodified code"),
         help_text=_("Should comments be made to unmodified code."))
-    rb_url = forms.URLField(
-        label=_("Review Board URL"),
-        help_text=_("URL of this Review Board instance."))
     user = forms.IntegerField(
         label=_("User id"),
         help_text=_("The id of the user account Review Bot will use."))
