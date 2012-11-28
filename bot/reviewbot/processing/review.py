@@ -1,7 +1,11 @@
 import json
+import os.path
+import logging
 
+from celery.utils.log import get_task_logger
 from reviewbot.processing.filesystem import cleanup_tempfiles, make_tempfile
 
+logger = get_task_logger("WORKER")
 
 class File(object):
     """Represents a file in the review.
@@ -19,6 +23,7 @@ class File(object):
         self.dest_file = api_filediff.dest_file
         self.diff_data = api_filediff.get_diff_data()
         self._api_filediff = api_filediff
+        self.filename, self.file_extension = os.path.splitext(api_filediff.dest_file)
 
     @property
     def patched_file_contents(self):
@@ -41,14 +46,14 @@ class File(object):
     def get_patched_file_path(self):
         contents = self.patched_file_contents
         if contents:
-            return make_tempfile(contents)
+            return make_tempfile(contents, self.file_extension)
         else:
             return None
 
     def get_original_file_path(self):
         contents = self.original_file_contents
         if contents:
-            return make_tempfile(contents)
+            return make_tempfile(contents, self.file_extension)
         else:
             return None
 
@@ -68,6 +73,7 @@ class File(object):
             if issue:
                 self.review.ship_it = False
 
+            logger.info("Adding comment %s to review" % text)
             self._comment(text, real_line, num_lines, issue)
 
     def _comment(self, text, first_line, num_lines, issue):

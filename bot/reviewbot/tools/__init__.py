@@ -20,8 +20,10 @@ class Tool(object):
     def execute(self):
         """Perform a review using the tool."""
         self.handle_files(self.review.files)
-
         self.post_process(self.review)
+
+        # Return the set of processed files, an empty set is false.
+        return self.processed_files
 
     def handle_files(self, files):
         """Perform a review of each file.
