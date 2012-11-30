@@ -32,7 +32,7 @@ class ReviewBotExtension(Extension):
     ]
 
     def __init__(self, *args, **kwargs):
-        super(ReviewBotExtension, self).__init__()
+        super(ReviewBotExtension, self).__init__(*args, **kwargs)
         self.settings.load()
         self.celery = Celery('reviewbot.tasks')
         self.signal_handlers = SignalHandlers(self)
