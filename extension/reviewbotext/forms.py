@@ -23,6 +23,14 @@ class ReviewBotSettingsForm(SettingsForm):
         required=False,
         label=_("Comment on unmodified code"),
         help_text=_("Should comments be made to unmodified code."))
+    max_comments = forms.IntegerField(
+        required=False,
+        label=_("Maximum Comments"),
+        help_text=_("The maximum number of comments allowed per review. "
+                    "If a review exceeds this maximum, the extra comments "
+                    "will be truncated and a warning will be displayed in "
+                    "the review. Large values can cause browsers to slow "
+                    "considerably if a tool generates many comments."))
     user = forms.IntegerField(
         label=_("User id"),
         help_text=_("The id of the user account Review Bot will use."))
