@@ -5,7 +5,7 @@ from reviewbot.utils import is_exe_in_path
 
 class pep8Tool(Tool):
     name = 'PEP8 Style Checker'
-    version = '0.1'
+    version = '0.2'
     description = "Checks code for style errors using the PEP8 tool."
     options = [
         {
@@ -16,6 +16,18 @@ class pep8Tool(Tool):
                 'label': 'Maximum Line Length',
                 'help_text': 'The maximum line length PEP8 will check for.',
                 'required': True,
+            },
+        },
+        {
+            'name': 'ignore',
+            'field_type': 'django.forms.CharField',
+            'default': "",
+            'field_options': {
+                'label': 'Ignore',
+                'help_text': 'A comma seperated list of errors and warnings '
+                             'to ignore. This will be passed to the --ignore '
+                             'command line argument (e.g. E4,W).',
+                'required': False,
             },
         },
     ]
@@ -37,6 +49,7 @@ class pep8Tool(Tool):
                 'pep8',
                 '-r',
                 '--max-line-length=%i' % self.settings['max_line_length'],
+                '--ignore=%s' % self.settings['ignore'],
                 path
             ],
             split_lines=True,
