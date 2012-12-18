@@ -64,14 +64,14 @@ def ProcessReviewRequest(payload, tool_settings):
     try:
         logger.info("Initializing tool '%s' version '%s'" % (tool.name,
                                                              tool.version))
-        t = tool(review, settings=tool_settings)
+        t = tool()
     except Exception, e:
         logger.error("Error initializing tool: %s" % str(e))
         return False
 
     try:
         logger.info("Executing tool '%s'" % t.name)
-        t.execute()
+        t.execute(review, settings=tool_settings)
         logger.info("Tool execution completed successfully")
     except Exception, e:
         logger.error("Error executing tool: %s" % str(e))
@@ -100,17 +100,23 @@ def update_tools_list(panel, payload):
 
     logging.info("Iterating Tools")
     tools = []
+
     for ep in pkg_resources.iter_entry_points(group='reviewbot.tools'):
         entry_point = ep.name
-        tool = ep.load()
-        tools.append({
-            'name': tool.name,
-            'entry_point': entry_point,
-            'version': tool.version,
-            'description': tool.description,
-            'tool_options': json.dumps(tool.options),
-        })
+        tool_class = ep.load()
+        tool = tool_class()
         logging.info("Tool: %s" % entry_point)
+
+        if tool.check_dependencies():
+            tools.append({
+                'name': tool_class.name,
+                'entry_point': entry_point,
+                'version': tool_class.version,
+                'description': tool_class.description,
+                'tool_options': json.dumps(tool_class.options),
+            })
+        else:
+            logging.warning("%s dependency check failed." % ep.name)
 
     logging.info("Done iterating Tools")
     tools = json.dumps(tools)

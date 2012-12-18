@@ -11,17 +11,31 @@ class Tool(object):
     version = "1"
     options = []
 
-    def __init__(self, review, settings={}):
+    def __init__(self):
+        pass
+
+    def check_dependencies(self):
+        """Verify the tool's dependencies are installed.
+
+        This method should return False if any dependency the tool
+        requires is missing, otherwise it should return True. This can
+        and should be used to check for scripts or external programs
+        the tool assumes exist on the path.
+
+        If False is returned, the worker will not listen on the Tool's
+        queue, and a warning will be logged.
+        """
+        return True
+
+    def execute(self, review, settings={}):
+        """Perform a review using the tool."""
         self.review = review
         self.settings = settings
         self.processed_files = set()
         self.ignored_files = set()
 
-    def execute(self):
-        """Perform a review using the tool."""
-        self.handle_files(self.review.files)
-
-        self.post_process(self.review)
+        self.handle_files(review.files)
+        self.post_process(review)
 
     def handle_files(self, files):
         """Perform a review of each file.

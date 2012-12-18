@@ -1,5 +1,6 @@
 from reviewbot.tools.process import execute
 from reviewbot.tools import Tool
+from reviewbot.utils import is_exe_in_path
 
 
 class pep8Tool(Tool):
@@ -18,6 +19,9 @@ class pep8Tool(Tool):
             },
         },
     ]
+
+    def check_dependencies(self):
+        return is_exe_in_path('pep8')
 
     def handle_file(self, f):
         if not f.dest_file.endswith('.py'):
