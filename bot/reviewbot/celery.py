@@ -8,8 +8,6 @@ from kombu import Exchange, Queue
 
 
 celery = Celery('reviewbot.celery', include=['reviewbot.tasks'])
-
-
 default_exchange = Exchange('celery', type='direct')
 celery.conf.CELERY_QUEUES = [
     Queue('celery', default_exchange, routing_key='celery'),

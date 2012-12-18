@@ -10,11 +10,11 @@ from rbtools.api.client import RBClient
 
 from reviewbot.processing.review import Review
 
+
 # TODO: Make the cookie file configurable.
 COOKIE_FILE = 'reviewbot-cookies.txt'
 # TODO: Include version information in the agent.
 AGENT = 'ReviewBot'
-
 logger = get_task_logger("WORKER")
 
 

@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 
+
 PACKAGE_NAME = "ReviewBot"
 VERSION = "0.1"
 

@@ -2,9 +2,7 @@ from reviewboard.reviews.signals import review_request_published
 
 
 class SignalHandlers(object):
-    """
-    Signal handlers for reviewboard signals.
-    """
+    """Signal handlers for reviewboard signals."""
 
     def __init__(self, extension):
         """Initialize and connect all the signals"""
