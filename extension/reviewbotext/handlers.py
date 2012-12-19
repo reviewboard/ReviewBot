@@ -54,5 +54,4 @@ class SignalHandlers(object):
 
         if has_diff:
             request_payload['diff_revision'] = diff_revision
-
-        self.extension.notify(request_payload)
+            self.extension.notify(request_payload)
