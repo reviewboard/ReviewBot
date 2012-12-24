@@ -78,6 +78,7 @@ def ProcessReviewRequest(payload, tool_settings):
         return False
 
     try:
+        # Only publish reviews where files have been processed.
         logger.info("Publishing review")
         review.publish()
     except Exception, e:

@@ -4,9 +4,11 @@ Review Bot
 Review Bot is a tool for automating tasks on code uploaded to a
 [Review Board](http://www.reviewboard.org/) instance, and posting the
 results as a code review. Review Bot was built to automate the
-execution of static analysis tools, and comes with a plugin for
-automatically analyzing Python code using the
+execution of static analysis tools, and comes with the following plugins
+by default:
 [pep8](http://pypi.python.org/pypi/pep8/) Python style guide checker.
+[cpplint](https://code.google.com/p/google-styleguide/) C++ style guide checker.
+[cppcheck](http://sourceforge.net/projects/cppcheck/) C/C++ syntax checker.
 
 * **Extensible:** Writing plugins is simple using a convenient API to
 retrieve code files and craft a review. If more power is needed, tools
@@ -81,6 +83,20 @@ Bot's 'app'. For more information please see documentation
 on [Celery Application's](http://docs.celeryproject.org/en/latest/userguide/application.html)
 and [Workers](http://docs.celeryproject.org/en/latest/userguide/workers.html).
 
+CPPlint
+-------
+To use the cpplint worker you must ensure that cpplint is available on the system path.
+Download and install the python script, ensure it is exectable and in the system path.
+It is not yet available through pip or easy_install.
+
+CPPCheck
+--------
+To use the cppcheck plugin - you must ensure that cppcheck is available on the worker machine.
+Linux:
+    sudo apt-get install cppcheck
+
+Windows:
+    See http://sourceforge.net/projects/cppcheck/
 
 Installing and Registering Tasks
 --------------------------------
@@ -92,6 +108,8 @@ point for the pep8 tool is part of the review bot installation, here
 is an example showing its definition:
 
     'reviewbot.tools': [
+            'cppcheck = reviewbot.tools.cppcheck:CPPCheckTool',
+            'cpplint = reviewbot.tools.cpplint:CPPLintTool',
             'pep8 = reviewbot.tools.pep8:pep8Tool',
     ],
 
