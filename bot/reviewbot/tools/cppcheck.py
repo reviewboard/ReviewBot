@@ -54,9 +54,9 @@ class CPPCheckTool(Tool):
         return is_exe_in_path('cppcheck')
 
     def handle_file(self, f):
-        if not (f.dest_file.tolower().endswith('.cpp') or
-                f.dest_file.tolower().endswith('.h') or
-                f.dest_file.tolower().endswith('.c')):
+        if not (f.dest_file.lower().endswith('.cpp') or
+                f.dest_file.lower().endswith('.h') or
+                f.dest_file.lower().endswith('.c')):
             # Ignore the file.
             return False
 

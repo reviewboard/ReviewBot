@@ -58,8 +58,8 @@ class CPPLintTool(Tool):
         return is_exe_in_path('cpplint.py')
 
     def handle_file(self, f):
-        if not (f.dest_file.tolower().endswith('.cpp') or
-                f.dest_file.tolower().endswith('.h')):
+        if not (f.dest_file.lower().endswith('.cpp') or
+                f.dest_file.lower().endswith('.h')):
             # Ignore the file.
             return False
 
