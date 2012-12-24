@@ -1,11 +1,7 @@
 import json
 import os.path
-import logging
 
-from celery.utils.log import get_task_logger
 from reviewbot.processing.filesystem import cleanup_tempfiles, make_tempfile
-
-logger = get_task_logger("WORKER")
 
 class File(object):
     """Represents a file in the review.
@@ -73,7 +69,6 @@ class File(object):
             if issue:
                 self.review.ship_it = False
 
-            logger.info("Adding comment %s to review" % text)
             self._comment(text, real_line, num_lines, issue)
 
     def _comment(self, text, first_line, num_lines, issue):

@@ -1,42 +1,41 @@
 # Copyright (c) 2012 Ericsson Television Ltd
 # Author D Laird
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-# copies of the Software, and to permit persons to whom the Software is 
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
 #
-# The above copyright notice and this permission notice shall be included 
+# The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
 #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
 import re
-import logging
 
-from celery.utils.log import get_task_logger
-from reviewbot.tools.process import execute
 from reviewbot.tools import Tool
+from reviewbot.tools.process import execute
 
-logger = get_task_logger("WORKER")
 
-class cpplintTool(Tool):
+class CPPLintTool(Tool):
     name = 'CPP-Lint Style Checker'
     version = '0.1'
-    description = "Checks code for style errors using the Google CPP Lint (Modified by E///) tool."
+    description = "Checks code for style errors using the Google CPP Lint tool."
     options = [
         {
             'name': 'verbosity',
             'field_type': 'django.forms.IntegerField',
             'default': 1,
+            'min_value': 1,
+            'max_value': 5,
             'field_options': {
                 'label': 'Verbosity level for CPP Lint',
                 'help_text': 'Which level of messages should be displayed.  1 = All, 5=Few',
@@ -55,16 +54,17 @@ class cpplintTool(Tool):
         },
     ]
 
+    def check_dependencies(self):
+        return is_exe_in_path('cpplint.py')
+
     def handle_file(self, f):
-        logger.info("Filename to parse is: %s" % f.dest_file)
-        if not (f.dest_file.endswith('.cpp') or f.dest_file.endswith('.h')):
+        if not (f.dest_file.tolower().endswith('.cpp') or
+                f.dest_file.tolower().endswith('.h')):
             # Ignore the file.
-            logger.info("File %s is not for us." % f)
             return False
 
         path = f.get_patched_file_path()
         if not path:
-            logger.info("Unable to create tmpfile")
             return False
 
         # Run the script and capture the output.
