@@ -157,7 +157,17 @@ class Review(object):
 
     def publish(self):
         """Upload the review to Review Board."""
+        # Truncate comments to the maximum permitted amount to avoid
+        # overloading the review and freezing the browser.
+        max_comments = self.settings['max_comments']
+        if len(self.comments) >  max_comments:
+            warning = ("WARNING: Number of comments exceeded maximum, "
+                       "showing %d of %d.") % (max_comments, len(self.comments))
+            self.body_top = "%s\n%s" % (self.body_top, warning)
+            del self.comments[max_comments:]
+
         cleanup_tempfiles()
+
         try:
             bot_reviews = self.api_root.get_extension(
                 values={

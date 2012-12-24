@@ -27,7 +27,6 @@ class ReviewBotReviewResource(WebAPIResource):
     Each user may only have one review draft per request at a time. This
     resource allows concurrent review of a single request by creating
     the review and publishing it in a single transaction.
-
     """
     name = 'review_bot_review'
     allowed_methods = ('GET', 'POST',)
@@ -64,9 +63,7 @@ class ReviewBotReviewResource(WebAPIResource):
     )
     def create(self, request, review_request_id, ship_it=False, body_top='',
                body_bottom='', diff_comments=None, *args, **kwargs):
-        """Creates a new review and publishes it.
-
-        """
+        """Creates a new review and publishes it."""
         try:
             review_request = \
                 review_request_resource.get_object(request, review_request_id,

@@ -25,6 +25,7 @@ class ReviewBotExtension(Extension):
         'open_issues': False,
         'BROKER_URL': '',
         'user': None,
+        'max_comments': 30,
     }
     resources = [
         review_bot_review_resource,
@@ -32,7 +33,7 @@ class ReviewBotExtension(Extension):
     ]
 
     def __init__(self, *args, **kwargs):
-        super(ReviewBotExtension, self).__init__()
+        super(ReviewBotExtension, self).__init__(*args, **kwargs)
         self.settings.load()
         self.celery = Celery('reviewbot.tasks')
         self.signal_handlers = SignalHandlers(self)
@@ -49,6 +50,7 @@ class ReviewBotExtension(Extension):
             'ship_it': self.settings['ship_it'],
             'comment_unmodified': self.settings['comment_unmodified'],
             'open_issues': self.settings['open_issues'],
+            'max_comments': self.settings['max_comments'],
         }
         payload = {
             'ship_it': self.settings['ship_it'],

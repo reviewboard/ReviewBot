@@ -1,6 +1,7 @@
 from setuptools import setup, find_packages
 from distutils.spawn import spawn, find_executable
 
+
 PACKAGE_NAME = "ReviewBot"
 VERSION = "0.1"
 
