@@ -47,21 +47,23 @@ class ReviewBotExtension(Extension):
         self.celery.conf.BROKER_URL = self.settings['BROKER_URL']
 
         review_settings = {
-            'ship_it': self.settings['ship_it'],
-            'comment_unmodified': self.settings['comment_unmodified'],
-            'open_issues': self.settings['open_issues'],
             'max_comments': self.settings['max_comments'],
         }
         payload = {
-            'ship_it': self.settings['ship_it'],
             'request': request_payload,
-            'settings': review_settings,
+            'review_settings': review_settings,
             'session': self._login_user(self.settings['user']),
             'url': self._rb_url(),
         }
         tools = ReviewBotTool.objects.filter(enabled=True,
                                              run_automatically=True)
+
         for tool in tools:
+            review_settings['ship_it'] = tool.ship_it
+            review_settings['comment_unmodified'] = tool.comment_unmodified
+            review_settings['open_issues'] = tool.open_issues
+            payload['review_settings'] = review_settings
+
             try:
                 self.celery.send_task(
                     "reviewbot.tasks.ProcessReviewRequest",

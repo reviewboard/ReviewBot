@@ -48,10 +48,18 @@ class ReviewBotToolAdmin(admin.ModelAdmin):
             ),
             'classes': ('wide',),
         }),
-        ('Settings', {
+        ('Execution Settings', {
             'fields': (
                 'run_automatically',
                 'allow_run_manually',
+            ),
+            'classes': ('wide',),
+        }),
+        ('Review Settings', {
+            'fields': (
+                'ship_it',
+                'open_issues',
+                'comment_unmodified',
             ),
             'classes': ('wide',),
         }),

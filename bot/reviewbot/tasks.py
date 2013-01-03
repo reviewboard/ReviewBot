@@ -56,7 +56,8 @@ def ProcessReviewRequest(payload, tool_settings):
     tool = tools[0]
     try:
         logger.info("Initializing review")
-        review = Review(api_root, payload['request'], payload['settings'])
+        review = Review(api_root, payload['request'],
+                        payload['review_settings'])
     except Exception, e:
         logger.error("Error initializing review: %s" % str(e))
         return False
