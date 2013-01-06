@@ -83,12 +83,6 @@ Bot's 'app'. For more information please see documentation
 on [Celery Application's](http://docs.celeryproject.org/en/latest/userguide/application.html)
 and [Workers](http://docs.celeryproject.org/en/latest/userguide/workers.html).
 
-CPPlint
--------
-To use the cpplint worker you must ensure that cpplint is available on the system path.
-Download and install the python script, ensure it is exectable and in the system path.
-It is not yet available through pip or easy_install.
-
 CPPCheck
 --------
 To use the cppcheck plugin - you must ensure that cppcheck is available on the worker machine.

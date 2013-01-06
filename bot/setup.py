@@ -23,5 +23,6 @@ setup(
     },
     install_requires=[
         'celery>=3.0',
+        'cpplint>=0.0.3',
         'pep8>=0.7.0',
     ],)
