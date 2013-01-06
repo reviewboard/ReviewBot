@@ -71,7 +71,7 @@ class CPPLintTool(Tool):
         if self.settings['excluded_checks']:
             output = execute(
                 [
-                    'cpplint.py',
+                    'cpplint',
                     '--verbose=%i' % self.settings['verbosity'],
                     '--filter=%s' % self.settings['excluded_checks'],
                     path
@@ -81,7 +81,7 @@ class CPPLintTool(Tool):
         else:
              output = execute(
                 [
-                    'cpplint.py',
+                    'cpplint',
                     '--verbose=%i' % self.settings['verbosity'],
                     path
                 ],
