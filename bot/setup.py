@@ -8,7 +8,7 @@ setup(
     name=PACKAGE_NAME,
     version=VERSION,
     description="ReviewBot, the automated code reviewer",
-    author="Steven MacLeod, Daniel Laird",
+    author="Steven MacLeod",
     author_email="steven@smacleod.ca",
     packages=find_packages(),
     entry_points={
