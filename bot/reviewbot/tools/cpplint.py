@@ -55,7 +55,7 @@ class CPPLintTool(Tool):
     ]
 
     def check_dependencies(self):
-        return is_exe_in_path('cpplint.py')
+        return is_exe_in_path('cpplint')
 
     def handle_file(self, f):
         if not (f.dest_file.lower().endswith('.cpp') or
