@@ -56,7 +56,7 @@ class pep8Tool(Tool):
             ignore_errors=True)
 
         for line in output:
-            parsed = line.split(':')
+            parsed = line.split(':', 3)
             lnum = int(parsed[1])
             col = int(parsed[2])
             msg = parsed[3]
