@@ -16,9 +16,13 @@ can access the full Review Board API.
 [Celery](http://www.celeryproject.org/) and can scale out to service
 very large Review Board instances.
 
-* **Integrated Configuration:** Tasks are configured through the
+* **Integrated Configuration:** Tools are configured through the
 Review Board admin panel, including settings uniquely defined for each
 task.
+
+For a list of tools Review Bot supports, please see the
+[Supported Tools](https://github.com/smacleod/ReviewBot/wiki/Supported-Tools)
+wiki page.
 
 
 Installation
@@ -82,7 +86,7 @@ on [Celery Application's](http://docs.celeryproject.org/en/latest/userguide/appl
 and [Workers](http://docs.celeryproject.org/en/latest/userguide/workers.html).
 
 
-Installing and Registering Tasks
+Installing and Registering Tools
 --------------------------------
 
 Workers are able to find installed tools using
