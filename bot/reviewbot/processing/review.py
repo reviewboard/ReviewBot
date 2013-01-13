@@ -27,7 +27,7 @@ class File(object):
             return None
 
         patched_file = self._api_filediff.get_patched_file()
-        return patched_file.text
+        return patched_file.data
 
     @property
     def original_file_contents(self):
@@ -36,7 +36,7 @@ class File(object):
             return None
 
         original_file = self._api_filediff.get_original_file()
-        return original_file.text
+        return original_file.data
 
     def get_patched_file_path(self):
         contents = self.patched_file_contents
@@ -136,10 +136,8 @@ class Review(object):
         # Get the list of files.
         self.files = []
         if self.diff_revision:
-            files = api_root.get_files(values={
-                    'review_request_id': self.request_id,
-                    'diff_revision': self.diff_revision,
-                })
+            files = api_root.get_files(review_request_id=self.request_id,
+                                       diff_revision=self.diff_revision)
             try:
                 while True:
                     for f in files:
@@ -164,18 +162,14 @@ class Review(object):
 
         try:
             bot_reviews = self.api_root.get_extension(
-                values={
-                    'extension_name':
-                        'reviewbotext.extension.ReviewBotExtension',
-                }).get_review_bot_reviews()
+                extension_name='reviewbotext.extension.ReviewBotExtension'
+            ).get_review_bot_reviews()
             bot_reviews.create(
-                data={
-                    'review_request_id': self.request_id,
-                    'ship_it': self.ship_it,
-                    'body_top': self.body_top,
-                    'body_bottom': self.body_bottom,
-                    'diff_comments': json.dumps(self.comments),
-                })
+                review_request_id=self.request_id,
+                ship_it=self.ship_it,
+                body_top=self.body_top,
+                body_bottom=self.body_bottom,
+                diff_comments=json.dumps(self.comments))
             return True
         except:
             return False

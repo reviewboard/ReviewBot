@@ -136,15 +136,10 @@ def update_tools_list(panel, payload):
 
     try:
         api_tools = api_root.get_extension(
-            values={
-                'extension_name': 'reviewbotext.extension.ReviewBotExtension',
-            }).get_review_bot_tools()
+            extension_name='reviewbotext.extension.ReviewBotExtension'
+        ).get_review_bot_tools()
 
-        api_tools.create(
-            data={
-                'hostname': hostname,
-                'tools': tools,
-            })
+        api_tools.create(hostname=hostname, tools=tools)
     except Exception, e:
         logging.error("Problem POSTing tools: %s" % str(e))
         return {'error': 'Problem POSTing tools.'}
