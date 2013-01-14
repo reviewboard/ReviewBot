@@ -28,7 +28,8 @@ from reviewbot.tools.process import execute
 class CPPLintTool(Tool):
     name = 'CPP-Lint Style Checker'
     version = '0.1'
-    description = "Checks code for style errors using the Google CPP Lint tool."
+    description = 'Checks code for style errors using the ' \
+                  'Google CPP Lint tool.'
     options = [
         {
             'name': 'verbosity',
@@ -38,7 +39,8 @@ class CPPLintTool(Tool):
             'max_value': 5,
             'field_options': {
                 'label': 'Verbosity level for CPP Lint',
-                'help_text': 'Which level of messages should be displayed.  1 = All, 5=Few',
+                'help_text': 'Which level of messages should be displayed.'
+                             '1 = All, 5=Few',
                 'required': True,
             },
         },
@@ -48,7 +50,9 @@ class CPPLintTool(Tool):
             'default': "",
             'field_options': {
                 'label': 'Tests to exclude',
-                'help_text': 'Comma seperated list of tests to exclude (run cpplint.py --filter= to see all possible choices)',
+                'help_text': 'Comma seperated list of tests to exclude (run '
+                             'cpplint.py --filter= to see all possible '
+                             'choices).',
                 'required': False,
             },
         },
@@ -79,7 +83,8 @@ class CPPLintTool(Tool):
                 split_lines=True,
                 ignore_errors=True)
         else:
-             output = execute(
+
+            output = execute(
                 [
                     'cpplint',
                     '--verbose=%i' % self.settings['verbosity'],
@@ -91,25 +96,39 @@ class CPPLintTool(Tool):
         # Now for each line extract the fields and add a comment to the file.
         for line in output:
             # Regexp to extract the fields from strings like:
-            # filename.cpp:126:  Use int16/int64/etc, rather than the C type long  [runtime/int] [4]
-            # filename.cpp:127:  Lines should be <= 132 characters long  [whitespace/line_length] [2]
-            # filename.cpp:129:  Use int16/int64/etc, rather than the C type long  [runtime/int] [4]
-            matchObj = re.findall(r'(\S+:)(\d+:)(.+?\[)(.+?\])(.+)', line)
-            # pre declare all the variables so that they can be used outside the loop if the match (regexp search) worked.
+            # filename.cpp:126: \
+            #   Use int16/int64/etc, rather than the C type long \
+            #   [runtime/int] [4]
+            # filename.cpp:127: \
+            #   Lines should be <= 132 characters long \
+            #   [whitespace/line_length] [2]
+            # filename.cpp:129: \
+            #   Use int16/int64/etc, rather than the C type long \
+            #   [runtime/int] [4]
+            matching_obj = re.findall(r'(\S+:)(\d+:)(.+?\[)(.+?\])(.+)', line)
+            # pre declare all the variables so that they can be used outside
+            # the loop if the match (regexp search) worked.
             filename = ""
             linenumber = 0
             freetext = ""
             category = ""
             verbosity = ""
-            for tuple in matchObj:
-                filename = tuple[0][:-1]  ## filename (: stripped from the end)
-                linenumber = int(tuple[1][:-1])  ## linenumber (: stripped from the end)
-                freetext = tuple[2][:-1].strip()  ## freetext ( [ stripped from the end)
-                category = tuple[3][:-1].strip()  ## category ( ] stripped from the end)
-                verbosity = tuple[4][2:-1].strip()  ## verbosity (we just want the number between [])
+            for tuple in matching_obj:
+                # filename (: stripped from the end)
+                filename = tuple[0][:-1]
+                # linenumber (: stripped from the end)
+                linenumber = int(tuple[1][:-1])
+                # freetext ( [ stripped from the end)
+                freetext = tuple[2][:-1].strip()
+                # category ( ] stripped from the end)
+                category = tuple[3][:-1].strip()
+                # verbosity (we just want the number between [])
+                verbosity = tuple[4][2:-1].strip()
 
-            # If we found a matchobj then the variables will not be empty and thus we can add a comment to this file object.
-            if matchObj:
-                f.comment('%s.\n\nError Group: %s\nVerbosity Level: %s' % (freetext, category, verbosity), linenumber)
+            # If we found a matching_obj then the variables will not be empty
+            # and thus we can add a comment to this file object.
+            if matching_obj:
+                f.comment('%s.\n\nError Group: %s\nVerbosity Level: %s' %
+                         (freetext, category, verbosity), linenumber)
 
         return True

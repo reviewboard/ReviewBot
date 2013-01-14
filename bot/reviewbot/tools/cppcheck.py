@@ -26,7 +26,8 @@ from reviewbot.tools.process import execute
 class CPPCheckTool(Tool):
     name = 'CPPCheck - Static Code Analaysis'
     version = '0.1'
-    description = "Checks code for errors using Cppcheck - A tool for static C/C++ code analysis"
+    description = 'Checks code for errors using Cppcheck - ' \
+                  'A tool for static C/C++ code analysis'
     options = [
         {
             'name': 'style_checks_enabled',
@@ -34,7 +35,9 @@ class CPPCheckTool(Tool):
             'default': True,
             'field_options': {
                 'label': 'Enable standard style checks',
-                'help_text': 'This will enable the standard style checks - this also enables most warning, style and performance checks',
+                'help_text': 'This will enable the standard style checks '
+                             '-this also enables most warning, style and '
+                             'performance checks',
                 'required': False,
             },
         },
@@ -44,7 +47,8 @@ class CPPCheckTool(Tool):
             'default': False,
             'field_options': {
                 'label': 'Enable ALL error checks',
-                'help_text': 'This will enable ALL the error checks - likely to have many false postives.',
+                'help_text': 'This will enable ALL the error checks '
+                             '- likely to have many false postives.',
                 'required': False,
             },
         },
@@ -87,12 +91,14 @@ class CPPCheckTool(Tool):
             split_lines=True,
             ignore_errors=True)
 
-
         # Now for each line extract the fields and add a comment to the file.
         for line in output:
-            # filename.cpp,849,style,unusedFunction,The function 'bob' is never used
-            # filename.cpp,638,style,unusedFunction,The function 'peter' is never used
-            # filename.cpp,722,style,unusedFunction,The function 'test' is never used
+            # filename.cpp,849,style,unusedFunction, \
+            #   The function 'bob' is never used
+            # filename.cpp,638,style,unusedFunction, \
+            #   The function 'peter' is never used
+            # filename.cpp,722,style,unusedFunction,
+            #   The function 'test' is never used
             parsed = line.split('::')
 
             # If we have a useful message
@@ -107,12 +113,18 @@ class CPPCheckTool(Tool):
                 # Now extract the other options.
                 category = parsed[2]
                 sub_category = parsed[3]
-                freetext = parsed[4][:-1] ## strip the " from the end
+                freetext = parsed[4][:-1]  # strip the " from the end
 
-                # If the message is that its an error then override the default settings and raise an Issue otherwise just add a comment.
+                # If the message is that its an error then override the
+                # default settings and raise an Issue otherwise just
+                # add a comment.
                 if category == 'error':
-                    f.comment('%s.\n\nCategory: %s\nSub Category: %s' % (freetext, category, sub_category), linenumber, issue=True)
+                    f.comment('%s.\n\nCategory: %s\nSub Category: %s' %
+                             (freetext, category, sub_category),
+                              linenumber, issue=True)
                 else:
-                    f.comment('%s.\n\nCategory: %s\nSub Category: %s' % (freetext, category, sub_category), linenumber, issue=False)
+                    f.comment('%s.\n\nCategory: %s\nSub Category: %s' %
+                             (freetext, category, sub_category),
+                              linenumber, issue=False)
 
         return True
