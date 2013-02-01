@@ -83,11 +83,12 @@ and [Workers](http://docs.celeryproject.org/en/latest/userguide/workers.html).
 CPPCheck
 --------
 To use the cppcheck plugin - you must ensure that cppcheck is available on the worker machine.
-Linux:
+
+To install on Ubuntu run:
+
     sudo apt-get install cppcheck
 
-Windows:
-    See http://sourceforge.net/projects/cppcheck/
+For other distributions or Windows, please see http://sourceforge.net/projects/cppcheck/
 
 Installing and Registering Tools
 --------------------------------
