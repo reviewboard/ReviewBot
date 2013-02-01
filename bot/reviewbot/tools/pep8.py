@@ -1,9 +1,9 @@
-from reviewbot.tools.process import execute
 from reviewbot.tools import Tool
+from reviewbot.tools.process import execute
 from reviewbot.utils import is_exe_in_path
 
 
-class pep8Tool(Tool):
+class PEP8Tool(Tool):
     name = 'PEP8 Style Checker'
     version = '0.2'
     description = "Checks code for style errors using the PEP8 tool."

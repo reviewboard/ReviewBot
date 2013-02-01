@@ -102,7 +102,7 @@ is an example showing its definition:
     'reviewbot.tools': [
             'cppcheck = reviewbot.tools.cppcheck:CPPCheckTool',
             'cpplint = reviewbot.tools.cpplint:CPPLintTool',
-            'pep8 = reviewbot.tools.pep8:pep8Tool',
+            'pep8 = reviewbot.tools.pep8:PEP8Tool',
     ],
 
 After a tool has been installed on a worker, it must be registered

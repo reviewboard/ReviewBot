@@ -19,7 +19,7 @@ setup(
         'reviewbot.tools': [
             'cppcheck = reviewbot.tools.cppcheck:CPPCheckTool',
             'cpplint = reviewbot.tools.cpplint:CPPLintTool',
-            'pep8 = reviewbot.tools.pep8:pep8Tool',
+            'pep8 = reviewbot.tools.pep8:PEP8Tool',
         ],
     },
     install_requires=[
