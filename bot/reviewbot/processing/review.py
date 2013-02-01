@@ -1,4 +1,5 @@
 import json
+import os.path
 
 from reviewbot.processing.filesystem import cleanup_tempfiles, make_tempfile
 
@@ -19,6 +20,8 @@ class File(object):
         self.dest_file = api_filediff.dest_file
         self.diff_data = api_filediff.get_diff_data()
         self._api_filediff = api_filediff
+        self.filename, self.file_extension = os.path.splitext(
+            api_filediff.dest_file)
 
     @property
     def patched_file_contents(self):
@@ -41,14 +44,14 @@ class File(object):
     def get_patched_file_path(self):
         contents = self.patched_file_contents
         if contents:
-            return make_tempfile(contents)
+            return make_tempfile(contents, self.file_extension)
         else:
             return None
 
     def get_original_file_path(self):
         contents = self.original_file_contents
         if contents:
-            return make_tempfile(contents)
+            return make_tempfile(contents, self.file_extension)
         else:
             return None
 
@@ -152,9 +155,9 @@ class Review(object):
         # Truncate comments to the maximum permitted amount to avoid
         # overloading the review and freezing the browser.
         max_comments = self.settings['max_comments']
-        if len(self.comments) >  max_comments:
-            warning = ("WARNING: Number of comments exceeded maximum, "
-                       "showing %d of %d.") % (max_comments, len(self.comments))
+        if len(self.comments) > max_comments:
+            warning = ("WARNING: Number of comments exceeded maximum, showing "
+                       "%d of %d.") % (max_comments, len(self.comments))
             self.body_top = "%s\n%s" % (self.body_top, warning)
             del self.comments[max_comments:]
 

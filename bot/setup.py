@@ -5,7 +5,6 @@ from setuptools import setup, find_packages
 PACKAGE_NAME = "ReviewBot"
 VERSION = "0.1"
 
-
 setup(
     name=PACKAGE_NAME,
     version=VERSION,
@@ -18,10 +17,13 @@ setup(
             'reviewbot = reviewbot.celery:main'
         ],
         'reviewbot.tools': [
+            'cppcheck = reviewbot.tools.cppcheck:CPPCheckTool',
+            'cpplint = reviewbot.tools.cpplint:CPPLintTool',
             'pep8 = reviewbot.tools.pep8:pep8Tool',
         ],
     },
     install_requires=[
         'celery>=3.0',
+        'cpplint>=0.0.3',
         'pep8>=0.7.0',
     ],)

@@ -14,12 +14,12 @@ def cleanup_tempfiles():
     tempfiles = []
 
 
-def make_tempfile(content=None):
+def make_tempfile(content=None, extension=None):
     """
     Creates a temporary file and returns the path. The path is stored
     in an array for later cleanup.
     """
-    fd, tmpfile = tempfile.mkstemp()
+    fd, tmpfile = tempfile.mkstemp(suffix=extension)
 
     if content:
         os.write(fd, content)
