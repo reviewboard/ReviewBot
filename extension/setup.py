@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 PACKAGE = "reviewbotext"
@@ -10,7 +10,7 @@ setup(
     version=VERSION,
     description="An extension for communicating with Review Bot",
     author="Steven MacLeod",
-    packages=["reviewbotext"],
+    packages=find_packages(),
     entry_points={
         'reviewboard.extensions':
             '%s = reviewbotext.extension:ReviewBotExtension' % PACKAGE,
