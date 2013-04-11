@@ -107,4 +107,4 @@ class ReviewBotExtension(Extension):
         protocol = SiteConfiguration.objects.get_current().get(
             "site_domain_method")
         domain = Site.objects.get_current().domain
-        return '%s://%s' % (protocol, domain)
+        return '%s://%s%s' % (protocol, domain, settings.SITE_ROOT)
