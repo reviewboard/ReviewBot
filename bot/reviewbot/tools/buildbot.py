@@ -138,6 +138,7 @@ class BuildBot(Tool):
             'buildbot',
             'try',
             '--wait',
+            '--quiet',
             '--diff=%s' % self.review.get_patch_file_path(),
             '--patchlevel=1',
             '--username=%s' % settings['username'],
