@@ -7,7 +7,7 @@ from reviewbot.tools.process import execute
 
 class BuildBot(Tool):
     name = 'BuildBot try plugin'
-    version = '0.11'
+    version = '0.2'
     description = "Runs buildbot's try command and posts the result of the build"
     options = [
         {
