@@ -66,6 +66,7 @@ def ProcessReviewRequest(payload, tool_settings):
         logger.info("Initializing tool '%s' version '%s'" % (tool.name,
                                                              tool.version))
         t = tool()
+
     except Exception, e:
         logger.error("Error initializing tool: %s" % str(e))
         return False
