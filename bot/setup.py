@@ -2,15 +2,17 @@
 from setuptools import find_packages, setup
 
 
-PACKAGE_NAME = "ReviewBot"
-VERSION = "0.1"
+VERSION = "0.2"
 
 setup(
-    name=PACKAGE_NAME,
+    name="ReviewBot",
     version=VERSION,
+    license="MIT",
     description="ReviewBot, the automated code reviewer",
     author="Steven MacLeod",
     author_email="steven@smacleod.ca",
+    maintainer="Steven MacLeod",
+    maintainer_email="steven@smacleod.ca",
     packages=find_packages(),
     entry_points={
         'console_scripts': [
@@ -30,4 +32,14 @@ setup(
         'cpplint>=0.0.3',
         'pep8>=0.7.0',
         'pyflakes>=0.5.0',
-    ],)
+    ],
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Environment :: Console",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python",
+        "Topic :: Software Development",
+    ],
+)

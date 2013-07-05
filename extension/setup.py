@@ -2,18 +2,21 @@
 from setuptools import find_packages, setup
 
 
-PACKAGE = "reviewbotext"
-VERSION = "0.1"
+VERSION = "0.2"
 
 setup(
-    name="Review Bot Extension",
+    name="ReviewBotExtension",
     version=VERSION,
-    description="An extension for communicating with Review Bot",
+    license="MIT",
+    description="A Review Board extension for communicating with Review Bot",
     author="Steven MacLeod",
+    author_email="steven@smacleod.ca",
+    maintainer="Steven MacLeod",
+    maintainer_email="steven@smacleod.ca",
     packages=find_packages(),
     entry_points={
         'reviewboard.extensions':
-            '%s = reviewbotext.extension:ReviewBotExtension' % PACKAGE,
+            'reviewbot = reviewbotext.extension:ReviewBotExtension',
     },
     install_requires=[
           'celery',
@@ -25,5 +28,14 @@ setup(
             'templates/admin/reviewbotext/reviewbottool/*.html',
             'templates/*.html',
         ],
-    }
+    },
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Environment :: Web Environment",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python",
+        "Topic :: Software Development",
+    ],
 )
