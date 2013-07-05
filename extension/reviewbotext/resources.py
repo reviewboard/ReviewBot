@@ -9,7 +9,8 @@ from djblets.webapi.errors import DOES_NOT_EXIST, INVALID_FORM_DATA, \
                                   NOT_LOGGED_IN, PERMISSION_DENIED
 
 from reviewboard.diffviewer.models import FileDiff
-from reviewboard.reviews.models import BaseComment, Review
+from reviewboard.extensions.base import get_extension_manager
+from reviewboard.reviews.models import BaseComment, Review, ReviewRequest
 from reviewboard.webapi.decorators import webapi_check_local_site
 from reviewboard.webapi.resources import WebAPIResource, \
                                          review_request_resource
@@ -132,9 +133,47 @@ review_bot_review_resource = ReviewBotReviewResource()
 
 
 class ReviewBotToolResource(WebAPIResource):
-    """Resource for workers to update the installed tools list."""
+    """Resource for workers to update the installed tools list.
+
+    Also provides information on the installed Review Bot tools. This can be
+    used to fetch the list of installed tools to be displayed in the Review
+    Board UI.
+
+    """
     name = 'review_bot_tool'
     allowed_methods = ('GET', 'POST',)
+    model = ReviewBotTool
+    model_object_key = 'id'
+    uri_object_key = 'reviewbot_tool_id'
+    fields = {
+        'id': {
+            'type': int,
+            'description': 'The id of the tool.',
+        },
+        'name': {
+            'type': str,
+            'description': 'The name of the tool.',
+        },
+        'version': {
+            'type': str,
+            'description': 'The tool version number.',
+        },
+        'enabled': {
+            'type': bool,
+            'description': 'Whether the user has enabled this '
+                           'tool in the Review Bot extension.',
+        },
+        'run_automatically': {
+            'type': bool,
+            'description': 'Whether the user has enabled this tool to '
+                           'run automatically.',
+        },
+        'allow_run_manually': {
+            'type': bool,
+            'description': 'Whether the user has enabled this tool to '
+                           'be triggered manually.',
+        },
+    }
 
     @webapi_check_local_site
     @webapi_login_required
@@ -210,3 +249,81 @@ class ReviewBotToolResource(WebAPIResource):
         return 201, {}
 
 review_bot_tool_resource = ReviewBotToolResource()
+
+
+class ReviewBotTriggerReviewResource(WebAPIResource):
+    """Resource that triggers a set of ReviewBot reviews given a list of tools
+    to run on a review request.
+
+    Can be called from within the ReviewBoard UI for the purpose of manually
+    triggering ReviewBot reviews.
+
+    """
+    name = 'review_bot_trigger_review'
+    allowed_methods = ('POST',)
+
+    @webapi_check_local_site
+    @webapi_login_required
+    @webapi_response_errors(DOES_NOT_EXIST, INVALID_FORM_DATA,
+                            NOT_LOGGED_IN, PERMISSION_DENIED)
+    @webapi_request_fields(
+        required={
+            'review_request_id': {
+                'type': int,
+                'description': 'ID of the review request to be reviewed.',
+            },
+            'tools': {
+                'type': str,
+                'description': 'A JSON payload containing tool information.',
+            },
+        },
+    )
+    def create(self, request, review_request_id, tools, *args, **kwargs):
+        """Trigger ReviewBot review(s) based on the set of given tools.
+
+        """
+        try:
+            tools = json.loads(tools)
+
+        except:
+            return INVALID_FORM_DATA, {
+                'fields': {
+                    'dtools': 'Malformed JSON.',
+                },
+            }
+
+        # Get the ReviewBotExtension instance. We can assume it exists because
+        # this code is executed after the extension has been registered with
+        # the manager.
+        from reviewbotext.extension import ReviewBotExtension
+        extension_manager = get_extension_manager()
+        extension = \
+            extension_manager.get_enabled_extension(ReviewBotExtension.id)
+        review_request = ReviewRequest.objects.get(id=review_request_id)
+        is_new = True
+        fields_changed = {}
+
+        # Check for a diff:
+        diffsets = review_request.diffset_history.diffsets.get_query_set()
+        if len(diffsets) > 0:
+            has_diff = True
+            diff_revision = diffsets[len(diffsets)-1].revision
+        else:
+            has_diff = False
+
+        request_payload = {
+            'review_request_id': review_request_id,
+            'new': is_new,
+            'fields_changed': fields_changed,
+            'has_diff': has_diff,
+        }
+
+        if has_diff:
+            request_payload['diff_revision'] = diff_revision
+
+        extension.notify(request_payload, tools)
+
+        # TODO: Fix the result key here.
+        return 201, {}
+
+review_bot_trigger_review_resource = ReviewBotTriggerReviewResource()

@@ -2,17 +2,24 @@ from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
 from django.utils.importlib import import_module
 
 from celery import Celery
 from djblets.siteconfig.models import SiteConfiguration
+from djblets.webapi.resources import register_resource_for_model, \
+                                     unregister_resource_for_model
 from reviewboard.extensions.base import Extension
+from reviewboard.extensions.hooks import DiffViewerActionHook, \
+                                         ReviewRequestActionHook, \
+                                         TemplateHook
 
 from reviewbotext.handlers import SignalHandlers
 from reviewbotext.models import ReviewBotTool
 from reviewbotext.resources import review_bot_review_resource, \
-                                   review_bot_tool_resource
+                                   review_bot_tool_resource, \
+                                   review_bot_trigger_review_resource
 
 
 class ReviewBotExtension(Extension):
@@ -30,6 +37,7 @@ class ReviewBotExtension(Extension):
     resources = [
         review_bot_review_resource,
         review_bot_tool_resource,
+        review_bot_trigger_review_resource,
     ]
 
     def __init__(self, *args, **kwargs):
@@ -37,13 +45,31 @@ class ReviewBotExtension(Extension):
         self.settings.load()
         self.celery = Celery('reviewbot.tasks')
         self.signal_handlers = SignalHandlers(self)
+        register_resource_for_model(ReviewBotTool,
+                                    review_bot_tool_resource)
+        self.add_action_hooks()
+        self.template_hook = TemplateHook(self,
+                                          'base-scripts-post',
+                                          'reviewbot_hook_action.html')
+
+    def add_action_hooks(self):
+        actions = [{
+            'id': 'reviewbot-link',
+            'label': 'Review Bot',
+            'url': '#'
+        }]
+        self.review_action_hook = ReviewRequestActionHook(self,
+                                                          actions=actions)
+        self.diff_action_hook = DiffViewerActionHook(self, actions=actions)
 
     def shutdown(self):
         self.signal_handlers.disconnect()
+        unregister_resource_for_model(ReviewBotTool)
         super(ReviewBotExtension, self).shutdown()
 
-    def notify(self, request_payload):
+    def notify(self, request_payload, selected_tools=None):
         """Add the request to the queue."""
+
         self.celery.conf.BROKER_URL = self.settings['BROKER_URL']
 
         review_settings = {
@@ -55,8 +81,21 @@ class ReviewBotExtension(Extension):
             'session': self._login_user(self.settings['user']),
             'url': self._rb_url(),
         }
-        tools = ReviewBotTool.objects.filter(enabled=True,
-                                             run_automatically=True)
+
+        if (selected_tools is not None):
+            tools = []
+            for tool in selected_tools:
+            # Double-check that the tool can be run manually in case
+            # this setting was changed between trigger time and queue time.
+                try:
+                    tools.append(
+                        ReviewBotTool.objects.get(id=tool['id'],
+                                                  allow_run_manually=True))
+                except ObjectDoesNotExist:
+                    pass
+        else:
+            tools = ReviewBotTool.objects.filter(enabled=True,
+                                                 run_automatically=True)
 
         for tool in tools:
             review_settings['ship_it'] = tool.ship_it
