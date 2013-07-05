@@ -17,7 +17,7 @@ setup(
             'reviewbot = reviewbot.celery:main'
         ],
         'reviewbot.tools': [
-            'buildbot = reviewbot.tools.buildbot:BuildBot',
+            'buildbot = reviewbot.tools.buildbot:BuildBotTool',
             'cppcheck = reviewbot.tools.cppcheck:CPPCheckTool',
             'cpplint = reviewbot.tools.cpplint:CPPLintTool',
             'pep8 = reviewbot.tools.pep8:PEP8Tool',

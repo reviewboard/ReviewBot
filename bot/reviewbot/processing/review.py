@@ -56,7 +56,7 @@ class File(object):
             return None
 
     def comment(self, text, first_line, num_lines=1, issue=None,
-                        original=False):
+                original=False):
         """Make a comment on the file.
 
         If original is True, the line number will correspond to the
@@ -185,7 +185,7 @@ class Review(object):
                 return None
             self.patch = self.api_root.get_diff(
                 review_request_id=self.request_id,
-                diff_revision=self.diff_revision).get_patch().diff
+                diff_revision=self.diff_revision).get_patch().data
 
         return self.patch
 
@@ -193,6 +193,6 @@ class Review(object):
         """Get the absolute path to the patch file."""
         patch_contents = self.patch_contents
         if patch_contents:
-            return make_tempfile(patch_contents)
+            return make_tempfile(patch_contents, ".diff")
         else:
             return None

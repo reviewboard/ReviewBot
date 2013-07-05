@@ -66,6 +66,7 @@ def ProcessReviewRequest(payload, tool_settings):
         logger.info("Initializing tool '%s' version '%s'" % (tool.name,
                                                              tool.version))
         t = tool()
+
     except Exception, e:
         logger.error("Error initializing tool: %s" % str(e))
         return False
@@ -97,7 +98,7 @@ def update_tools_list(panel, payload):
     and inform Review Board of them.
     """
     logging.info("Request to refresh installed tools from '%s'" %
-        payload['url'])
+                 payload['url'])
 
     logging.info("Iterating Tools")
     tools = []
