@@ -1,3 +1,4 @@
+from djblets.extensions.hooks import SignalHook
 from reviewboard.reviews.signals import review_request_published
 
 
@@ -8,12 +9,9 @@ class SignalHandlers(object):
         """Initialize and connect all the signals"""
         self.extension = extension
 
-        # Connect the handlers.
-        review_request_published.connect(self._review_request_published)
-
-    def disconnect(self):
-        """Disconnect the signal handlers"""
-        review_request_published.disconnect(self._review_request_published)
+        SignalHook(extension,
+                   review_request_published,
+                   self._review_request_published)
 
     def _review_request_published(self, **kwargs):
         review_request = kwargs.get('review_request')
