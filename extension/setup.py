@@ -2,15 +2,18 @@
 from setuptools import find_packages
 from reviewboard.extensions.packaging import setup
 
+from reviewbotext import get_package_version
+
 
 PACKAGE = "reviewbotext"
-VERSION = "0.1"
+
 
 setup(
     name="Review Bot Extension",
-    version=VERSION,
+    version=get_package_version(),
     description="An extension for communicating with Review Bot",
     author="Steven MacLeod",
+    include_package_data=True,
     packages=find_packages(),
     entry_points={
         'reviewboard.extensions':
@@ -19,12 +22,4 @@ setup(
     install_requires=[
           'celery',
     ],
-    package_data={
-        'reviewbotext': [
-            'htdocs/css/*.css',
-            'htdocs/js/*.js',
-            'templates/admin/reviewbotext/reviewbottool/*.html',
-            'templates/*.html',
-        ],
-    }
 )
