@@ -11,8 +11,7 @@ from djblets.webapi.errors import DOES_NOT_EXIST, INVALID_FORM_DATA, \
 from reviewboard.diffviewer.models import FileDiff
 from reviewboard.reviews.models import BaseComment, Review
 from reviewboard.webapi.decorators import webapi_check_local_site
-from reviewboard.webapi.resources import WebAPIResource, \
-                                         review_request_resource
+from reviewboard.webapi.resources import WebAPIResource, resources
 
 from reviewbotext.models import ReviewBotTool
 
@@ -65,9 +64,10 @@ class ReviewBotReviewResource(WebAPIResource):
                body_bottom='', diff_comments=None, *args, **kwargs):
         """Creates a new review and publishes it."""
         try:
-            review_request = \
-                review_request_resource.get_object(request, review_request_id,
-                                                   *args, **kwargs)
+            review_request = resources.review_request.get_object(
+                request,
+                review_request_id=review_request_id,
+                *args, **kwargs)
         except ObjectDoesNotExist:
             return DOES_NOT_EXIST
 

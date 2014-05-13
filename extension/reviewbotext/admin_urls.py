@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import patterns
+from django.conf.urls import patterns, url
 
 from reviewbotext.extension import ReviewBotExtension
 from reviewbotext.forms import ReviewBotSettingsForm
@@ -6,10 +6,11 @@ from reviewbotext.forms import ReviewBotSettingsForm
 
 urlpatterns = patterns(
     '',
-    (
-        r'^$', 'reviewboard.extensions.views.configure_extension',
+
+    url(r'^$',
+        'reviewboard.extensions.views.configure_extension',
         {
             'ext_class': ReviewBotExtension,
             'form_class': ReviewBotSettingsForm,
-        }
-    ))
+        }),
+)

@@ -81,9 +81,8 @@ class ReviewBotExtension(Extension):
 
         Will return the session id of the login.
         """
-        user = User.objects.get(id=user_id)
-        user.backend = "%s.%s" % ("django.contrib.auth.backends",
-                                  "ModelBackend")
+        user = User.objects.get(pk=user_id)
+        user.backend = 'reviewboard.accounts.backends.StandardAuthBackend'
         engine = import_module(settings.SESSION_ENGINE)
 
         # Create a fake request to store login details.
