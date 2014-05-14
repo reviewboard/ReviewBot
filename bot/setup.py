@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 from setuptools import find_packages, setup
 
+from reviewbot import get_package_version
+
 
 PACKAGE_NAME = "ReviewBot"
-VERSION = "0.1"
+
 
 setup(
     name=PACKAGE_NAME,
-    version=VERSION,
+    version=get_package_version(),
     description="ReviewBot, the automated code reviewer",
     author="Steven MacLeod",
     author_email="steven@smacleod.ca",
