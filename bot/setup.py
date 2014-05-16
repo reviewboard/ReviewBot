@@ -30,4 +30,5 @@ setup(
         'cpplint>=0.0.3',
         'pep8>=0.7.0',
         'pyflakes>=0.5.0',
+        'RBTools>=0.6.0',
     ],)
