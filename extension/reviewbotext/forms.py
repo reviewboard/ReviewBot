@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 
 from djblets.extensions.forms import SettingsForm
 
-from reviewbotext.models import Tool, ToolProfile
+from reviewbotext.models import Tool, Profile
 
 
 class ReviewBotSettingsForm(SettingsForm):
@@ -29,28 +29,28 @@ class ToolForm(forms.ModelForm):
         model = Tool
 
 
-class ToolProfileFormset(forms.models.BaseInlineFormSet):
+class ProfileFormset(forms.models.BaseInlineFormSet):
     def __init__(self, **kwargs):
         self.tool_options = kwargs.get('instance').tool_options
-        return super(ToolProfileFormset, self).__init__(**kwargs)
+        return super(ProfileFormset, self).__init__(**kwargs)
 
     def _construct_form(self, i, **kwargs):
         kwargs['tool_options'] = self.tool_options
         print "CONSTRUCTING A FORM"
         print kwargs
         print ""
-        return super(ToolProfileFormset, self)._construct_form(i, **kwargs)
+        return super(ProfileFormset, self)._construct_form(i, **kwargs)
 
 
-class ToolProfileForm(forms.ModelForm):
+class ProfileForm(forms.ModelForm):
     class Meta:
-        model = ToolProfile
+        model = Profile
 
     TOOL_OPTIONS_FIELDSET = 'Tool Specific Settings'
 
     def __init__(self, *args, **kwargs):
         self.options = kwargs.pop('tool_options', None)
-        super(ToolProfileForm, self).__init__(*args, **kwargs)
+        super(ProfileForm, self).__init__(*args, **kwargs)
         self.tool_opt_form = None
 
         if self.options is None:
@@ -68,11 +68,11 @@ class ToolProfileForm(forms.ModelForm):
 
     def is_valid(self):
         """Returns whether or not the form is valid."""
-        return (super(ToolProfileForm, self).is_valid() and
+        return (super(ProfileForm, self).is_valid() and
                 self.tool_opt_form.is_valid())
 
     def save(self, commit=True, *args, **kwargs):
-        tool_profile = super(ToolProfileForm, self).save(commit=False,
+        tool_profile = super(ProfileForm, self).save(commit=False,
                                                          *args, **kwargs)
 
         # options = tool_profile.tool_options

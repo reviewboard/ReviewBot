@@ -7,16 +7,16 @@ from reviewboard.extensions.base import get_extension_manager
 
 from reviewbotext.extension import ReviewBotExtension
 from reviewbotext.forms import (ToolForm,
-                                ToolProfileForm,
-                                ToolProfileFormset)
+                                ProfileForm,
+                                ProfileFormset)
 from reviewbotext.models import (Tool,
-                                 ToolProfile)
+                                 Profile)
 
 
-class ToolProfileInline(admin.StackedInline):
-    model = ToolProfile
-    # formset = ToolProfileFormset
-    # form = ToolProfileForm
+class ProfileInline(admin.StackedInline):
+    model = Profile
+    # formset = ProfileFormset
+    # form = ProfileForm
     extra = 0
 
     # fieldsets = (
@@ -41,7 +41,7 @@ class ToolProfileInline(admin.StackedInline):
     #         ),
     #         'classes': ('wide',),
     #     }),
-    #     (ToolProfileForm.TOOL_OPTIONS_FIELDSET, {
+    #     (ProfileForm.TOOL_OPTIONS_FIELDSET, {
     #         'fields': (),
     #         'classes': ('wide',),
     #     }),
@@ -49,7 +49,7 @@ class ToolProfileInline(admin.StackedInline):
 
 class ToolAdmin(admin.ModelAdmin):
     inlines = [
-        ToolProfileInline,
+        ProfileInline,
     ]
 
     form = ToolForm
