@@ -4,7 +4,6 @@ from django.utils.translation import ugettext as _
 
 from djblets.util.fields import JSONField
 
-from reviewboard.reviews.diffviewer import DiffSet
 from reviewboard.reviews.models import Review
 from reviewboard.scmtools.models import Repository
 from reviewboard.site.models import LocalSite
@@ -92,7 +91,7 @@ class ToolExecution(models.Model):
 
     # Review Information
     result = JSONField()
-    review = modelsForeignKey(Review, null=True)
+    review = models.ForeignKey(Review, null=True)
 
 
 class AutomaticRunGroup(models.Model):
