@@ -6,24 +6,61 @@ from django.template.context import RequestContext
 from reviewboard.extensions.base import get_extension_manager
 
 from reviewbotext.extension import ReviewBotExtension
-from reviewbotext.forms import ReviewBotToolForm
-from reviewbotext.models import ReviewBotTool
+from reviewbotext.forms import (ToolForm,
+                                ToolProfileForm,
+                                ToolProfileFormset)
+from reviewbotext.models import (Tool,
+                                 ToolProfile)
 
 
-class ReviewBotToolAdmin(admin.ModelAdmin):
-    form = ReviewBotToolForm
+class ToolProfileInline(admin.StackedInline):
+    model = ToolProfile
+    # formset = ToolProfileFormset
+    # form = ToolProfileForm
+    extra = 0
+
+    # fieldsets = (
+    #     ('General', {
+    #         'fields': (
+    #             'name',
+    #             'description',
+    #         ),
+    #         'classes': ('wide',),
+    #     }),
+    #     ('Execution Settings', {
+    #         'fields': (
+    #             'allow_manual',
+    #         ),
+    #         'classes': ('wide',),
+    #     }),
+    #     ('Review Settings', {
+    #         'fields': (
+    #             'ship_it',
+    #             'open_issues',
+    #             'comment_unmodified',
+    #         ),
+    #         'classes': ('wide',),
+    #     }),
+    #     (ToolProfileForm.TOOL_OPTIONS_FIELDSET, {
+    #         'fields': (),
+    #         'classes': ('wide',),
+    #     }),
+    # )
+
+class ToolAdmin(admin.ModelAdmin):
+    inlines = [
+        ToolProfileInline,
+    ]
+
+    form = ToolForm
+
     list_display = [
         'name',
         'version',
-        'run_automatically',
         'in_last_update',
-    ]
-    list_editable = [
-        'run_automatically',
     ]
     list_filter = [
         'in_last_update',
-        'run_automatically',
     ]
     ordering = [
         'enabled',
@@ -48,25 +85,6 @@ class ReviewBotToolAdmin(admin.ModelAdmin):
             ),
             'classes': ('wide',),
         }),
-        ('Execution Settings', {
-            'fields': (
-                'run_automatically',
-                'allow_run_manually',
-            ),
-            'classes': ('wide',),
-        }),
-        ('Review Settings', {
-            'fields': (
-                'ship_it',
-                'open_issues',
-                'comment_unmodified',
-            ),
-            'classes': ('wide',),
-        }),
-        (ReviewBotToolForm.TOOL_OPTIONS_FIELDSET, {
-            'fields': (),
-            'classes': ('wide',),
-        }),
     )
 
     def refresh_tools_view(self, request, template_name="refresh.html"):
@@ -74,7 +92,7 @@ class ReviewBotToolAdmin(admin.ModelAdmin):
         extension = extension_manager.get_enabled_extension(
             ReviewBotExtension.id)
 
-        ReviewBotTool.objects.all().update(in_last_update=False)
+        Tool.objects.all().update(in_last_update=False)
         extension.send_refresh_tools()
 
         return render_to_response(
@@ -82,7 +100,7 @@ class ReviewBotToolAdmin(admin.ModelAdmin):
             RequestContext(request, {},  current_app=self.admin_site.name))
 
     def get_urls(self):
-        urls = super(ReviewBotToolAdmin, self).get_urls()
+        urls = super(ToolAdmin, self).get_urls()
 
         my_urls = patterns('',
             (
@@ -103,4 +121,5 @@ extension_manager = get_extension_manager()
 extension = extension_manager.get_enabled_extension(ReviewBotExtension.id)
 
 # Register with the extension's, not Review Board's, admin site.
-extension.admin_site.register(ReviewBotTool, ReviewBotToolAdmin)
+extension.admin_site.register(Tool, ToolAdmin)
+

@@ -3,7 +3,7 @@ from django.utils.translation import ugettext as _
 
 from djblets.extensions.forms import SettingsForm
 
-from reviewbotext.models import ReviewBotTool
+from reviewbotext.models import Tool, ToolProfile
 
 
 class ReviewBotSettingsForm(SettingsForm):
@@ -24,49 +24,73 @@ class ReviewBotSettingsForm(SettingsForm):
         help_text=_("The id of the user account Review Bot will use."))
 
 
-class ReviewBotToolForm(forms.ModelForm):
+class ToolForm(forms.ModelForm):
     class Meta:
-        model = ReviewBotTool
+        model = Tool
+
+
+class ToolProfileFormset(forms.models.BaseInlineFormSet):
+    def __init__(self, **kwargs):
+        self.tool_options = kwargs.get('instance').tool_options
+        return super(ToolProfileFormset, self).__init__(**kwargs)
+
+    def _construct_form(self, i, **kwargs):
+        kwargs['tool_options'] = self.tool_options
+        print "CONSTRUCTING A FORM"
+        print kwargs
+        print ""
+        return super(ToolProfileFormset, self)._construct_form(i, **kwargs)
+
+
+class ToolProfileForm(forms.ModelForm):
+    class Meta:
+        model = ToolProfile
 
     TOOL_OPTIONS_FIELDSET = 'Tool Specific Settings'
 
     def __init__(self, *args, **kwargs):
-        super(ReviewBotToolForm, self).__init__(*args, **kwargs)
-
+        self.options = kwargs.pop('tool_options', None)
+        super(ToolProfileForm, self).__init__(*args, **kwargs)
         self.tool_opt_form = None
 
-        instance = kwargs.get('instance', None)
-
-        if instance is None:
+        if self.options is None:
             return
 
-        options = instance.tool_options
-        settings = instance.tool_settings
+        options = self.options
+        instance = kwargs.get('instance', None)
+        settings = {}
+
+        if instance:
+            settings = instance.tool_settings
+
         form_class = self._make_tool_opt_form(options, settings)
         self.tool_opt_form = form_class(self.data or None)
 
     def is_valid(self):
         """Returns whether or not the form is valid."""
-        return (super(ReviewBotToolForm, self).is_valid() and
+        return (super(ToolProfileForm, self).is_valid() and
                 self.tool_opt_form.is_valid())
 
     def save(self, commit=True, *args, **kwargs):
-        tool = super(ReviewBotToolForm, self).save(commit=False,
-                                                      *args, **kwargs)
+        tool_profile = super(ToolProfileForm, self).save(commit=False,
+                                                         *args, **kwargs)
 
-        options = tool.tool_options
-        settings = tool.tool_settings
+        # options = tool_profile.tool_options
+        options = self.options
+        settings = tool_profile.tool_settings
 
         for option in options:
+            print option
             field_name = option['name']
             settings[field_name] = self.tool_opt_form.cleaned_data[field_name]
 
-        tool.tool_settings = settings
+        tool_profile.tool_settings = settings
 
         if commit:
-            tool.save()
+            tool_profile.save()
 
-        return tool
+        return tool_profile
+
 
     def _make_tool_opt_form(self, options, settings):
         """Construct the tool specific settings form.
@@ -84,9 +108,9 @@ class ReviewBotToolForm(forms.ModelForm):
             if option_value is not None:
                 field_options['initial'] = option_value
 
-            fields[field_name] = field_class(
-                **field_options)
+            fields[field_name] = field_class(**field_options)
 
+        print fields
         return type('ReviewBotToolOptionsForm', (forms.Form,), fields)
 
     def _get_field_class(self, class_str):
