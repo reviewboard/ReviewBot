@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import patterns
+from django.conf.urls import patterns
 
 from reviewbotext.extension import ReviewBotExtension
 from reviewbotext.forms import ReviewBotSettingsForm

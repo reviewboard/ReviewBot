@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 
-VERSION = "0.2"
+VERSION = "1.0"
 
 setup(
     name="ReviewBotExtension",
@@ -19,13 +19,13 @@ setup(
             'reviewbot = reviewbotext.extension:ReviewBotExtension',
     },
     install_requires=[
-          'celery',
+          'celery>=3.0',
     ],
     package_data={
         'reviewbotext': [
             'htdocs/css/*.css',
             'htdocs/js/*.js',
-            'templates/admin/reviewbotext/reviewbottool/*.html',
+            'templates/admin/reviewbotext/tool/*.html',
             'templates/*.html',
         ],
     },

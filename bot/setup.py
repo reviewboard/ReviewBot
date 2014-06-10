@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 
-VERSION = "0.2"
+VERSION = "1.0"
 
 setup(
     name="ReviewBot",
@@ -27,6 +27,7 @@ setup(
         ],
     },
     install_requires=[
+        'rbtools>=0.5.2',
         'buildbot>=0.8.7',
         'celery>=3.0',
         'cpplint>=0.0.3',

@@ -138,7 +138,7 @@ def update_tools_list(panel, payload):
     try:
         api_tools = api_root.get_extension(
             extension_name='reviewbotext.extension.ReviewBotExtension'
-        ).get_review_bot_tools()
+        ).get_tools()
 
         api_tools.create(hostname=hostname, tools=tools)
     except Exception, e:

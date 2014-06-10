@@ -8,24 +8,33 @@ from django.utils.importlib import import_module
 
 from celery import Celery
 from djblets.siteconfig.models import SiteConfiguration
-from djblets.webapi.resources import register_resource_for_model, \
-                                     unregister_resource_for_model
+from djblets.webapi.resources import (register_resource_for_model,
+                                      unregister_resource_for_model)
+
 from reviewboard.extensions.base import Extension
-from reviewboard.extensions.hooks import DiffViewerActionHook, \
-                                         ReviewRequestActionHook, \
-                                         TemplateHook
+from reviewboard.extensions.hooks import (DiffViewerActionHook,
+                                          ReviewRequestActionHook,
+                                          TemplateHook)
 
 from reviewbotext.handlers import SignalHandlers
-from reviewbotext.models import ReviewBotTool
-from reviewbotext.resources import review_bot_review_resource, \
-                                   review_bot_tool_resource, \
-                                   review_bot_trigger_review_resource
+from reviewbotext.models import Tool
+from reviewbotext.resources import tool_resource
 
 
 class ReviewBotExtension(Extension):
     """An extension for communicating with Review Bot"""
+    metadata = {
+        'Name': 'Review Bot',
+        'Author': 'Steven MacLeod',
+    }
+
     is_configurable = True
     has_admin_site = True
+
+    resources = [
+        tool_resource,
+    ]
+
     default_settings = {
         'ship_it': False,
         'comment_unmodified': False,
@@ -34,37 +43,30 @@ class ReviewBotExtension(Extension):
         'user': None,
         'max_comments': 30,
     }
-    resources = [
-        review_bot_review_resource,
-        review_bot_tool_resource,
-        review_bot_trigger_review_resource,
-    ]
 
     def __init__(self, *args, **kwargs):
         super(ReviewBotExtension, self).__init__(*args, **kwargs)
         self.settings.load()
         self.celery = Celery('reviewbot.tasks')
         self.signal_handlers = SignalHandlers(self)
-        register_resource_for_model(ReviewBotTool,
-                                    review_bot_tool_resource)
-        self.add_action_hooks()
-        self.template_hook = TemplateHook(self,
-                                          'base-scripts-post',
-                                          'reviewbot_hook_action.html')
+        # register_resource_for_model(Tool, review_bot_tool_resource)
+        # self.add_action_hooks()
+        # self.template_hook = TemplateHook(self, 'base-scripts-post',
+        #                                   'reviewbot_hook_action.html')
 
-    def add_action_hooks(self):
-        actions = [{
-            'id': 'reviewbot-link',
-            'label': 'Review Bot',
-            'url': '#'
-        }]
-        self.review_action_hook = ReviewRequestActionHook(self,
-                                                          actions=actions)
-        self.diff_action_hook = DiffViewerActionHook(self, actions=actions)
+    # def add_action_hooks(self):
+    #     actions = [{
+    #         'id': 'reviewbot-link',
+    #         'label': 'Review Bot',
+    #         'url': '#'
+    #     }]
+    #     self.review_action_hook = ReviewRequestActionHook(self,
+    #                                                       actions=actions)
+    #     self.diff_action_hook = DiffViewerActionHook(self, actions=actions)
 
     def shutdown(self):
         self.signal_handlers.disconnect()
-        unregister_resource_for_model(ReviewBotTool)
+        # unregister_resource_for_model(Tool)
         super(ReviewBotExtension, self).shutdown()
 
     def notify(self, request_payload, selected_tools=None):
@@ -89,12 +91,12 @@ class ReviewBotExtension(Extension):
             # this setting was changed between trigger time and queue time.
                 try:
                     tools.append(
-                        ReviewBotTool.objects.get(id=tool['id'],
+                        Tool.objects.get(id=tool['id'],
                                                   allow_run_manually=True))
                 except ObjectDoesNotExist:
                     pass
         else:
-            tools = ReviewBotTool.objects.filter(enabled=True,
+            tools = Tool.objects.filter(enabled=True,
                                                  run_automatically=True)
 
         for tool in tools:
