@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 from setuptools import find_packages, setup
 
+from reviewbot import get_package_version
 
-VERSION = "1.0"
+
+PACKAGE_NAME = "ReviewBot"
+
 
 setup(
-    name="ReviewBot",
-    version=VERSION,
+    name=PACKAGE_NAME,
+    version=get_package_version(),
     license="MIT",
     description="ReviewBot, the automated code reviewer",
     author="Steven MacLeod",
@@ -27,12 +30,12 @@ setup(
         ],
     },
     install_requires=[
-        'rbtools>=0.5.2',
         'buildbot>=0.8.7',
         'celery>=3.0',
         'cpplint>=0.0.3',
         'pep8>=0.7.0',
         'pyflakes>=0.5.0',
+        'RBTools>=0.6.0',
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

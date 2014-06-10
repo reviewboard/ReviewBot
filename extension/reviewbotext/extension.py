@@ -25,7 +25,10 @@ class ReviewBotExtension(Extension):
     """An extension for communicating with Review Bot"""
     metadata = {
         'Name': 'Review Bot',
-        'Author': 'Steven MacLeod',
+        'Summary': 'Performs automated analysis and review on code posted '
+                   'to Review Board.',
+        'Author': 'Review Board',
+        'Author-URL': 'http://www.reviewboard.org/',
     }
 
     is_configurable = True
@@ -44,11 +47,9 @@ class ReviewBotExtension(Extension):
         'max_comments': 30,
     }
 
-    def __init__(self, *args, **kwargs):
-        super(ReviewBotExtension, self).__init__(*args, **kwargs)
-        self.settings.load()
+    def initialize(self):
         self.celery = Celery('reviewbot.tasks')
-        self.signal_handlers = SignalHandlers(self)
+        SignalHandlers(self)
         # register_resource_for_model(Tool, review_bot_tool_resource)
         # self.add_action_hooks()
         # self.template_hook = TemplateHook(self, 'base-scripts-post',
@@ -64,10 +65,6 @@ class ReviewBotExtension(Extension):
     #                                                       actions=actions)
     #     self.diff_action_hook = DiffViewerActionHook(self, actions=actions)
 
-    def shutdown(self):
-        self.signal_handlers.disconnect()
-        # unregister_resource_for_model(Tool)
-        super(ReviewBotExtension, self).shutdown()
 
     def notify(self, request_payload, selected_tools=None):
         """Add the request to the queue."""
@@ -122,9 +119,8 @@ class ReviewBotExtension(Extension):
 
         Will return the session id of the login.
         """
-        user = User.objects.get(id=user_id)
-        user.backend = "%s.%s" % ("django.contrib.auth.backends",
-                                  "ModelBackend")
+        user = User.objects.get(pk=user_id)
+        user.backend = 'reviewboard.accounts.backends.StandardAuthBackend'
         engine = import_module(settings.SESSION_ENGINE)
 
         # Create a fake request to store login details.

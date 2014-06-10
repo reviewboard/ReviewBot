@@ -1,18 +1,21 @@
 #!/usr/bin/env python
-from setuptools import find_packages, setup
+from setuptools import find_packages
+from reviewboard.extensions.packaging import setup
+
+from reviewbotext import get_package_version
 
 
-VERSION = "1.0"
+PACKAGE = "reviewbotext"
+
 
 setup(
-    name="ReviewBotExtension",
-    version=VERSION,
+    name="Review Bot Extension",
+    version=get_package_version(),
     license="MIT",
     description="A Review Board extension for communicating with Review Bot",
     author="Steven MacLeod",
-    author_email="steven@smacleod.ca",
     maintainer="Steven MacLeod",
-    maintainer_email="steven@smacleod.ca",
+    include_package_data=True,
     packages=find_packages(),
     entry_points={
         'reviewboard.extensions':
@@ -21,14 +24,6 @@ setup(
     install_requires=[
           'celery>=3.0',
     ],
-    package_data={
-        'reviewbotext': [
-            'htdocs/css/*.css',
-            'htdocs/js/*.js',
-            'templates/admin/reviewbotext/tool/*.html',
-            'templates/*.html',
-        ],
-    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
