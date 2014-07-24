@@ -25,7 +25,7 @@ from reviewbot.utils import is_exe_in_path
 
 
 class CPPCheckTool(Tool):
-    name = 'CPPCheck - Static Code Analaysis'
+    name = 'CPPCheck - Static Code Analysis'
     version = '0.1'
     description = ('Checks code for errors using Cppcheck - '
                    'A tool for static C/C++ code analysis')
@@ -37,8 +37,8 @@ class CPPCheckTool(Tool):
             'field_options': {
                 'label': 'Enable standard style checks',
                 'help_text': 'This will enable the standard style checks '
-                             '-this also enables most warning, style and '
-                             'performance checks',
+                             '- this also enables most warning, style and '
+                             'performance checks.',
                 'required': False,
             },
         },
@@ -121,11 +121,11 @@ class CPPCheckTool(Tool):
                 # add a comment.
                 if category == 'error':
                     f.comment('%s.\n\nCategory: %s\nSub Category: %s' %
-                             (freetext, category, sub_category),
+                              (freetext, category, sub_category),
                               linenumber, issue=True)
                 else:
                     f.comment('%s.\n\nCategory: %s\nSub Category: %s' %
-                             (freetext, category, sub_category),
+                              (freetext, category, sub_category),
                               linenumber, issue=False)
 
         return True
