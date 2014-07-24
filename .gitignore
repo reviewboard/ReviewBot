@@ -1,4 +1,11 @@
+# Wildcards
 *.pyc
+*.egg-info
+
+# Files
+reviewbot-cookies.txt
+.DS_Store
+
+# Directories
 build
 dist
-*.egg-info
