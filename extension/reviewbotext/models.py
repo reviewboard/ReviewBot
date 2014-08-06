@@ -1,10 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext as _
-
-from djblets.util.fields import JSONField
-
-from reviewboard.reviews.models import Review
+from djblets.db.fields import JSONField, ModificationTimestampField
 from reviewboard.scmtools.models import Repository
 from reviewboard.site.models import LocalSite
 
@@ -85,13 +82,34 @@ class ToolExecution(models.Model):
 
     This represents the request for and status of a tool's execution.
     """
+    QUEUED = 'Q'
+    RUNNING = 'R'
+    SUCCEEDED = 'S'
+    FAILED = 'F'
+    TIMED_OUT = 'T'
+
+    STATUSES = (
+        (QUEUED, _('Queued')),
+        (RUNNING, _('Running')),
+        (SUCCEEDED, _('Succeeded')),
+        (FAILED, _('Failed')),
+        (TIMED_OUT, _('Timed-out')),
+    )
+
     profile = models.ForeignKey(Profile)
-    manual_user = models.ForeignKey(User, null=True)
+    review_request_id = models.IntegerField(null=True)
     diff_revision = models.IntegerField(null=True)
+    last_updated = ModificationTimestampField(_("last updated"))
+    status = models.CharField(max_length=1, choices=STATUSES, blank=True)
 
     # Review Information
     result = JSONField()
-    review = models.ForeignKey(Review, null=True)
+
+    def __unicode__(self):
+        return '%s (%s)' % (self.profile.name, self.status)
+
+    class Meta:
+        ordering = ['-last_updated', 'review_request_id', 'diff_revision']
 
 
 class AutomaticRunGroup(models.Model):
@@ -131,5 +149,3 @@ class ManualPermission(models.Model):
     user = models.ForeignKey(User)
     local_site = models.ForeignKey(LocalSite)
     allow = models.BooleanField(default=False)
-
-
