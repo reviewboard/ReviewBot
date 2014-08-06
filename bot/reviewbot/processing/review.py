@@ -150,6 +150,16 @@ class Review(object):
             except StopIteration:
                 pass
 
+    def to_json(self):
+        """Returns the review as a JSON payload."""
+        result = {
+            'body_top': self.body_top,
+            'body_bottom': self.body_bottom,
+            'diff_comments': self.comments,
+        }
+
+        return json.dumps(result)
+
     def publish(self):
         """Upload the review to Review Board."""
         # Truncate comments to the maximum permitted amount to avoid
@@ -179,7 +189,7 @@ class Review(object):
 
     @property
     def patch_contents(self):
-        """ Get a patch for review request."""
+        """Get a patch for review request."""
         if not hasattr(self, 'patch'):
             if not hasattr(self.api_root, 'get_diff'):
                 return None

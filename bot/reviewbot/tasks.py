@@ -80,6 +80,24 @@ def ProcessReviewRequest(payload, tool_settings):
         return False
 
     try:
+        logger.info('Updating tool execution with completed review')
+        tool_execution_id = payload.get('request').get('tool_execution_id')
+        review_request_id = payload.get('request').get('review_request_id')
+        diff_revision = payload.get('request').get('diff_revision')
+
+        tool_execution = api_root.get_extension(
+            extension_name='reviewbotext.extension.ReviewBotExtension'
+        ).get_tool_executions(
+            review_request_id=review_request_id,
+            diff_revision=diff_revision
+        ).get_item(tool_execution_id)
+
+        tool_execution.update(status='S', result=review.to_json())
+    except Exception, e:
+        logger.error('Error updating tool execution: %s' % str(e))
+        return False
+
+    try:
         logger.info("Publishing review")
         review.publish()
     except Exception, e:

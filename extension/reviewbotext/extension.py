@@ -1,3 +1,6 @@
+import logging
+
+from celery import Celery
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
@@ -5,24 +8,21 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
 from django.utils.importlib import import_module
-
-from celery import Celery
 from djblets.siteconfig.models import SiteConfiguration
 from djblets.webapi.resources import (register_resource_for_model,
                                       unregister_resource_for_model)
-
 from reviewboard.extensions.base import Extension
-from reviewboard.extensions.hooks import (DiffViewerActionHook,
-                                          ReviewRequestActionHook,
-                                          TemplateHook)
 
 from reviewbotext.handlers import SignalHandlers
-from reviewbotext.models import Tool
-from reviewbotext.resources import tool_resource
+from reviewbotext.models import Profile, ToolExecution
+from reviewbotext.resources import (review_bot_review_resource,
+                                    tool_executable_resource,
+                                    tool_execution_resource,
+                                    tool_resource)
 
 
 class ReviewBotExtension(Extension):
-    """An extension for communicating with Review Bot"""
+    """An extension for communicating with Review Bot."""
     metadata = {
         'Name': 'Review Bot',
         'Summary': 'Performs automated analysis and review on code posted '
@@ -35,7 +35,10 @@ class ReviewBotExtension(Extension):
     has_admin_site = True
 
     resources = [
+        review_bot_review_resource,
         tool_resource,
+        tool_execution_resource,
+        tool_executable_resource,
     ]
 
     default_settings = {
@@ -48,27 +51,18 @@ class ReviewBotExtension(Extension):
     }
 
     def initialize(self):
+        """Initializes the extension."""
+        register_resource_for_model(ToolExecution, tool_execution_resource)
         self.celery = Celery('reviewbot.tasks')
         SignalHandlers(self)
-        # register_resource_for_model(Tool, review_bot_tool_resource)
-        # self.add_action_hooks()
-        # self.template_hook = TemplateHook(self, 'base-scripts-post',
-        #                                   'reviewbot_hook_action.html')
 
-    # def add_action_hooks(self):
-    #     actions = [{
-    #         'id': 'reviewbot-link',
-    #         'label': 'Review Bot',
-    #         'url': '#'
-    #     }]
-    #     self.review_action_hook = ReviewRequestActionHook(self,
-    #                                                       actions=actions)
-    #     self.diff_action_hook = DiffViewerActionHook(self, actions=actions)
+    def shutdown(self, *args, **kwargs):
+        """Shuts down the extension."""
+        unregister_resource_for_model(ToolExecution)
+        super(ReviewBotExtension, self).shutdown()
 
-
-    def notify(self, request_payload, selected_tools=None):
-        """Add the request to the queue."""
-
+    def notify(self, request_payload):
+        """Initiates a review by placing a message on the message queue."""
         self.celery.conf.BROKER_URL = self.settings['BROKER_URL']
 
         review_settings = {
@@ -81,43 +75,41 @@ class ReviewBotExtension(Extension):
             'url': self._rb_url(),
         }
 
-        if (selected_tools is not None):
-            tools = []
-            for tool in selected_tools:
-            # Double-check that the tool can be run manually in case
-            # this setting was changed between trigger time and queue time.
-                try:
-                    tools.append(
-                        Tool.objects.get(id=tool['id'],
-                                                  allow_run_manually=True))
-                except ObjectDoesNotExist:
-                    pass
-        else:
-            tools = Tool.objects.filter(enabled=True,
-                                                 run_automatically=True)
-
-        for tool in tools:
-            review_settings['ship_it'] = tool.ship_it
-            review_settings['comment_unmodified'] = tool.comment_unmodified
-            review_settings['open_issues'] = tool.open_issues
-            payload['review_settings'] = review_settings
+        if 'tool_profile_id' in request_payload:
+            tool_profile_id = request_payload.get('tool_profile_id')
 
             try:
-                self.celery.send_task(
-                    "reviewbot.tasks.ProcessReviewRequest",
-                    [payload, tool.tool_settings],
-                    queue='%s.%s' % (tool.entry_point, tool.version))
-            except:
-                raise
+                profile = Profile.objects.get(pk=tool_profile_id)
+            except ObjectDoesNotExist:
+                logging.error('Error: Profile %s does not exist.',
+                              tool_profile_id)
+                return
+        else:
+            logging.error('Error: Tool profile ID must be specified.')
+            return
+
+        review_settings['ship_it'] = profile.ship_it
+        review_settings['comment_unmodified'] = profile.comment_unmodified
+        review_settings['open_issues'] = profile.open_issues
+        payload['review_settings'] = review_settings
+
+        try:
+            self.celery.send_task(
+                'reviewbot.tasks.ProcessReviewRequest',
+                [payload, profile.tool_settings],
+                queue='%s.%s' % (profile.tool.entry_point,
+                                 profile.tool.version))
+        except:
+            raise
 
     def _login_user(self, user_id):
-        """
-        Login as specified user, does not depend on auth backend (hopefully).
+        """Log in as the specified user.
 
-        This is based on Client.login() with a small hack that does not
-        require the call to authenticate().
+        This does not depend on the auth backend (hopefully). This is based on
+        Client.login() with a small hack that does not require the call to
+        authenticate().
 
-        Will return the session id of the login.
+        Will return the session ID of the login.
         """
         user = User.objects.get(pk=user_id)
         user.backend = 'reviewboard.accounts.backends.StandardAuthBackend'
@@ -140,7 +132,7 @@ class ReviewBotExtension(Extension):
         self.celery.control.broadcast('update_tools_list', payload=payload)
 
     def _rb_url(self):
-        """Returns a valid reviewbot url including http protocol."""
+        """Returns a valid reviewbot URL including HTTP protocol."""
         protocol = SiteConfiguration.objects.get_current().get(
             "site_domain_method")
         domain = Site.objects.get_current().domain
