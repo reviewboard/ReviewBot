@@ -212,8 +212,7 @@ class ToolExecutionResource(WebAPIResource):
 
         user = request.user
 
-        # The Review Bot user should always have permission for automatic
-        # execution.
+        # The Review Bot user should have permission.
         if user.id == extension.settings['user']:
             return True
 
@@ -531,18 +530,19 @@ class ToolExecutableResource(WebAPIResource):
         if is_in_manual_group:
             q = q | Q(allow_manual_group=True)
 
-        q = q & ((Q(toolexecution__review_request_id=review_request_id) &
-                  Q(toolexecution__diff_revision=diff_revision)) |
-                 (Q(toolexecution__review_request_id__isnull=True) &
-                  Q(toolexecution__diff_revision__isnull=True)))
+        queryset = Profile.objects.filter(q, local_site=local_site)
 
-        # Call distinct() since a tool profile can have multiple failed
-        # execution attempts.
-        queryset = Profile.objects.filter(q, local_site=local_site).distinct()
-
-        queryset = queryset.exclude(Q(toolexecution__status='Q') |
-                                    Q(toolexecution__status='R') |
-                                    Q(toolexecution__status='S'))
+        # Now that we have all Profiles that the user has permission to
+        # manually execute, we need to exclude the Profiles that are currently
+        # being executed or have already been executed (on this review request
+        # and diff).
+        queryset = queryset.exclude(
+            (Q(toolexecution__review_request_id=review_request_id) &
+             Q(toolexecution__diff_revision=diff_revision)) &
+            (Q(toolexecution__status='Q') |
+             Q(toolexecution__status='R') |
+             Q(toolexecution__status='S'))
+        )
 
         return queryset
 
