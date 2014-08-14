@@ -519,6 +519,11 @@ class ToolExecutableResource(WebAPIResource):
         is_in_manual_group = ManualPermission.objects.filter(
             user=user, local_site=local_site, allow=True).exists()
 
+        if not (is_admin or is_submitter or is_in_manual_group):
+            # The user is not allowed to manually execute any tools, so return
+            # an empty queryset.
+            return Profile.objects.none()
+
         q = Q()
 
         if is_admin:
