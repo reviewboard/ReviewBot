@@ -80,6 +80,14 @@ Bot's 'app'. For more information please see documentation
 on [Celery Application's](http://docs.celeryproject.org/en/latest/userguide/application.html)
 and [Workers](http://docs.celeryproject.org/en/latest/userguide/workers.html).
 
+JSHint
+--------
+To use the JSHint plugin, you must have JSHint installed as a Node program. To
+install it in the current working directory, run the following command (add the
+`-g` flag to install it globally):
+
+    npm install jshint
+
 CPPCheck
 --------
 To use the cppcheck plugin - you must ensure that cppcheck is available on the worker machine.
