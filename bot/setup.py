@@ -25,6 +25,7 @@ setup(
             'buildbot = reviewbot.tools.buildbot:BuildBotTool',
             'cppcheck = reviewbot.tools.cppcheck:CPPCheckTool',
             'cpplint = reviewbot.tools.cpplint:CPPLintTool',
+            'jshint = reviewbot.tools.jshint:JSHintTool',
             'pep8 = reviewbot.tools.pep8:PEP8Tool',
             'pyflakes = reviewbot.tools.pyflakes:PyflakesTool',
         ],
