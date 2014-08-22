@@ -1,5 +1,6 @@
 import re
 
+from reviewbot.processing.filesystem import make_tempfile
 from reviewbot.tools import Tool
 from reviewbot.tools.process import execute
 from reviewbot.utils import is_exe_in_path
@@ -51,6 +52,25 @@ class JSHintTool(Tool):
                 'required': False,
             },
         },
+        {
+            'name': 'config',
+            'field_type': 'djblets.db.fields.JSONFormField',
+            'default': '',
+            'field_options': {
+                'label': 'Configuration',
+                'help_text': ('JSON specifying which JSHint options to turn '
+                              'on or off. (This is equivalent to the contents '
+                              'of a .jshintrc file.)'),
+                'required': False,
+            },
+            'widget': {
+                'type': 'django.forms.Textarea',
+                'attrs': {
+                    'cols': 70,
+                    'rows': 10,
+                },
+            },
+        },
     ]
 
     # Each output line looks something like:
@@ -68,6 +88,12 @@ class JSHintTool(Tool):
         if self.settings['extra_ext_checks']:
             self.file_exts = tuple(
                 self.settings['extra_ext_checks'].split(','))
+
+        # If any configuration was specified, create a temporary config file.
+        self.config_file = None
+
+        if self.settings['config']:
+            self.config_file = make_tempfile(content=self.settings['config'])
 
         super(JSHintTool, self).handle_files(files)
 
@@ -88,6 +114,9 @@ class JSHintTool(Tool):
 
         if self.settings['verbose']:
             cmd.append('--verbose')
+
+        if self.config_file:
+            cmd.append('--config=%s' % self.config_file)
 
         cmd.append(path)
         output = execute(cmd, split_lines=True, ignore_errors=True)

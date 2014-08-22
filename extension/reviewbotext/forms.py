@@ -1,6 +1,7 @@
 from django import forms
+from django.forms.fields import Field
+from django.forms.widgets import Widget
 from django.utils.translation import ugettext as _
-
 from djblets.extensions.forms import SettingsForm
 
 from reviewbotext.models import Tool, Profile
@@ -99,35 +100,70 @@ class ProfileForm(forms.ModelForm):
         construct a new form class with the proper fields.
         """
         fields = {}
+
         for option in options:
             field_name = option['name']
             field_class = self._get_field_class(option['field_type'])
-            field_options = option.get('field_options', {})
 
+            # If this field specifies which widget it wants to use, we must
+            # instantiate the widget and pass it to the field constructor.
+            widget = option.get('widget', None)
+
+            if widget is not None:
+                widget_class = self._get_widget_class(widget['type'])
+
+                widget_attrs = widget.get('attrs', None)
+                widget = widget_class(attrs=widget_attrs)
+
+            field_options = option.get('field_options', {})
             option_value = settings.get(field_name, None)
+
             if option_value is not None:
                 field_options['initial'] = option_value
 
-            fields[field_name] = field_class(**field_options)
+            # Note: We pass the widget separately instead of including it in
+            # field_options because field_options must be serializable.
+            # (field_options is referenced by the tool's actual tool_options
+            # JSON field.)
+            fields[field_name] = field_class(widget=widget, **field_options)
 
-        print fields
         return type('ReviewBotToolOptionsForm', (forms.Form,), fields)
 
     def _get_field_class(self, class_str):
         """Import and return the field class.
 
-        Given the module path to a field class in class_str,
-        imports the class and returns it.
-
-        TODO: It might be a good idea to check if the class
-        is actually a field.
+        Given the module path to a field class in class_str, imports the class
+        and returns it. If class_str does not specify a valid field class, an
+        exception is raised.
         """
-        field_class_path = str(class_str).split('.')
-        if len(field_class_path) > 1:
-            field_module_name = '.'.join(field_class_path[:-1])
-        else:
-            field_module_name = '.'
+        field_class = self._get_class(class_str)
 
-        field_module = __import__(field_module_name, {}, {},
-                                field_class_path[-1])
-        return getattr(field_module, field_class_path[-1])
+        if not issubclass(field_class, Field):
+            raise TypeError('%s is not a Field class.' % class_str)
+
+        return field_class
+
+    def _get_widget_class(self, widget_str):
+        """Imports and returns the widget class.
+
+        If widget_str does not specify a valid widget class, an exception is
+        raised.
+        """
+        widget_class = self._get_class(widget_str)
+
+        if not issubclass(widget_class, Widget):
+            raise TypeError('%s is not a Widget class.' % widget_str)
+
+        return widget_class
+
+    def _get_class(self, class_str):
+        """Imports and returns the class, given the module path to a class."""
+        class_path = str(class_str).split('.')
+
+        if len(class_path) > 1:
+            module_name = '.'.join(class_path[:-1])
+        else:
+            module_name = '.'
+
+        module = __import__(module_name, {}, {}, class_path[-1])
+        return getattr(module, class_path[-1])
