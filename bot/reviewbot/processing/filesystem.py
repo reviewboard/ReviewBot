@@ -14,7 +14,7 @@ def cleanup_tempfiles():
     tempfiles = []
 
 
-def make_tempfile(content=None, extension=None):
+def make_tempfile(content=None, extension=''):
     """
     Creates a temporary file and returns the path. The path is stored
     in an array for later cleanup.
