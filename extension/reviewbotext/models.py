@@ -145,10 +145,23 @@ class AutomaticRunGroup(models.Model):
 
 
 class ManualPermission(models.Model):
-    """Manual execution permissions for a user on a local site."""
-    user = models.ForeignKey(User)
-    local_site = models.ForeignKey(LocalSite)
-    allow = models.BooleanField(default=False)
+    """Manual execution permissions for a user on a local site.
+
+    A user with this permission will be allowed to manually execute all tool
+    profiles which have ``allow_manual_group`` set to True.
+    """
+    user = models.ForeignKey(User, unique=True, blank=False)
+    local_site = models.ForeignKey(LocalSite, blank=True, null=True,
+                                   related_name='reviewbot_manual_permissions')
+    allow = models.BooleanField(
+        default=False,
+        verbose_name=_('Allow manual execution'),
+        help_text=_('Designates whether the user can manually execute tool '
+                    'profiles which have the "Allow manual group" setting '
+                    'checked.'))
+
+    def __unicode__(self):
+        return self.user.username
 
 
 # TODO: This is a temporary fix that should be removed once /r/6224 is in.

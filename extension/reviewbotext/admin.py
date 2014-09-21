@@ -6,8 +6,10 @@ from django.utils.translation import ugettext_lazy as _
 from reviewboard.extensions.base import get_extension_manager
 
 from reviewbotext.extension import ReviewBotExtension
-from reviewbotext.forms import AutomaticRunGroupForm, ToolForm
-from reviewbotext.models import AutomaticRunGroup, Profile, Tool
+from reviewbotext.forms import (AutomaticRunGroupForm, ManualPermissionForm,
+                                ToolForm)
+from reviewbotext.models import (AutomaticRunGroup, ManualPermission, Profile,
+                                 Tool)
 
 
 class ProfileInline(admin.StackedInline):
@@ -153,6 +155,35 @@ class AutomaticRunGroupAdmin(admin.ModelAdmin):
     )
 
 
+class ManualPermissionAdmin(admin.ModelAdmin):
+    form = ManualPermissionForm
+
+    list_display = (
+        'user',
+        'local_site',
+        'allow',
+    )
+    raw_id_fields = (
+        'user',
+        'local_site',
+    )
+
+    fieldsets = (
+        (_('General Information'), {
+            'fields': (
+                'user',
+                'local_site',
+            ),
+            'classes': ('wide',),
+        }),
+        (_('Permissions'), {
+            'fields': (
+                'allow',
+            ),
+        }),
+    )
+
+
 # Get the ReviewBotExtension instance. We can assume it exists because
 # this code is executed after the extension has been registered with
 # the manager.
@@ -162,3 +193,4 @@ extension = extension_manager.get_enabled_extension(ReviewBotExtension.id)
 # Register with the extension's, not Review Board's, admin site.
 extension.admin_site.register(Tool, ToolAdmin)
 extension.admin_site.register(AutomaticRunGroup, AutomaticRunGroupAdmin)
+extension.admin_site.register(ManualPermission, ManualPermissionAdmin)

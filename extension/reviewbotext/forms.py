@@ -9,7 +9,8 @@ from django.utils.translation import ugettext as _
 from djblets.extensions.forms import SettingsForm
 from reviewboard.scmtools.models import Repository
 
-from reviewbotext.models import AutomaticRunGroup, Profile, Tool
+from reviewbotext.models import (AutomaticRunGroup, ManualPermission, Profile,
+                                 Tool)
 
 
 class ReviewBotSettingsForm(SettingsForm):
@@ -235,3 +236,33 @@ class AutomaticRunGroupForm(forms.ModelForm):
 
     class Meta:
         model = AutomaticRunGroup
+
+
+class ManualPermissionForm(forms.ModelForm):
+    def clean_user(self):
+        """Checks that the user does not already have a ManualPermission."""
+        user = self.cleaned_data['user']
+
+        if ManualPermission.objects.filter(user=user).exclude(
+            pk=self.instance.pk).exists():
+            raise forms.ValidationError(_('This user already has a Manual '
+                                          'Permission entry.'))
+
+        return user
+
+    def clean(self):
+        """Checks that the user exists on the local site, if specified."""
+        local_site = self.cleaned_data.get('local_site')
+        user = self.cleaned_data.get('user')
+
+        if (local_site and
+            not user.local_site.filter(pk=local_site.pk).exists()):
+            self._errors['user'] = self.error_class([
+                _('The user %s does not exist on the local site.')
+                % user.username
+            ])
+
+        return self.cleaned_data
+
+    class Meta:
+        model = ManualPermission
