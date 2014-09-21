@@ -1,10 +1,15 @@
+import re
+
 from django import forms
+from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.core.exceptions import ValidationError
 from django.forms.fields import Field
 from django.forms.widgets import Widget
 from django.utils.translation import ugettext as _
 from djblets.extensions.forms import SettingsForm
+from reviewboard.scmtools.models import Repository
 
-from reviewbotext.models import Tool, Profile
+from reviewbotext.models import AutomaticRunGroup, Profile, Tool
 
 
 class ReviewBotSettingsForm(SettingsForm):
@@ -167,3 +172,66 @@ class ProfileForm(forms.ModelForm):
 
         module = __import__(module_name, {}, {}, class_path[-1])
         return getattr(module, class_path[-1])
+
+
+def _regex_validator(regex):
+    """Validates the provided regular expression."""
+    try:
+        re.compile(regex)
+    except Exception, e:
+        raise ValidationError('This regex is invalid: %s' % e)
+
+
+class AutomaticRunGroupForm(forms.ModelForm):
+    name = forms.CharField(
+        label=_('Name'),
+        max_length=128,
+        widget=forms.TextInput(attrs={'size': '30'}))
+
+    file_regex = forms.CharField(
+        label=_('File regular expression'),
+        max_length=256,
+        widget=forms.TextInput(attrs={'size': '60'}),
+        validators=[_regex_validator],
+        help_text=_('File paths are matched against this regular expression '
+                    'to determine if the tool profiles specified below should '
+                    'be run automatically.'))
+
+    repository = forms.ModelMultipleChoiceField(
+        label=_('Repositories'),
+        required=False,
+        queryset=Repository.objects.filter(visible=True).order_by('name'),
+        help_text=_('The list of repositories this automatic run group will '
+                    'match. If left empty, this automatic run group will not '
+                    'apply to any repositories.'),
+        widget=FilteredSelectMultiple(_("Repositories"), False))
+
+    def clean(self):
+        """Checks that profiles and repositories have matching LocalSites."""
+        # Check that the profiles are valid.
+        local_site = self.cleaned_data.get('local_site')
+        profiles = self.cleaned_data.get('profile', [])
+
+        for profile in profiles:
+            if profile.local_site != local_site:
+                self._errors['profile'] = self.error_class([
+                    _('The profile %s does not exist on the local site.')
+                    % profile.name
+                ])
+                break
+
+        # Check that the repositories are valid.
+        repositories = self.cleaned_data.get('repository', [])
+
+        for repository in repositories:
+            if repository.local_site != local_site:
+                self._errors['repository'] = self.error_class([
+                    _('The repository %s does not exist on the local site.')
+                    % repository.name
+                ])
+                break
+
+        return self.cleaned_data
+
+    class Meta:
+        model = AutomaticRunGroup

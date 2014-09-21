@@ -126,11 +126,11 @@ class AutomaticRunGroup(models.Model):
     """
     name = models.CharField(max_length=128, blank=False)
     file_regex = models.CharField(
-        _("file regex"),
+        _('file regex'),
         max_length=256,
-        help_text=_("File paths are matched against this regular expression "
-                    "to determine if these tool profiles should be run"))
-    profile = models.ManyToManyField(Profile, blank=True)
+        help_text=_('File paths are matched against this regular expression '
+                    'to determine if these tool profiles should be run.'))
+    profile = models.ManyToManyField(Profile, blank=False)
     repository = models.ManyToManyField(Repository, blank=True)
     local_site = models.ForeignKey(
         LocalSite,
@@ -149,3 +149,8 @@ class ManualPermission(models.Model):
     user = models.ForeignKey(User)
     local_site = models.ForeignKey(LocalSite)
     allow = models.BooleanField(default=False)
+
+
+# TODO: This is a temporary fix that should be removed once /r/6224 is in.
+Repository._meta._fill_related_many_to_many_cache()
+Repository._meta.init_name_map()

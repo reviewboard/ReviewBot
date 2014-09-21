@@ -2,15 +2,12 @@ from django.conf.urls import patterns
 from django.contrib import admin
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
-
+from django.utils.translation import ugettext_lazy as _
 from reviewboard.extensions.base import get_extension_manager
 
 from reviewbotext.extension import ReviewBotExtension
-from reviewbotext.forms import (ToolForm,
-                                ProfileForm,
-                                ProfileFormset)
-from reviewbotext.models import (Tool,
-                                 Profile)
+from reviewbotext.forms import AutomaticRunGroupForm, ToolForm
+from reviewbotext.models import AutomaticRunGroup, Profile, Tool
 
 
 class ProfileInline(admin.StackedInline):
@@ -114,6 +111,48 @@ class ToolAdmin(admin.ModelAdmin):
         return False
 
 
+class AutomaticRunGroupAdmin(admin.ModelAdmin):
+    form = AutomaticRunGroupForm
+
+    filter_horizontal = (
+        'repository',
+        'profile',
+    )
+    list_display = (
+        'name',
+        'file_regex',
+    )
+    raw_id_fields = (
+        'local_site',
+    )
+
+    fieldsets = (
+        (_('General Information'), {
+            'fields': (
+                'name',
+                'file_regex',
+                'local_site',
+            ),
+            'classes': ('wide',),
+        }),
+        (_('Tool Profiles'), {
+            'description': _('<p>These tool profiles will be executed when '
+                             'the provided file regex and repositories match '
+                             'a review request.</p>'),
+            'fields': (
+                'profile',
+            ),
+        }),
+        (_('Repositories'), {
+            'description': _('<p>An AutomaticRunGroup will only cover the '
+                             'repositories specified below.</p>'),
+            'fields': (
+                'repository',
+            ),
+        }),
+    )
+
+
 # Get the ReviewBotExtension instance. We can assume it exists because
 # this code is executed after the extension has been registered with
 # the manager.
@@ -122,4 +161,4 @@ extension = extension_manager.get_enabled_extension(ReviewBotExtension.id)
 
 # Register with the extension's, not Review Board's, admin site.
 extension.admin_site.register(Tool, ToolAdmin)
-
+extension.admin_site.register(AutomaticRunGroup, AutomaticRunGroupAdmin)
