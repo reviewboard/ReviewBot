@@ -43,12 +43,16 @@ instructions.
 Review Board Extension
 ----------------------
 
-*Review Bot requires a version 1.7 Review Board installation.*
+*Review Bot requires a version 2.0 or 1.7 Review Board installation.*
+* For Review Board 2.0.x, use the branch 
+[release-0.2.x](https://github.com/reviewboard/ReviewBot/tree/release-0.2.x).
+* For Review Board 1.7.x, use the branch 
+[release-0.1.x](https://github.com/reviewboard/ReviewBot/tree/release-0.1.x).
 
 To install Review Bot's Review Board extension, clone this repository
 and install with the following commands:
 
-    git clone git://github.com/smacleod/ReviewBot.git
+    git clone -b <branch> git://github.com/reviewboard/ReviewBot.git
     cd ReviewBot/extension
     python setup.py install
 
