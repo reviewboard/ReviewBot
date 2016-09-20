@@ -121,9 +121,6 @@ class File(object):
             issue = self.review.settings['open_issues']
 
         if modified or self.review.settings['comment_unmodified']:
-            if issue:
-                self.review.ship_it = False
-
             data = {
                 'filediff_id': self.id,
                 'first_line': real_line,
@@ -195,9 +192,6 @@ class File(object):
 class Review(object):
     """An object which orchestrates the creation of a review."""
 
-    #: Whether the review should have "Ship it!" set.
-    ship_it = False
-
     #: Additional text to show above the comments in the review.
     body_top = ""
 
@@ -227,7 +221,6 @@ class Review(object):
         self.review_request_id = review_request_id
         self.diff_revision = diff_revision
         self.comments = []
-        self.ship_it = self.settings['ship_it']
 
         # Get the list of files.
         self.files = []
@@ -250,25 +243,25 @@ class Review(object):
                 'of %d.'
                 % (max_comments, len(self.comments))
             )
-            self.body_top = '%s\n%s' % (self.body_top, warning)
+
+            if self.body_top:
+                self.body_top = '%s\n%s' % (self.body_top, warning)
+            else:
+                self.body_top = warning
+
             del self.comments[max_comments:]
 
         cleanup_tempfiles()
 
-        try:
-            bot_reviews = self.api_root.get_extension(
-                extension_name='reviewbotext.extension.ReviewBotExtension'
-            ).get_review_bot_reviews()
+        bot_reviews = self.api_root.get_extension(
+            extension_name='reviewbotext.extension.ReviewBotExtension'
+        ).get_review_bot_reviews()
 
-            bot_reviews.create(
-                review_request_id=self.review_request_id,
-                ship_it=self.ship_it,
-                body_top=self.body_top,
-                body_bottom=self.body_bottom,
-                diff_comments=json.dumps(self.comments))
-            return True
-        except:
-            return False
+        return bot_reviews.create(
+            review_request_id=self.review_request_id,
+            body_top=self.body_top,
+            body_bottom=self.body_bottom,
+            diff_comments=json.dumps(self.comments))
 
     @property
     def patch_contents(self):

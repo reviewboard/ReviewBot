@@ -22,7 +22,7 @@ setup(
             'reviewbot = reviewbotext.extension:ReviewBotExtension',
     },
     install_requires=[
-          'celery>=3.0',
+        'celery>=3.0',
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

@@ -1,7 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
-import logging
 import pkg_resources
 
 from celery.utils.log import get_task_logger
@@ -15,25 +14,29 @@ from reviewbot.processing.review import Review
 # TODO: Make the cookie file configurable.
 COOKIE_FILE = 'reviewbot-cookies.txt'
 
+
 # TODO: Include version information in the agent.
 AGENT = 'ReviewBot'
 
-logger = get_task_logger('WORKER')
 
-# Tool execution statuses.
-RUNNING = 'R'
-SUCCEEDED = 'S'
-FAILED = 'F'
+# Status Update states
+PENDING = 'pending'
+DONE_SUCCESS = 'done-success'
+DONE_FAILURE = 'done-failure'
+ERROR = 'error'
+
+
+logger = get_task_logger(__name__)
 
 
 @celery.task(ignore_result=True)
-def ProcessReviewRequest(server_url,
-                         session,
-                         review_request_id,
-                         diff_revision,
-                         tool_execution_id,
-                         review_settings,
-                         tool_settings):
+def RunTool(server_url,
+            session,
+            review_request_id,
+            diff_revision,
+            changedesc_id,
+            review_settings,
+            tool_options):
     """Execute an automated review on a review request.
 
     Args:
@@ -50,119 +53,124 @@ def ProcessReviewRequest(server_url,
         diff_revision (int):
             The ID of the diff revision being reviewed.
 
-        tool_execution_id (int):
-            The ID of the ToolExecution model corresponding to this tool
-            execution.
+        changedesc_id (int):
+            The ID of the change description which corresponds to the diff
+            revision, if any.
 
         review_settings (dict):
             Settings for how the review should be created.
 
-        tool_settings (dict):
+        tool_options (dict):
             The tool-specific settings.
 
     Returns:
         bool:
         Whether the task completed successfully.
     """
-    routing_key = ProcessReviewRequest.request.delivery_info['routing_key']
+    routing_key = RunTool.request.delivery_info['routing_key']
     route_parts = routing_key.partition('.')
-    tool_ep = route_parts[0]
-    logger.info('Request to execute review tool "%s" for %s',
-                tool_ep, server_url)
+    tool_name = route_parts[0]
+
+    log_detail = ('(server=%s, review_request_id=%s, diff_revision=%s)'
+                  % (server_url, review_request_id, diff_revision))
+
+    logger.info('Running tool "%s" %s', tool_name, log_detail)
 
     try:
-        logger.info('Initializing RB API')
+        logger.info('Initializing RB API %s', log_detail)
         api_client = RBClient(server_url,
                               cookie_file=COOKIE_FILE,
                               agent=AGENT,
                               session=session)
         api_root = api_client.get_root()
-    except:
-        logger.error('Could not contact RB server at "%s"', server_url)
+    except Exception as e:
+        logger.error('Could not contact Review Board server: %s %s',
+                     e, log_detail)
         return False
 
-    def _update_tool_execution(status, message):
-        if not (status or message):
-            return True
+    logger.info('Loading requested tool "%s" %s', tool_name, log_detail)
+    tools = [
+        entrypoint.load()
+        for entrypoint in pkg_resources.iter_entry_points(
+            group='reviewbot.tools', name=tool_name)
+    ]
 
-        if status == FAILED:
-            logger.error(message)
-            message = json.dumps({
-                'error': message,
-            })
-        elif status == SUCCEEDED:
-            logger.info('Updateding tool execution with completed review')
-
-        try:
-            executions = \
-                _get_extension_resource(api_root).get_tool_executions(
-                    review_request_id, diff_revision)
-            tool_execution = executions.get_item(tool_execution_id)
-            tool_execution.update(status=status, result=message)
-            return True
-        except Exception as e:
-            logger.exception('Error updating tool execution: %s', e)
-            return False
-
-    logger.info('Loading requested tool "%s"', tool_ep)
-    tools = []
-    for ep in pkg_resources.iter_entry_points(group='reviewbot.tools',
-                                              name=tool_ep):
-        tools.append(ep.load())
-
-    if len(tools) > 1:
-        _update_tool_execution(tool_execution_id, status=FAILED,
-                               msg='Tool "%s" is ambiguous' % tool_ep)
+    if len(tools) == 0:
+        logger.error('Tool "%s" not found %s', tool_name, log_detail)
         return False
-    elif len(tools) == 0:
-        _update_tool_execution(tool_execution_id, status=FAILED,
-                               msg='Tool "%s" not found' % tool_ep)
+    elif len(tools) > 1:
+        logger.error('Tool "%s" is ambiguous (found %s) %s',
+                     tool_name, ', '.join(tool.name for tool in tools),
+                     log_detail)
         return False
+    else:
+        tool = tools[0]
 
-    tool = tools[0]
     try:
-        logger.info('Initializing review')
+        logger.info('Creating status update %s', log_detail)
+        review_request = api_root.get_review_request(
+            review_request_id=review_request_id)
+        status_update = review_request.get_status_updates().create(
+            service_id='reviewbot.%s' % tool.name,
+            summary=tool.name,
+            change_id=changedesc_id,
+            state='pending',
+            description='running...')
+    except Exception as e:
+        logger.exception('Unable to create status update: %s %s',
+                         e, log_detail)
+        return False
+
+    try:
+        logger.info('Initializing review %s', log_detail)
         review = Review(api_root, review_request_id, diff_revision,
                         review_settings)
     except Exception as e:
-        _update_tool_execution(tool_execution_id, status=FAILED,
-                               msg='Error initializing review: %s' % str(e))
+        logger.exception('Failed to initialize review: %s %s', e, log_detail)
+        status_update.update(state=ERROR, description='internal error.')
         return False
 
     try:
-        logger.info('Initializing tool "%s" version "%s"',
-                    tool.name, tool.version)
+        logger.info('Initializing tool "%s %s" %s',
+                    tool.name, tool.version, log_detail)
         t = tool()
-
     except Exception as e:
-        _update_tool_execution(tool_execution_id, status=FAILED,
-                               msg='Error initializing tool: %s' % str(e))
+        logger.exception('Error initializing tool "%s": %s %s',
+                         tool.name, e, log_detail)
+        status_update.update(state=ERROR, description='internal error.')
         return False
 
     try:
-        logger.info('Executing tool "%s"', t.name)
-        _update_tool_execution(tool_execution_id, status=RUNNING)
-        t.execute(review, settings=tool_settings)
-        logger.info('Tool execution completed successfully')
+        logger.info('Executing tool "%s" %s', tool.name, log_detail)
+        t.execute(review, settings=tool_options)
+        logger.info('Tool "%s" completed successfully %s',
+                    tool.name, log_detail)
     except Exception as e:
-        _update_tool_execution(tool_execution_id, status=FAILED,
-                               msg='Error executing tool: %s' % str(e))
-        return False
-
-    updated = _update_tool_execution(tool_execution_id, status=SUCCEEDED)
-
-    if not updated:
+        logger.exception('Error executing tool "%s": %s %s',
+                         tool.name, e, log_detail)
+        status_update.update(state=ERROR, description='internal error.')
         return False
 
     try:
-        logger.info('Publishing review')
-        review.publish()
+        logger.info('Publishing review %s', log_detail)
+        review_id = review.publish().id
+
+        if len(review.comments) == 0:
+            new_state = DONE_SUCCESS
+            description = 'passed.'
+        else:
+            new_state = DONE_FAILURE
+            description = 'failed.'
+
+        status_update.update(state=new_state,
+                             description=description,
+                             review_id=review_id)
     except Exception as e:
-        _update_tool_execution(tool_execution_id, status=FAILED,
-                               msg='Error publishing review: %s' % str(e))
+        logger.exception('Error when publishing review: %s %s', e, log_detail)
+        status_update.update(state=ERROR, description='internal error.')
         return False
 
-    logger.info('Review completed successfully')
+    logger.info('Review completed successfully %s', log_detail)
     return True
 
 
@@ -184,17 +192,17 @@ def update_tools_list(panel, payload):
         bool:
         Whether the task completed successfully.
     """
-    logging.info('Request to refresh installed tools from "%s"',
-                 payload['url'])
+    logger.info('Request to refresh installed tools from "%s"',
+                payload['url'])
 
-    logging.info('Iterating Tools')
+    logger.info('Iterating Tools')
     tools = []
 
     for ep in pkg_resources.iter_entry_points(group='reviewbot.tools'):
         entry_point = ep.name
         tool_class = ep.load()
         tool = tool_class()
-        logging.info('Tool: %s' % entry_point)
+        logger.info('Tool: %s' % entry_point)
 
         if tool.check_dependencies():
             tools.append({
@@ -205,9 +213,9 @@ def update_tools_list(panel, payload):
                 'tool_options': json.dumps(tool_class.options),
             })
         else:
-            logging.warning('%s dependency check failed.', ep.name)
+            logger.warning('%s dependency check failed.', ep.name)
 
-    logging.info('Done iterating Tools')
+    logger.info('Done iterating Tools')
     tools = json.dumps(tools)
     hostname = panel.hostname
 
@@ -219,7 +227,7 @@ def update_tools_list(panel, payload):
             session=payload['session'])
         api_root = api_client.get_root()
     except Exception as e:
-        logging.error('Could not reach RB server: %s', str(e))
+        logger.exception('Could not reach RB server: %s', e)
         return {'error': 'Could not reach RB server.'}
 
     try:
@@ -227,7 +235,7 @@ def update_tools_list(panel, payload):
 
         api_tools.create(hostname=hostname, tools=tools)
     except Exception as e:
-        logging.error('Problem POSTing tools: %s', str(e))
+        logger.exception('Problem POSTing tools: %s', e)
         return {'error': 'Problem POSTing tools.'}
 
     return {'ok': 'Tool list update complete.'}

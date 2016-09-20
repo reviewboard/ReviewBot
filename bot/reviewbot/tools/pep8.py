@@ -50,7 +50,7 @@ class PEP8Tool(Tool):
             [
                 'pep8',
                 '-r',
-                '--max-line-length=%i' % self.settings['max_line_length'],
+                '--max-line-length=%s' % self.settings['max_line_length'],
                 '--ignore=%s' % self.settings['ignore'],
                 path
             ],

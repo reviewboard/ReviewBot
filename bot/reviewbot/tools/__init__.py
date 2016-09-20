@@ -78,26 +78,11 @@ class Tool(object):
     def post_process(self, review):
         """Modify the review after the tool has completed.
 
-        Unless overridden this will prepend some useful information
-        about the tool execution to the 'body_top' of the review.
+        This can be overridden by subclasses to make changes to the review
+        before it is published.
 
         Args:
             review (reviewbot.processing.review.Review):
                 The review object.
         """
-        header = '\n'.join(
-            [
-                'This is a review from Review Bot.',
-                'Tool: %s' % self.name,
-                '  Processed Files:',
-            ] + [
-                '    %s' % f
-                for f in self.processed_files
-            ] + [
-                '  Ignored Files:',
-            ] + [
-                '    %s' % f
-                for f in self.ignored_files
-            ])
-
-        review.body_top = '%s\n%s' % (header, review.body_top)
+        pass

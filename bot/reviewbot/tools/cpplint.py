@@ -79,7 +79,7 @@ class CPPLintTool(Tool):
             output = execute(
                 [
                     'cpplint',
-                    '--verbose=%i' % self.settings['verbosity'],
+                    '--verbose=%s' % self.settings['verbosity'],
                     '--filter=%s' % self.settings['excluded_checks'],
                     path
                 ],
