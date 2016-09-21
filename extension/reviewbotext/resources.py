@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import json
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -103,10 +105,10 @@ class ToolResource(WebAPIResource):
             tools = json.loads(tools)
         except:
             return INVALID_FORM_DATA, {
-                    'fields': {
-                        'dtools': 'Malformed JSON.',
-                    },
-                }
+                'fields': {
+                    'dtools': 'Malformed JSON.',
+                },
+            }
 
         for tool in tools:
             obj, created = Tool.objects.get_or_create(
@@ -512,10 +514,11 @@ class ToolExecutableResource(WebAPIResource):
         diff_revision = request.GET.get('diff-revision')
         local_site = self._get_local_site(kwargs.get('local_site_name'))
 
+        review_request = resources.review_request.get_object(
+            request, review_request_id=review_request_id, *args, **kwargs)
+
         is_admin = user.is_superuser
-        is_submitter = (user == resources.review_request.get_object(
-            request, review_request_id=review_request_id, *args, **kwargs
-            ).submitter)
+        is_submitter = (user == review_request.submitter)
         is_in_manual_group = ManualPermission.objects.filter(
             user=user, local_site=local_site, allow=True).exists()
 

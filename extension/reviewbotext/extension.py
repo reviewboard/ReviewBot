@@ -1,16 +1,17 @@
+from __future__ import unicode_literals
+
 import logging
 
 from celery import Celery
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
-from django.contrib.sites.models import Site
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
 from django.utils.importlib import import_module
-from djblets.siteconfig.models import SiteConfiguration
+from django.utils.translation import ugettext_lazy as _
 from djblets.webapi.resources import (register_resource_for_model,
                                       unregister_resource_for_model)
+from reviewboard.admin.server import get_server_url
 from reviewboard.extensions.base import Extension
 
 from reviewbotext.handlers import SignalHandlers
@@ -23,10 +24,11 @@ from reviewbotext.resources import (review_bot_review_resource,
 
 class ReviewBotExtension(Extension):
     """An extension for communicating with Review Bot."""
+
     metadata = {
         'Name': 'Review Bot',
-        'Summary': 'Performs automated analysis and review on code posted '
-                   'to Review Board.',
+        'Summary': _('Performs automated analysis and review on code posted '
+                     'to Review Board.'),
         'Author': 'Review Board',
         'Author-URL': 'http://www.reviewboard.org/',
     }
@@ -51,18 +53,23 @@ class ReviewBotExtension(Extension):
     }
 
     def initialize(self):
-        """Initializes the extension."""
+        """Initialize the extension."""
         register_resource_for_model(ToolExecution, tool_execution_resource)
         self.celery = Celery('reviewbot.tasks')
         SignalHandlers(self)
 
     def shutdown(self, *args, **kwargs):
-        """Shuts down the extension."""
+        """Shut down the extension."""
         unregister_resource_for_model(ToolExecution)
         super(ReviewBotExtension, self).shutdown()
 
     def notify(self, request_payload):
-        """Initiates a review by placing a message on the message queue."""
+        """Initiate a review by placing a message on the message queue.
+
+        Args:
+            request_payload (dict):
+                The payload to use for the request.
+        """
         self.celery.conf.BROKER_URL = self.settings['BROKER_URL']
 
         review_settings = {
@@ -72,7 +79,7 @@ class ReviewBotExtension(Extension):
             'request': request_payload,
             'review_settings': review_settings,
             'session': self._login_user(self.settings['user']),
-            'url': self._rb_url(),
+            'url': get_server_url(),
         }
 
         if 'tool_profile_id' in request_payload:
@@ -80,7 +87,7 @@ class ReviewBotExtension(Extension):
 
             try:
                 profile = Profile.objects.get(pk=tool_profile_id)
-            except ObjectDoesNotExist:
+            except Profile.DoesNotExist:
                 logging.error('Error: Profile %s does not exist.',
                               tool_profile_id)
                 return
@@ -93,14 +100,11 @@ class ReviewBotExtension(Extension):
         review_settings['open_issues'] = profile.open_issues
         payload['review_settings'] = review_settings
 
-        try:
-            self.celery.send_task(
-                'reviewbot.tasks.ProcessReviewRequest',
-                [payload, profile.tool_settings],
-                queue='%s.%s' % (profile.tool.entry_point,
-                                 profile.tool.version))
-        except:
-            raise
+        self.celery.send_task(
+            'reviewbot.tasks.ProcessReviewRequest',
+            [payload, profile.tool_settings],
+            queue='%s.%s' % (profile.tool.entry_point,
+                             profile.tool.version))
 
     def _login_user(self, user_id):
         """Log in as the specified user.
@@ -109,7 +113,13 @@ class ReviewBotExtension(Extension):
         Client.login() with a small hack that does not require the call to
         authenticate().
 
-        Will return the session ID of the login.
+        Args:
+            user_id (int):
+                The ID of the user to log in as.
+
+        Returns:
+            unicode:
+            The key of the new user session.
         """
         user = User.objects.get(pk=user_id)
         user.backend = 'reviewboard.accounts.backends.StandardAuthBackend'
@@ -127,13 +137,6 @@ class ReviewBotExtension(Extension):
         self.celery.conf.BROKER_URL = self.settings['BROKER_URL']
         payload = {
             'session': self._login_user(self.settings['user']),
-            'url': self._rb_url(),
+            'url': get_server_url(),
         }
         self.celery.control.broadcast('update_tools_list', payload=payload)
-
-    def _rb_url(self):
-        """Returns a valid reviewbot URL including HTTP protocol."""
-        protocol = SiteConfiguration.objects.get_current().get(
-            "site_domain_method")
-        domain = Site.objects.get_current().domain
-        return '%s://%s%s' % (protocol, domain, settings.SITE_ROOT)

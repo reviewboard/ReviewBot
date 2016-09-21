@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+
+
 # The version of Review Bot.
 #
 # This is in the format of:
@@ -8,6 +11,12 @@ VERSION = (0, 3, 0, 'alpha', 0, False)
 
 
 def get_version_string():
+    """Return the version of Review Bot.
+
+    Returns:
+        unicode:
+        The full version.
+    """
     version = '%s.%s' % (VERSION[0], VERSION[1])
 
     if VERSION[2]:
@@ -26,6 +35,14 @@ def get_version_string():
 
 
 def get_package_version():
+    """Return the package version of Review Bot.
+
+    This is a simplified version string which is used when building a package.
+
+    Returns:
+        unicode:
+        The version to use for the package.
+    """
     version = '%d.%d' % (VERSION[0], VERSION[1])
 
     if VERSION[2]:
@@ -38,6 +55,12 @@ def get_package_version():
 
 
 def is_release():
+    """Return whether the current version is a release.
+
+    Returns:
+        boolean:
+        True if the current version of Review Bot is a released package.
+    """
     return VERSION[5]
 
 

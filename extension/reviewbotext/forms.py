@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import re
 
 from django import forms
@@ -14,80 +16,81 @@ from reviewbotext.models import (AutomaticRunGroup, ManualPermission, Profile,
 
 
 class ReviewBotSettingsForm(SettingsForm):
-    BROKER_URL = forms.CharField(
+    """Settings form for Review Bot."""
+
+    broker_url = forms.CharField(
         max_length=512,
-        label=_("Broker URL"),
-        help_text=_("The Celery configuration BROKER_URL"))
+        label=_('Broker URL'),
+        help_text=_('The Celery configuration BROKER_URL'))
+
     max_comments = forms.IntegerField(
         required=False,
-        label=_("Maximum Comments"),
-        help_text=_("The maximum number of comments allowed per review. "
-                    "If a review exceeds this maximum, the extra comments "
-                    "will be truncated and a warning will be displayed in "
-                    "the review. Large values can cause browsers to slow "
-                    "considerably if a tool generates many comments."))
+        label=_('Maximum Comments'),
+        help_text=_('The maximum number of comments allowed per review. '
+                    'If a review exceeds this maximum, the extra comments '
+                    'will be truncated and a warning will be displayed in '
+                    'the review. Large values can cause browsers to slow '
+                    'considerably if a tool generates many comments.'))
+
     user = forms.IntegerField(
-        label=_("User id"),
-        help_text=_("The id of the user account Review Bot will use."))
+        label=_('User ID'),
+        help_text=_('The id of the user account Review Bot will use.'))
 
 
 class ToolForm(forms.ModelForm):
+    """Form for the :py:class:`~reviewbotext.models.Tool` model."""
+
     class Meta:
         model = Tool
 
 
-class ProfileFormset(forms.models.BaseInlineFormSet):
-    def __init__(self, **kwargs):
-        self.tool_options = kwargs.get('instance').tool_options
-        return super(ProfileFormset, self).__init__(**kwargs)
-
-    def _construct_form(self, i, **kwargs):
-        kwargs['tool_options'] = self.tool_options
-        print "CONSTRUCTING A FORM"
-        print kwargs
-        print ""
-        return super(ProfileFormset, self)._construct_form(i, **kwargs)
-
-
 class ProfileForm(forms.ModelForm):
-    class Meta:
-        model = Profile
+    """Form for the :py:class:`~reviewbotext.models.Profile` model."""
 
     TOOL_OPTIONS_FIELDSET = 'Tool Specific Settings'
 
-    def __init__(self, *args, **kwargs):
-        self.options = kwargs.pop('tool_options', None)
+    def __init__(self, tool_options=None, *args, **kwargs):
         super(ProfileForm, self).__init__(*args, **kwargs)
-        self.tool_opt_form = None
 
-        if self.options is None:
-            return
+        self.options = tool_options
 
-        options = self.options
-        instance = kwargs.get('instance', None)
-        settings = {}
+        if tool_options is not None:
+            if 'instance' in kwargs:
+                settings = kwargs['instance'].tool_settings
+            else:
+                settings = {}
 
-        if instance:
-            settings = instance.tool_settings
-
-        form_class = self._make_tool_opt_form(options, settings)
-        self.tool_opt_form = form_class(self.data or None)
+            form_class = self._make_tool_opt_form(tool_options, settings)
+            self.tool_opt_form = form_class(self.data or None)
+        else:
+            self.tool_opt_form = None
 
     def is_valid(self):
-        """Returns whether or not the form is valid."""
+        """Return whether or not the form is valid.
+
+        Returns:
+            boolean:
+            True if the form is valid.
+        """
         return (super(ProfileForm, self).is_valid() and
                 self.tool_opt_form.is_valid())
 
     def save(self, commit=True, *args, **kwargs):
-        tool_profile = super(ProfileForm, self).save(commit=False,
-                                                         *args, **kwargs)
+        """Save the profile.
 
-        # options = tool_profile.tool_options
+        Args:
+            commit (boolean):
+                True if the model should be saved in addition to having its
+                fields updated. This is used to batch all updates from super-
+                and sub-classes into a single transaction.
+        """
+        tool_profile = super(ProfileForm, self).save(
+            commit=False, *args, **kwargs)
+
         options = self.options
         settings = tool_profile.tool_settings
 
         for option in options:
-            print option
             field_name = option['name']
             settings[field_name] = self.tool_opt_form.cleaned_data[field_name]
 
@@ -98,12 +101,19 @@ class ProfileForm(forms.ModelForm):
 
         return tool_profile
 
-
     def _make_tool_opt_form(self, options, settings):
         """Construct the tool specific settings form.
 
-        Given the tool's tool_options, and tool_settings
-        construct a new form class with the proper fields.
+        Args:
+            options (dict):
+                The tool's :py:attr:`~reviewbotext.models.Tool.tool_options`.
+
+            settings (dict):
+                The profile's settings for the tool.
+
+        Returns:
+            ReviewBotToolOptionsForm:
+            The new form.
         """
         fields = {}
 
@@ -138,9 +148,18 @@ class ProfileForm(forms.ModelForm):
     def _get_field_class(self, class_str):
         """Import and return the field class.
 
-        Given the module path to a field class in class_str, imports the class
-        and returns it. If class_str does not specify a valid field class, an
-        exception is raised.
+        Args:
+            class_str (unicode):
+                The name of the class to import.
+
+        Returns:
+            class:
+            The imported class.
+
+        Raises:
+            TypeErrror:
+                The specified class was not a subclass of
+                :py:class:`django.forms.fields.Field`.
         """
         field_class = self._get_class(class_str)
 
@@ -150,10 +169,20 @@ class ProfileForm(forms.ModelForm):
         return field_class
 
     def _get_widget_class(self, widget_str):
-        """Imports and returns the widget class.
+        """Import and returns the widget class.
 
-        If widget_str does not specify a valid widget class, an exception is
-        raised.
+        Args:
+            widget_class (unicode):
+                The name of the class to import.
+
+        Returns:
+            class:
+            The imported class.
+
+        Raises:
+            TypeErrror:
+                The specified class was not a subclass of
+                :py:class:`django.forms.widgets.Widget`.
         """
         widget_class = self._get_class(widget_str)
 
@@ -163,7 +192,16 @@ class ProfileForm(forms.ModelForm):
         return widget_class
 
     def _get_class(self, class_str):
-        """Imports and returns the class, given the module path to a class."""
+        """Import and returns the class, given the module path to a class.
+
+        Args:
+            class_str (unicode):
+                The name of the class to import.
+
+        Returns:
+            class:
+            The imported class.
+        """
         class_path = str(class_str).split('.')
 
         if len(class_path) > 1:
@@ -174,16 +212,31 @@ class ProfileForm(forms.ModelForm):
         module = __import__(module_name, {}, {}, class_path[-1])
         return getattr(module, class_path[-1])
 
+    class Meta:
+        model = Profile
+
 
 def _regex_validator(regex):
-    """Validates the provided regular expression."""
+    """Validate the provided regular expression.
+
+    Args:
+        regex (unicode):
+            The regular expression to validate.
+
+    Raises:
+        ValidationError:
+        The provided regular expression could not be compiled.
+    """
     try:
         re.compile(regex)
-    except Exception, e:
+    except Exception as e:
         raise ValidationError('This regex is invalid: %s' % e)
 
 
 class AutomaticRunGroupForm(forms.ModelForm):
+    """Form for the :py:class:`~reviewbotext.models.AutomaticRunGroup` model.
+    """
+
     name = forms.CharField(
         label=_('Name'),
         max_length=128,
@@ -208,7 +261,12 @@ class AutomaticRunGroupForm(forms.ModelForm):
         widget=FilteredSelectMultiple(_("Repositories"), False))
 
     def clean(self):
-        """Checks that profiles and repositories have matching LocalSites."""
+        """Validate the current state of the form.
+
+        Returns:
+            dict:
+            The cleaned form data.
+        """
         # Check that the profiles are valid.
         local_site = self.cleaned_data.get('local_site')
         profiles = self.cleaned_data.get('profile', [])
@@ -239,24 +297,42 @@ class AutomaticRunGroupForm(forms.ModelForm):
 
 
 class ManualPermissionForm(forms.ModelForm):
+    """Form for the :py:class:`~reviewbotext.models.ManualPermission` model.
+    """
+
     def clean_user(self):
-        """Checks that the user does not already have a ManualPermission."""
+        """Clean the user field.
+
+        Returns:
+            django.contrib.auth.models.User:
+            The cleaned user.
+
+        Raises:
+            ValidationError:
+            There was an error with the selected user.
+        """
         user = self.cleaned_data['user']
 
-        if ManualPermission.objects.filter(user=user).exclude(
-            pk=self.instance.pk).exists():
+        if (ManualPermission.objects
+                .filter(user=user)
+                .exclude(pk=self.instance.pk)
+                .exists()):
             raise forms.ValidationError(_('This user already has a Manual '
                                           'Permission entry.'))
 
         return user
 
     def clean(self):
-        """Checks that the user exists on the local site, if specified."""
+        """Validate the current state of the form.
+
+        Returns:
+            dict:
+            The cleaned form data.
+        """
         local_site = self.cleaned_data.get('local_site')
         user = self.cleaned_data.get('user')
 
-        if (local_site and
-            not user.local_site.filter(pk=local_site.pk).exists()):
+        if (local_site and not local_site.is_accessible_by(user)):
             self._errors['user'] = self.error_class([
                 _('The user %s does not exist on the local site.')
                 % user.username

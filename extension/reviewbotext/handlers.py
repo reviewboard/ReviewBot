@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import logging
 import re
 
@@ -11,7 +13,12 @@ class SignalHandlers(object):
     """Signal handlers for Review Board signals."""
 
     def __init__(self, extension):
-        """Initialize and connect all the signals."""
+        """Initialize and connect all the signals.
+
+        Args:
+            extension (reviewbotext.extension.ReviewBotExtension):
+                The extension instance.
+        """
         self.extension = extension
 
         SignalHook(extension,
@@ -56,7 +63,7 @@ class SignalHandlers(object):
         for auto_run_group in auto_run_groups:
             try:
                 regex = re.compile(auto_run_group.file_regex)
-            except Exception, e:
+            except Exception as e:
                 logging.error('The regex %s for AutomaticRunGroup %s could '
                               'not be compiled: %s', auto_run_group.file_regex,
                               auto_run_group.name, e)

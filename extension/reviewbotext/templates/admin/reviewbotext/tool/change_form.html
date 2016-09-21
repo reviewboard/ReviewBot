@@ -10,16 +10,6 @@
  <div class="description">{{fieldset.description|safe}}</div>
 {%   endif %}
 
-{% comment %}
-{%   for line in fieldset %}
-{%    for adminfield in line %}
-{%     with adminfield.field as field %}
-{%      include "siteconfig/settings_field.html" %}
-{%     endwith %}
-{%    endfor %}
-{%   endfor %}
-{% endcomment %}
-
 {% for line in fieldset %}
     <div class="form-row{% if line.fields|length_is:'1' and line.errors %} errors{% endif %}{% for field in line %}{% if field.field.name %} field-{{ field.field.name }}{% endif %}{% endfor %}">
         {% if line.fields|length_is:'1' %}{{ line.errors }}{% endif %}
