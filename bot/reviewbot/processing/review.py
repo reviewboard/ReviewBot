@@ -204,15 +204,19 @@ class Review(object):
     #: Additional text to show below the comments in the review.
     body_bottom = ""
 
-    def __init__(self, api_root, request, settings):
+    def __init__(self, api_root, review_request_id, diff_revision, settings):
         """Initialize the review.
 
         Args:
             api_root (rbtools.api.resource.Resource):
                 The API root.
 
-            request (dict):
-                The request provided by the extension when triggering the task.
+            review_request_id (int):
+                The ID of the review request being reviewed (ID for use in the
+                API, which is the "display_id" field).
+
+            diff_revision (int):
+                The diff revision being reviewed.
 
             settings (dict):
                 The settings provided by the extension when triggering the
@@ -220,34 +224,19 @@ class Review(object):
         """
         self.api_root = api_root
         self.settings = settings
-        self.request_id = request['review_request_id']
-        self.diff_revision = request.get('diff_revision', None)
+        self.review_request_id = review_request_id
+        self.diff_revision = diff_revision
         self.comments = []
         self.ship_it = self.settings['ship_it']
 
         # Get the list of files.
         self.files = []
         if self.diff_revision:
-            files = api_root.get_files(review_request_id=self.request_id,
-                                       diff_revision=self.diff_revision)
+            files = api_root.get_files(
+                review_request_id=self.review_request_id,
+                diff_revision=self.diff_revision)
 
             self.files = [File(self, f) for f in files]
-
-    def to_json(self):
-        """Return the review as a JSON payload.
-
-        Returns:
-            unicode:
-            The review, encoded to JSON.
-        """
-        # TODO: this can go away once we no longer use the ToolExecution model.
-        result = {
-            'body_top': self.body_top,
-            'body_bottom': self.body_bottom,
-            'diff_comments': self.comments,
-        }
-
-        return json.dumps(result)
 
     def publish(self):
         """Upload the review to Review Board."""
@@ -272,7 +261,7 @@ class Review(object):
             ).get_review_bot_reviews()
 
             bot_reviews.create(
-                review_request_id=self.request_id,
+                review_request_id=self.review_request_id,
                 ship_it=self.ship_it,
                 body_top=self.body_top,
                 body_bottom=self.body_bottom,
@@ -295,7 +284,7 @@ class Review(object):
                 return None
 
             self.patch = self.api_root.get_diff(
-                review_request_id=self.request_id,
+                review_request_id=self.review_request_id,
                 diff_revision=self.diff_revision).get_patch().data
 
         return self.patch

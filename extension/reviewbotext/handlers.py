@@ -100,11 +100,5 @@ class SignalHandlers(object):
                     status=ToolExecution.QUEUED)
                 tool_execution.save()
 
-                request_payload = {
-                    'tool_execution_id': tool_execution.id,
-                    'tool_profile_id': profile.id,
-                    'review_request_id': review_request_id,
-                    'diff_revision': diff_revision,
-                }
-
-                self.extension.notify(request_payload)
+                self.extension.notify(tool_execution.id, profile,
+                                      review_request_id, diff_revision)

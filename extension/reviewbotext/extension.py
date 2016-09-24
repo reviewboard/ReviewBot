@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
 
-import logging
-
 from celery import Celery
 from django.conf import settings
 from django.contrib.auth import login
@@ -15,7 +13,7 @@ from reviewboard.admin.server import get_server_url
 from reviewboard.extensions.base import Extension
 
 from reviewbotext.handlers import SignalHandlers
-from reviewbotext.models import Profile, ToolExecution
+from reviewbotext.models import ToolExecution
 from reviewbotext.resources import (review_bot_review_resource,
                                     tool_executable_resource,
                                     tool_execution_resource,
@@ -63,46 +61,40 @@ class ReviewBotExtension(Extension):
         unregister_resource_for_model(ToolExecution)
         super(ReviewBotExtension, self).shutdown()
 
-    def notify(self, request_payload):
+    def notify(self, tool_execution_id, profile, review_request_id,
+               diff_revision):
         """Initiate a review by placing a message on the message queue.
 
         Args:
-            request_payload (dict):
-                The payload to use for the request.
+            tool_execution_id (int):
+                The pk of the ToolExecution model.
+
+            profile (reviewbotext.models.Profile):
+                The tool profile.
+
+            review_request_id (int):
+                The pk of the ReviewRequest being reviewed.
+
+            diff_revision (int):
+                The diff revision being reviewed.
         """
         self.celery.conf.BROKER_URL = self.settings['BROKER_URL']
 
+        # TODO: this should add the local site prefix to the URL, if
+        # appropriate.
+        server_url = get_server_url()
+        session = self._login_user(self.settings['user'])
         review_settings = {
+            'comment_unmodified': profile.comment_unmodified,
             'max_comments': self.settings['max_comments'],
+            'open_issues': profile.open_issues,
+            'ship_it': profile.ship_it,
         }
-        payload = {
-            'request': request_payload,
-            'review_settings': review_settings,
-            'session': self._login_user(self.settings['user']),
-            'url': get_server_url(),
-        }
-
-        if 'tool_profile_id' in request_payload:
-            tool_profile_id = request_payload.get('tool_profile_id')
-
-            try:
-                profile = Profile.objects.get(pk=tool_profile_id)
-            except Profile.DoesNotExist:
-                logging.error('Error: Profile %s does not exist.',
-                              tool_profile_id)
-                return
-        else:
-            logging.error('Error: Tool profile ID must be specified.')
-            return
-
-        review_settings['ship_it'] = profile.ship_it
-        review_settings['comment_unmodified'] = profile.comment_unmodified
-        review_settings['open_issues'] = profile.open_issues
-        payload['review_settings'] = review_settings
 
         self.celery.send_task(
             'reviewbot.tasks.ProcessReviewRequest',
-            [payload, profile.tool_settings],
+            [server_url, session, review_request_id, diff_revision,
+             tool_execution_id, review_settings, profile.tool_settings],
             queue='%s.%s' % (profile.tool.entry_point,
                              profile.tool.version))
 

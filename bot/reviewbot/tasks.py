@@ -27,12 +27,35 @@ FAILED = 'F'
 
 
 @celery.task(ignore_result=True)
-def ProcessReviewRequest(payload, tool_settings):
+def ProcessReviewRequest(server_url,
+                         session,
+                         review_request_id,
+                         diff_revision,
+                         tool_execution_id,
+                         review_settings,
+                         tool_settings):
     """Execute an automated review on a review request.
 
     Args:
-        payload (dict):
-            The payload as assembled by the extension.
+        server_url (unicode):
+            The URL of the Review Board server.
+
+        session (unicode):
+            The encoded session identifier.
+
+        review_request_id (int):
+            The ID of the review request being reviewed (ID for use in the
+            API, which is the "display_id" field).
+
+        diff_revision (int):
+            The ID of the diff revision being reviewed.
+
+        tool_execution_id (int):
+            The ID of the ToolExecution model corresponding to this tool
+            execution.
+
+        review_settings (dict):
+            Settings for how the review should be created.
 
         tool_settings (dict):
             The tool-specific settings.
@@ -45,19 +68,41 @@ def ProcessReviewRequest(payload, tool_settings):
     route_parts = routing_key.partition('.')
     tool_ep = route_parts[0]
     logger.info('Request to execute review tool "%s" for %s',
-                tool_ep, payload['url'])
+                tool_ep, server_url)
 
     try:
         logger.info('Initializing RB API')
-        api_client = RBClient(
-            payload['url'],
-            cookie_file=COOKIE_FILE,
-            agent=AGENT,
-            session=payload['session'])
+        api_client = RBClient(server_url,
+                              cookie_file=COOKIE_FILE,
+                              agent=AGENT,
+                              session=session)
         api_root = api_client.get_root()
     except:
-        logger.error('Could not contact RB server at "%s"', payload['url'])
+        logger.error('Could not contact RB server at "%s"', server_url)
         return False
+
+    def _update_tool_execution(status, message):
+        if not (status or message):
+            return True
+
+        if status == FAILED:
+            logger.error(message)
+            message = json.dumps({
+                'error': message,
+            })
+        elif status == SUCCEEDED:
+            logger.info('Updateding tool execution with completed review')
+
+        try:
+            executions = \
+                _get_extension_resource(api_root).get_tool_executions(
+                    review_request_id, diff_revision)
+            tool_execution = executions.get_item(tool_execution_id)
+            tool_execution.update(status=status, result=message)
+            return True
+        except Exception as e:
+            logger.exception('Error updating tool execution: %s', e)
+            return False
 
     logger.info('Loading requested tool "%s"', tool_ep)
     tools = []
@@ -66,21 +111,21 @@ def ProcessReviewRequest(payload, tool_settings):
         tools.append(ep.load())
 
     if len(tools) > 1:
-        _update_tool_execution(api_root, payload['request'], status=FAILED,
+        _update_tool_execution(tool_execution_id, status=FAILED,
                                msg='Tool "%s" is ambiguous' % tool_ep)
         return False
     elif len(tools) == 0:
-        _update_tool_execution(api_root, payload['request'], status=FAILED,
+        _update_tool_execution(tool_execution_id, status=FAILED,
                                msg='Tool "%s" not found' % tool_ep)
         return False
 
     tool = tools[0]
     try:
         logger.info('Initializing review')
-        review = Review(api_root, payload['request'],
-                        payload['review_settings'])
+        review = Review(api_root, review_request_id, diff_revision,
+                        review_settings)
     except Exception as e:
-        _update_tool_execution(api_root, payload['request'], status=FAILED,
+        _update_tool_execution(tool_execution_id, status=FAILED,
                                msg='Error initializing review: %s' % str(e))
         return False
 
@@ -90,24 +135,21 @@ def ProcessReviewRequest(payload, tool_settings):
         t = tool()
 
     except Exception as e:
-        _update_tool_execution(api_root, payload['request'], status=FAILED,
+        _update_tool_execution(tool_execution_id, status=FAILED,
                                msg='Error initializing tool: %s' % str(e))
         return False
 
     try:
         logger.info('Executing tool "%s"', t.name)
-        _update_tool_execution(api_root, payload['request'], status=RUNNING)
+        _update_tool_execution(tool_execution_id, status=RUNNING)
         t.execute(review, settings=tool_settings)
         logger.info('Tool execution completed successfully')
     except Exception as e:
-        _update_tool_execution(api_root, payload['request'], status=FAILED,
+        _update_tool_execution(tool_execution_id, status=FAILED,
                                msg='Error executing tool: %s' % str(e))
         return False
 
-    # Update the tool execution with the completed review, in JSON.
-    updated = _update_tool_execution(api_root, payload['request'],
-                                     status=SUCCEEDED,
-                                     msg=review.to_json())
+    updated = _update_tool_execution(tool_execution_id, status=SUCCEEDED)
 
     if not updated:
         return False
@@ -116,7 +158,7 @@ def ProcessReviewRequest(payload, tool_settings):
         logger.info('Publishing review')
         review.publish()
     except Exception as e:
-        _update_tool_execution(api_root, payload['request'], status=FAILED,
+        _update_tool_execution(tool_execution_id, status=FAILED,
                                msg='Error publishing review: %s' % str(e))
         return False
 
@@ -205,51 +247,3 @@ def _get_extension_resource(api_root):
     # TODO: Cache this. We only use this resource as a link to sub-resources.
     return api_root.get_extension(
         extension_name='reviewbotext.extension.ReviewBotExtension')
-
-
-def _update_tool_execution(api_root, request, status=None, msg=None):
-    """Report the result of tool execution.
-
-    Args:
-        api_root (rbtools.api.resource.Resource):
-            The server API root.
-
-        request (dict):
-            The request information as provided by the extension that triggered
-            the task.
-
-        status (unicode):
-            The status of the tool.
-
-        msg (unicode):
-            A message (in JSON-format) to associate with the execution status.
-
-    Returns:
-        bool:
-        True if the execution state was reported successfully.
-    """
-    # If there is nothing to update, return early.
-    if not (status or msg):
-        return True
-
-    result = msg
-
-    if status == FAILED:
-        logger.error(msg)
-        result = json.dumps({
-            'error': msg,
-        })
-    elif status == SUCCEEDED:
-        logger.info('Updating tool execution with completed review')
-
-    try:
-        tool_execution = _get_extension_resource(api_root).get_tool_executions(
-            review_request_id=request.get('review_request_id'),
-            diff_revision=request.get('diff_revision')
-        ).get_item(request.get('tool_execution_id'))
-
-        tool_execution.update(status=status, result=result)
-        return True
-    except Exception as e:
-        logger.error('Error updating tool execution: %s' % str(e))
-        return False
