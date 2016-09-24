@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from reviewbot.tools import Tool
 from reviewbot.tools.process import execute
 from reviewbot.utils import is_exe_in_path
@@ -6,7 +8,7 @@ from reviewbot.utils import is_exe_in_path
 class PyflakesTool(Tool):
     name = 'Pyflakes'
     version = '0.1'
-    description = "Checks Python code for errors using Pyflakes."
+    description = 'Checks Python code for errors using Pyflakes.'
 
     def check_dependencies(self):
         return is_exe_in_path('pyflakes')

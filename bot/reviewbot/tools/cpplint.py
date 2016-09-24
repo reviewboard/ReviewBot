@@ -19,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+from __future__ import unicode_literals
+
 import re
 
 from reviewbot.tools import Tool
@@ -109,14 +111,11 @@ class CPPLintTool(Tool):
             matching_obj = re.findall(r'(\S+:)(\d+:)(.+?\[)(.+?\])(.+)', line)
             # pre declare all the variables so that they can be used outside
             # the loop if the match (regexp search) worked.
-            filename = ""
             linenumber = 0
-            freetext = ""
-            category = ""
-            verbosity = ""
+            freetext = ''
+            category = ''
+            verbosity = ''
             for match in matching_obj:
-                # filename (: stripped from the end)
-                filename = match[0][:-1]
                 # linenumber (: stripped from the end)
                 linenumber = int(match[1][:-1])
                 # freetext ( [ stripped from the end)
@@ -130,6 +129,6 @@ class CPPLintTool(Tool):
             # and thus we can add a comment to this file object.
             if matching_obj:
                 f.comment('%s.\n\nError Group: %s\nVerbosity Level: %s' %
-                         (freetext, category, verbosity), linenumber)
+                          (freetext, category, verbosity), linenumber)
 
         return True

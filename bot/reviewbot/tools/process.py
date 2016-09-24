@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import logging
 import os
 import subprocess
@@ -12,8 +14,41 @@ def execute(command,
             translate_newlines=True,
             with_errors=True,
             none_on_ignored_error=False):
-    """
-    Utility function to execute a command and return the output.
+    """Execute a command and return the output.
+
+    Args:
+        command (list of unicode):
+            The command to run.
+
+        env (dict, optional):
+            The environment variables to use when running the process.
+
+        split_lines (bool, optional):
+            Whether to return the output as a list (split on newlines) or a
+            single string.
+
+        ignore_errors (bool, optional):
+            Whether to ignore non-zero return codes from the command.
+
+        extra_ignore_errors (tuple of int, optional):
+            Process return codes to ignore.
+
+        translate_newlines (bool, optional):
+            Whether to convert platform-specific newlines (such as \\r\\n) to
+            the regular newline (\\n) character.
+
+        with_errors (bool, optional):
+            Whether the stderr output should be merged in with the stdout
+            output or just ignored.
+
+        none_on_ignored_error (bool, optional):
+            Whether to return ``None`` if there was an ignored error (instead
+            of the process output).
+
+    Returns:
+        unicode or list of unicode:
+        Either the output of the process, or a list of lines in the output,
+        depending on the value of ``split_lines``.
     """
     if isinstance(command, list):
         logging.debug(subprocess.list2cmdline(command))

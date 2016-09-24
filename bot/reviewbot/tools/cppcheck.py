@@ -19,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
+from __future__ import unicode_literals
+
 from reviewbot.tools import Tool
 from reviewbot.tools.process import execute
 from reviewbot.utils import is_exe_in_path

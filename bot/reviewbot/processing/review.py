@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import json
 import os.path
 
@@ -13,7 +15,17 @@ class File(object):
 
     Allows comments to be made to the file in the review.
     """
+
     def __init__(self, review, api_filediff):
+        """Initialize the File.
+
+        Args:
+            review (Review):
+                The review object.
+
+            api_filediff (rbtools.api.resource.Resource):
+                The filediff resource.
+        """
         self.review = review
         self.id = int(api_filediff.id)
         self.source_file = api_filediff.source_file
@@ -25,6 +37,12 @@ class File(object):
 
     @property
     def patched_file_contents(self):
+        """The patched contents of the file.
+
+        Returns:
+            bytes:
+            The contents of the patched file.
+        """
         # TODO: Cache the contents.
         if not hasattr(self._api_filediff, 'get_patched_file'):
             return None
@@ -34,6 +52,12 @@ class File(object):
 
     @property
     def original_file_contents(self):
+        """The original contents of the file.
+
+        Returns:
+            bytes:
+            The contents of the original file.
+        """
         # TODO Cache the contents
         if not hasattr(self._api_filediff, 'get_original_file'):
             return None
@@ -42,6 +66,13 @@ class File(object):
         return original_file.data
 
     def get_patched_file_path(self):
+        """Fetch the patched file and return the filename of it.
+
+        Returns:
+            unicode:
+            The filename of a new temporary file containing the patched file
+            contents. If the file is empty, return None.
+        """
         contents = self.patched_file_contents
         if contents:
             return make_tempfile(contents, self.file_extension)
@@ -49,6 +80,13 @@ class File(object):
             return None
 
     def get_original_file_path(self):
+        """Fetch the original file and return the filename of it.
+
+        Returns:
+            unicode:
+            The filename of a new temporary file containing the original file
+            contents. If the file is empty, return None.
+        """
         contents = self.original_file_contents
         if contents:
             return make_tempfile(contents, self.file_extension)
@@ -59,11 +97,26 @@ class File(object):
                 original=False):
         """Make a comment on the file.
 
-        If original is True, the line number will correspond to the
-        original file, instead of the patched file.
+        Args:
+            text (unicode):
+                The text of the comment.
+
+            first_line (int):
+                The line number that the comment starts on.
+
+            num_lines (int, optional):
+                The number of lines that the comment should span.
+
+            issue (bool, optional):
+                Whether an issue should be opened.
+
+            original (bool, optional):
+                If True, the ``first_line`` argument corresponds to the line
+                number in the original file, instead of the patched file.
         """
         real_line = self._translate_line_num(first_line)
         modified = self._is_modified(first_line, num_lines)
+
         if issue is None:
             issue = self.review.settings['open_issues']
 
@@ -71,28 +124,33 @@ class File(object):
             if issue:
                 self.review.ship_it = False
 
-            self._comment(text, real_line, num_lines, issue)
-
-    def _comment(self, text, first_line, num_lines, issue):
-        """Add a comment to the list of comments."""
-        data = {
-            'filediff_id': self.id,
-            'first_line': first_line,
-            'num_lines': num_lines,
-            'text': text,
-            'issue_opened': issue,
-        }
-        self.review.comments.append(data)
+            data = {
+                'filediff_id': self.id,
+                'first_line': real_line,
+                'num_lines': num_lines,
+                'text': text,
+                'issue_opened': issue,
+            }
+            self.review.comments.append(data)
 
     def _translate_line_num(self, line_num, original=False):
         """Convert a file line number to a filediff line number.
 
-        If original is True, will convert based on the original
-        file numbers, instead of the patched.
+        Args:
+            line_num (int):
+                The line number within the file.
 
-        TODO: Convert to a faster search algorithm.
+            original (bool, optional):
+                If True, the ``line_num`` argument corresponds to the line
+                number in the original file, instead of the patched file.
+
+        Returns:
+            int:
+            The filediff row number.
         """
+        # TODO: Convert to a faster search algorithm.
         line_num_index = 4
+
         if original:
             line_num_index = 1
 
@@ -102,17 +160,28 @@ class File(object):
                     return row[0]
 
     def _is_modified(self, line_num, num_lines, original=False):
-        """Indicates if the filediff row is modified or new.
+        """Return whether the given region is modified in the diff.
 
-        Will return True if the row is modified, or new, false
-        otherwise
+        Args:
+            first_line (int):
+                The line number that the comment starts on.
 
-        TODO: Convert to a faster search algorithm.
+            num_lines (int):
+                The number of lines that the comment should span.
 
-        TODO: Change this to check all chunks within a range for a
-        modification. Currently the pep8 tool will only single line
-        comment, but future tools might multi-line.
+            original (bool, optional):
+                If True, the ``first_line`` argument corresponds to the line
+                number in the original file, instead of the patched file.
+
+        Returns:
+            bool:
+            True if the region corresponds to modified code.
         """
+        # TODO: Convert to a faster search algorithm.
+
+        # TODO: Change this to check all chunks within a range for a
+        # modification. Current tools will only comment on single lines, but
+        # future tools might create multi-line comments.
         line_num_index = 4
         if original:
             line_num_index = 1
@@ -124,11 +193,31 @@ class File(object):
 
 
 class Review(object):
+    """An object which orchestrates the creation of a review."""
+
+    #: Whether the review should have "Ship it!" set.
     ship_it = False
+
+    #: Additional text to show above the comments in the review.
     body_top = ""
+
+    #: Additional text to show below the comments in the review.
     body_bottom = ""
 
     def __init__(self, api_root, request, settings):
+        """Initialize the review.
+
+        Args:
+            api_root (rbtools.api.resource.Resource):
+                The API root.
+
+            request (dict):
+                The request provided by the extension when triggering the task.
+
+            settings (dict):
+                The settings provided by the extension when triggering the
+                task.
+        """
         self.api_root = api_root
         self.settings = settings
         self.request_id = request['review_request_id']
@@ -141,17 +230,17 @@ class Review(object):
         if self.diff_revision:
             files = api_root.get_files(review_request_id=self.request_id,
                                        diff_revision=self.diff_revision)
-            try:
-                while True:
-                    for f in files:
-                        self.files.append(File(self, f))
 
-                    files = files.get_next()
-            except StopIteration:
-                pass
+            self.files = [File(self, f) for f in files]
 
     def to_json(self):
-        """Returns the review as a JSON payload."""
+        """Return the review as a JSON payload.
+
+        Returns:
+            unicode:
+            The review, encoded to JSON.
+        """
+        # TODO: this can go away once we no longer use the ToolExecution model.
         result = {
             'body_top': self.body_top,
             'body_bottom': self.body_bottom,
@@ -165,10 +254,14 @@ class Review(object):
         # Truncate comments to the maximum permitted amount to avoid
         # overloading the review and freezing the browser.
         max_comments = self.settings['max_comments']
+
         if len(self.comments) > max_comments:
-            warning = ("WARNING: Number of comments exceeded maximum, showing "
-                       "%d of %d.") % (max_comments, len(self.comments))
-            self.body_top = "%s\n%s" % (self.body_top, warning)
+            warning = (
+                'WARNING: Number of comments exceeded maximum, showing %d '
+                'of %d.'
+                % (max_comments, len(self.comments))
+            )
+            self.body_top = '%s\n%s' % (self.body_top, warning)
             del self.comments[max_comments:]
 
         cleanup_tempfiles()
@@ -177,6 +270,7 @@ class Review(object):
             bot_reviews = self.api_root.get_extension(
                 extension_name='reviewbotext.extension.ReviewBotExtension'
             ).get_review_bot_reviews()
+
             bot_reviews.create(
                 review_request_id=self.request_id,
                 ship_it=self.ship_it,
@@ -189,10 +283,17 @@ class Review(object):
 
     @property
     def patch_contents(self):
-        """Get a patch for review request."""
+        """The contents of the patch.
+
+        Returns:
+            unicode:
+            The contents of the patch associated with the review request and
+            diff revision.
+        """
         if not hasattr(self, 'patch'):
             if not hasattr(self.api_root, 'get_diff'):
                 return None
+
             self.patch = self.api_root.get_diff(
                 review_request_id=self.request_id,
                 diff_revision=self.diff_revision).get_patch().data
@@ -200,9 +301,16 @@ class Review(object):
         return self.patch
 
     def get_patch_file_path(self):
-        """Get the absolute path to the patch file."""
+        """Fetch the patch and return the filename of it.
+
+        Returns:
+            unicode:
+            The filename of a new temporary file containing the patch contents.
+            If the patch is empty, return None.
+        """
         patch_contents = self.patch_contents
+
         if patch_contents:
-            return make_tempfile(patch_contents, ".diff")
+            return make_tempfile(patch_contents, '.diff')
         else:
             return None

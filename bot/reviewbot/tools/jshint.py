@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import re
 
 from reviewbot.processing.filesystem import make_tempfile

@@ -1,6 +1,5 @@
-import os
+from __future__ import unicode_literals
 
-from reviewbot.processing.filesystem import make_tempfile
 from reviewbot.tools import Tool
 from reviewbot.tools.process import execute
 
@@ -8,8 +7,8 @@ from reviewbot.tools.process import execute
 class BuildBotTool(Tool):
     name = 'BuildBot try plugin'
     version = '0.2'
-    description = ("Runs buildbot's try command and posts the result of the "
-                   "build")
+    description = ('Runs the buildbot try command and posts the result of the '
+                   'build')
     options = [
         {
             'name': 'address',
@@ -164,7 +163,7 @@ class BuildBotTool(Tool):
                 '--passwd=%s' % settings['password'],
             ])
         else:
-            #Assume SSH
+            # Assume SSH
             cmd.extend([
                 '--connect=ssh',
                 '--jobdir=%s' % settings['jobdir'],
@@ -179,8 +178,8 @@ class BuildBotTool(Tool):
 
         output = execute(cmd, ignore_errors=True)
 
-        review.body_top = "This is a review from Review Bot.\n"
-        review.body_top += "  Tool: %s\n\n" % self.name
-        review.body_top += "Buildbot Output:\n%s" % output
+        review.body_top = 'This is a review from Review Bot.\n'
+        review.body_top += '  Tool: %s\n\n' % self.name
+        review.body_top += 'Buildbot Output:\n%s' % output
 
         self.post_process(review)
