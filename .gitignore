@@ -1,6 +1,7 @@
 # Wildcards
-*.pyc
 *.egg-info
+*.pyc
+*.swp
 
 # Files
 reviewbot-cookies.txt
