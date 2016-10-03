@@ -1,0 +1,53 @@
+{% extends "admin/base_site.html" %}
+{% load avatars i18n staticfiles %}
+
+{% block extrastyle %}
+{{block.super}}
+<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />
+{% endblock %}
+
+{% block title %}
+{%  blocktrans with extension.info.name as name %}Configure {{name}}{%  endblocktrans %}
+{{block.super}}
+{% endblock %}
+
+{% block bodyclass %}{{block.super}} change-form{% endblock %}
+
+{% block coltype %}colM clearfix{% endblock %}
+
+{% block content %}
+<h1 class="title">
+{%  blocktrans with extension.info.name as name %}Configure {{name}}{%  endblocktrans %}
+</h1>
+<div id="content-main"></div>
+{% endblock %}
+
+{% block scripts-post %}
+<script>
+$(function() {
+    var view = new ReviewBot.ExtensionConfigView({
+        model: new ReviewBot.ExtensionConfig(
+            {
+{%  if reviewbot_user %}
+                user: {
+                    avatar_url: '{% avatar_url reviewbot_user 48 %}',
+                    id: {{reviewbot_user.pk}},
+                    fullname: '{{reviewbot_user.get_full_name|escapejs}}',
+                    username: '{{reviewbot_user.username|escapejs}}'
+                },
+{%  endif %}
+                brokerURL: '{{extension.settings.broker_url|escapejs}}'
+            },
+            {
+                integrationConfigURL: '{% url "integration-list" %}',
+                userConfigURL: '{% url "reviewbot-configure-user" %}',
+                workerStatusURL: '{% url "reviewbot-worker-status" %}'
+            }
+        ),
+        el: $('#content-main')
+    });
+
+    view.render();
+});
+</script>
+{% endblock %}

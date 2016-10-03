@@ -41,22 +41,43 @@ class ReviewBotExtension(Extension):
     }
 
     css_bundles = {
+        'extension-config': {
+            'source_filenames': ['css/extension-config.less'],
+            'apply_to': ['reviewbot-configure'],
+        },
         'integration-config': {
             'source_filenames': ['css/integration-config.less'],
         },
     }
 
     js_bundles = {
+        'extension-config': {
+            'source_filenames': [
+                'js/extensionConfig.es6.js',
+            ],
+            'apply_to': ['reviewbot-configure'],
+        },
         'integration-config': {
             'source_filenames': ['js/integrationConfig.es6.js'],
         },
     }
 
+    @property
+    def celery(self):
+        """The celery instance."""
+        self._celery.conf.broker_url = self.settings['broker_url']
+        return self._celery
+
+    @property
+    def is_configured(self):
+        """Whether the extension has been properly configured."""
+        return self.settings['user'] and self.settings['broker_url']
+
     def initialize(self):
         """Initialize the extension."""
         IntegrationHook(self, ReviewBotIntegration)
 
-        self.celery = Celery('reviewbot.tasks')
+        self._celery = Celery('reviewbot.tasks')
 
     def login_user(self):
         """Log in as the configured user.
@@ -82,7 +103,6 @@ class ReviewBotExtension(Extension):
 
     def send_refresh_tools(self):
         """Request workers to update tool list."""
-        self.celery.conf.broker_url = self.settings['broker_url']
         payload = {
             'session': self.login_user(),
             'url': get_server_url(),

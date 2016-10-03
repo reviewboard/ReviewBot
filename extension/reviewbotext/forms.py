@@ -1,30 +1,14 @@
 from __future__ import unicode_literals
 
 from django import forms
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
-from djblets.extensions.forms import SettingsForm
 from djblets.forms.fields import ConditionsField
 from reviewboard.integrations.forms import IntegrationConfigForm
 from reviewboard.reviews.conditions import ReviewRequestConditionChoices
 
 from reviewbotext.models import Tool
 from reviewbotext.widgets import ToolOptionsWidget
-
-
-class ReviewBotSettingsForm(SettingsForm):
-    """Settings form for Review Bot."""
-
-    broker_url = forms.CharField(
-        max_length=512,
-        label=_('Broker URL'),
-        help_text=_('The Celery configuration BROKER_URL'))
-
-    # TODO: This needs to use a more efficient widget.
-    user = forms.ModelChoiceField(
-        label=_('User'),
-        queryset=User.objects.filter(is_active=True))
 
 
 class ToolForm(forms.ModelForm):
@@ -125,7 +109,7 @@ class ReviewBotConfigForm(IntegrationConfigForm):
                 The serialized value.
 
         Returns:
-            list of reviewbotext.models.Tool:
+            reviewbotext.models.Tool:
             The deserialized value.
         """
         try:

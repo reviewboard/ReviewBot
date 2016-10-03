@@ -11,15 +11,11 @@ from djblets.webapi.errors import (DOES_NOT_EXIST,
                                    NOT_LOGGED_IN,
                                    PERMISSION_DENIED)
 from reviewboard.diffviewer.models import FileDiff
-from reviewboard.extensions.base import get_extension_manager
 from reviewboard.reviews.models import BaseComment, Review
 from reviewboard.webapi.decorators import webapi_check_local_site
 from reviewboard.webapi.resources import resources, WebAPIResource
 
 from reviewbotext.models import Tool
-
-
-EXTENSION_MANAGER = get_extension_manager()
 
 
 class ToolResource(WebAPIResource):
@@ -29,8 +25,9 @@ class ToolResource(WebAPIResource):
     for workers to "dump" their entire list of installed tools as a single
     POST. A GET request will not actually return a list of tools.
     """
+
     name = 'tool'
-    allowed_methods = ('GET', 'POST',)
+    allowed_methods = ('GET', 'POST')
     model_object_key = 'id'
     uri_object_key = 'tool_id'
 
@@ -91,8 +88,7 @@ class ToolResource(WebAPIResource):
         TODO: Use the hostname.
         """
         from reviewbotext.extension import ReviewBotExtension
-        extension = EXTENSION_MANAGER.get_enabled_extension(
-            ReviewBotExtension.id)
+        extension = ReviewBotExtension.instance
 
         # Ensure the request is from the Review Bot user
         if request.user.id != extension.settings['user']:

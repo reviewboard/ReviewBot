@@ -1,0 +1,73 @@
+@import (reference) "@{STATIC_ROOT}rb/css/defs.less";
+
+@config_control_width: 25rem;
+
+#content_container {
+  padding-left: 1.5em;
+}
+
+#content {
+  margin: 0 0 1.5em 0;
+  padding: 0;
+  width: 100%;
+}
+
+#reviewbot-broker {
+  input[type="text"] {
+    box-sizing: border-box;
+    width: @config_control_width !important;
+  }
+
+  input[type="button"] {
+    font-size: @admin_font_size;
+  }
+}
+
+#reviewbot-broker-status {
+  .form-row {
+    border-bottom: none;
+
+    > div {
+      margin-bottom: 1em;
+      padding-top: 3px;
+    }
+  }
+
+  .fa-check {
+    color: darkgreen;
+    font-size: 120%;
+  }
+
+  .fa-exclamation-triangle {
+    color: darkred;
+    font-size: 120%;
+  }
+}
+
+#reviewbot-broker-status-refresh {
+  cursor: pointer;
+}
+
+#reviewbot-user {
+  .reviewbot-user-select {
+    display: inline-block;
+    margin-left: -6px;
+    width: @config_control_width;
+    vertical-align: middle;
+  }
+
+  label {
+    display: inline-block;
+    float: none;
+    vertical-align: middle;
+  }
+
+  input[placeholder] {
+    // Work around selectize bug 851.
+    width: 100% !important;
+  }
+}
+
+#reviewbot-user-create {
+  cursor: pointer;
+}

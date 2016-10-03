@@ -2,17 +2,17 @@ from __future__ import unicode_literals
 
 from django.conf.urls import patterns, url
 
-from reviewbotext.extension import ReviewBotExtension
-from reviewbotext.forms import ReviewBotSettingsForm
+from reviewbotext.views import (ConfigureUserView,
+                                ConfigureView,
+                                WorkerStatusView)
 
 
 urlpatterns = patterns(
     '',
 
-    url(r'^$',
-        'reviewboard.extensions.views.configure_extension',
-        {
-            'ext_class': ReviewBotExtension,
-            'form_class': ReviewBotSettingsForm,
-        }),
+    url(r'^$', ConfigureView.as_view(), name='reviewbot-configure'),
+    url(r'^user/$', ConfigureUserView.as_view(),
+        name='reviewbot-configure-user'),
+    url(r'^worker-status/$', WorkerStatusView.as_view(),
+        name='reviewbot-worker-status'),
 )

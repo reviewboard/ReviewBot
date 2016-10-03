@@ -216,7 +216,6 @@ def update_tools_list(panel, payload):
             logger.warning('%s dependency check failed.', ep.name)
 
     logger.info('Done iterating Tools')
-    tools = json.dumps(tools)
     hostname = panel.hostname
 
     try:
@@ -228,17 +227,28 @@ def update_tools_list(panel, payload):
         api_root = api_client.get_root()
     except Exception as e:
         logger.exception('Could not reach RB server: %s', e)
-        return {'error': 'Could not reach RB server.'}
+
+        return {
+            'status': 'error',
+            'error': 'Could not reach Review Board server: %s' % e,
+        }
 
     try:
         api_tools = _get_extension_resource(api_root).get_tools()
 
-        api_tools.create(hostname=hostname, tools=tools)
+        api_tools.create(hostname=hostname, tools=json.dumps(tools))
     except Exception as e:
         logger.exception('Problem POSTing tools: %s', e)
-        return {'error': 'Problem POSTing tools.'}
 
-    return {'ok': 'Tool list update complete.'}
+        return {
+            'status': 'error',
+            'error': 'Problem uploading tools: %s' % e,
+        }
+
+    return {
+        'status': 'ok',
+        'tools': tools,
+    }
 
 
 def _get_extension_resource(api_root):
