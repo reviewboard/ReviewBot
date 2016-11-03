@@ -34,7 +34,7 @@ def RunTool(server_url,
             session,
             review_request_id,
             diff_revision,
-            changedesc_id,
+            status_update_id,
             review_settings,
             tool_options):
     """Execute an automated review on a review request.
@@ -53,9 +53,8 @@ def RunTool(server_url,
         diff_revision (int):
             The ID of the diff revision being reviewed.
 
-        changedesc_id (int):
-            The ID of the change description which corresponds to the diff
-            revision, if any.
+        status_update_id (int):
+            The ID of the status update for this invocation of the tool.
 
         review_settings (dict):
             Settings for how the review should be created.
@@ -108,14 +107,9 @@ def RunTool(server_url,
 
     try:
         logger.info('Creating status update %s', log_detail)
-        review_request = api_root.get_review_request(
-            review_request_id=review_request_id)
-        status_update = review_request.get_status_updates().create(
-            service_id='reviewbot.%s' % tool.name,
-            summary=tool.name,
-            change_id=changedesc_id,
-            state='pending',
-            description='running...')
+        status_update = api_root.get_status_update(
+            review_request_id=review_request_id,
+            status_update_id=status_update_id)
     except Exception as e:
         logger.exception('Unable to create status update: %s %s',
                          e, log_detail)
@@ -125,6 +119,7 @@ def RunTool(server_url,
         logger.info('Initializing review %s', log_detail)
         review = Review(api_root, review_request_id, diff_revision,
                         review_settings)
+        status_update.update(description='running...')
     except Exception as e:
         logger.exception('Failed to initialize review: %s %s', e, log_detail)
         status_update.update(state=ERROR, description='internal error.')

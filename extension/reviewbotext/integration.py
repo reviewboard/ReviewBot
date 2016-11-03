@@ -7,6 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from djblets.extensions.hooks import SignalHook
 from reviewboard.admin.server import get_server_url
 from reviewboard.integrations import Integration
+from reviewboard.reviews.models import StatusUpdate
 from reviewboard.reviews.signals import review_request_published
 
 from reviewbotext.forms import ReviewBotConfigForm
@@ -60,10 +61,6 @@ class ReviewBotIntegration(Integration):
                 'added' not in fields_changed['diff']):
                 return
 
-            changedesc_id = changedesc.id
-        else:
-            changedesc_id = None
-
         from reviewbotext.extension import ReviewBotExtension
         extension = ReviewBotExtension.instance
 
@@ -82,6 +79,7 @@ class ReviewBotIntegration(Integration):
         # TODO: This creates a new session entry. We should figure out a better
         # way for Review Bot workers to authenticate to the server.
         session = extension.login_user()
+        user = extension.user
 
         for config in matching_configs:
             tool_id = config.settings.get('tool')
@@ -114,6 +112,15 @@ class ReviewBotIntegration(Integration):
                                   config.name, config.pk, e)
                 tool_options = {}
 
+            status_update = StatusUpdate.objects.create(
+                service_id='reviewbot.%s' % tool.name,
+                summary=tool.name,
+                description='starting...',
+                review_request=review_request,
+                change_description=changedesc,
+                state=StatusUpdate.PENDING,
+                user=user)
+
             extension.celery.send_task(
                 'reviewbot.tasks.RunTool',
                 [
@@ -121,7 +128,7 @@ class ReviewBotIntegration(Integration):
                     session,
                     review_request_id,
                     diffset.revision,
-                    changedesc_id,
+                    status_update.pk,
                     review_settings,
                     tool_options,
                 ],

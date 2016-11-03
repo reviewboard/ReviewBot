@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.http import HttpRequest
 from django.utils.importlib import import_module
 from django.utils.translation import ugettext_lazy as _
+from djblets.db.query import get_object_or_none
 from reviewboard.admin.server import get_server_url
 from reviewboard.extensions.base import Extension
 from reviewboard.extensions.hooks import IntegrationHook
@@ -63,6 +64,11 @@ class ReviewBotExtension(Extension):
     }
 
     @property
+    def user(self):
+        """The configured user."""
+        return get_object_or_none(User, pk=self.settings.get('user'))
+
+    @property
     def celery(self):
         """The celery instance."""
         self._celery.conf.broker_url = self.settings['broker_url']
@@ -90,7 +96,7 @@ class ReviewBotExtension(Extension):
             unicode:
             The session key of the new user session.
         """
-        user = User.objects.get(pk=self.settings['user'])
+        user = self.user
         user.backend = 'reviewboard.accounts.backends.StandardAuthBackend'
         engine = import_module(settings.SESSION_ENGINE)
 
