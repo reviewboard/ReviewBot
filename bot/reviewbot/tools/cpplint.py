@@ -33,6 +33,7 @@ class CPPLintTool(Tool):
     version = '0.1'
     description = ('Checks code for style errors using the '
                    'Google CPP Lint tool.')
+    timeout = 30
     options = [
         {
             'name': 'verbosity',

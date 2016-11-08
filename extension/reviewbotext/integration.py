@@ -119,6 +119,7 @@ class ReviewBotIntegration(Integration):
                 review_request=review_request,
                 change_description=changedesc,
                 state=StatusUpdate.PENDING,
+                timeout=tool.timeout,
                 user=user)
 
             extension.celery.send_task(

@@ -21,6 +21,7 @@ class Tool(models.Model):
     description = models.CharField(max_length=512, default='', blank=True)
     enabled = models.BooleanField(default=True)
     in_last_update = models.BooleanField()
+    timeout = models.IntegerField(blank=True, null=True)
 
     #: A JSON list describing the options a tool make take. Each entry is a
     #: dictionary which may define the following fields:

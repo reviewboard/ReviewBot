@@ -35,6 +35,7 @@ class ToolAdmin(admin.ModelAdmin):
         'version',
         'description',
         'in_last_update',
+        'timeout',
     ]
 
     fieldsets = (
@@ -44,6 +45,7 @@ class ToolAdmin(admin.ModelAdmin):
                 'version',
                 'description',
                 'in_last_update',
+                'timeout',
             ),
             'classes': ('wide',),
         }),

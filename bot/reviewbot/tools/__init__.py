@@ -15,6 +15,9 @@ class Tool(object):
     version = '1'
     options = []
 
+    #: Timeout for tool execution, in seconds.
+    timeout = None
+
     def __init__(self):
         pass
 

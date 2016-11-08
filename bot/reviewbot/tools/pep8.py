@@ -9,6 +9,7 @@ class PEP8Tool(Tool):
     name = 'PEP8 Style Checker'
     version = '0.2'
     description = "Checks code for style errors using the PEP8 tool."
+    timeout = 30
     options = [
         {
             'name': 'max_line_length',

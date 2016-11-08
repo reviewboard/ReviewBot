@@ -9,6 +9,7 @@ class PyflakesTool(Tool):
     name = 'Pyflakes'
     version = '0.1'
     description = 'Checks Python code for errors using Pyflakes.'
+    timeout = 30
 
     def check_dependencies(self):
         return is_exe_in_path('pyflakes')

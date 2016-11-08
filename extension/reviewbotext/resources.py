@@ -112,6 +112,7 @@ class ToolResource(WebAPIResource):
                     'description': tool['description'],
                     'tool_options': tool['tool_options'],
                     'in_last_update': True,
+                    'timeout': tool['timeout'],
                 })
 
             if not created and not obj.in_last_update:

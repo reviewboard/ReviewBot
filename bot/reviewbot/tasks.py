@@ -206,6 +206,7 @@ def update_tools_list(panel, payload):
                 'version': tool_class.version,
                 'description': tool_class.description,
                 'tool_options': json.dumps(tool_class.options),
+                'timeout': tool_class.timeout,
             })
         else:
             logger.warning('%s dependency check failed.', ep.name)

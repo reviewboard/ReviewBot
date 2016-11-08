@@ -31,6 +31,7 @@ class CPPCheckTool(Tool):
     version = '0.1'
     description = ('Checks code for errors using Cppcheck - '
                    'A tool for static C/C++ code analysis')
+    timeout = 30
     options = [
         {
             'name': 'style_checks_enabled',

@@ -13,6 +13,7 @@ class JSHintTool(Tool):
     version = '0.1'
     description = ('Checks JavaScript code for style errors and potential '
                    'bugs using JSHint.')
+    timeout = 30
     options = [
         {
             'name': 'verbose',
