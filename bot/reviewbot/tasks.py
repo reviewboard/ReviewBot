@@ -147,19 +147,16 @@ def RunTool(server_url,
         return False
 
     try:
-        logger.info('Publishing review %s', log_detail)
-        review_id = review.publish().id
-
         if len(review.comments) == 0:
-            new_state = DONE_SUCCESS
-            description = 'passed.'
+            status_update.update(state=DONE_SUCCESS,
+                                 description='passed.')
         else:
-            new_state = DONE_FAILURE
-            description = 'failed.'
+            logger.info('Publishing review %s', log_detail)
+            review_id = review.publish().id
 
-        status_update.update(state=new_state,
-                             description=description,
-                             review_id=review_id)
+            status_update.update(state=DONE_FAILURE,
+                                 description='failed.',
+                                 review_id=review_id)
     except Exception as e:
         logger.exception('Error when publishing review: %s %s', e, log_detail)
         status_update.update(state=ERROR, description='internal error.')
