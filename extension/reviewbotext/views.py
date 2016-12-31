@@ -10,6 +10,7 @@ from django.http import (HttpResponse,
 from django.shortcuts import get_object_or_404, render
 from django.utils import six
 from django.views.generic import View
+from djblets.avatars.services import URLAvatarService
 from djblets.db.query import get_object_or_none
 from djblets.siteconfig.models import SiteConfiguration
 from reviewboard.admin.server import get_server_url
@@ -98,10 +99,11 @@ class ConfigureView(View):
 
         extension = ReviewBotExtension.instance
         should_save = False
+        new_user = request.POST.get('reviewbot_user')
 
-        if 'reviewbot_user' in request.POST:
+        if new_user:
             try:
-                user = User.objects.get(pk=request.POST['reviewbot_user'])
+                user = User.objects.get(pk=new_user)
             except User.DoesNotExist:
                 # TODO: return which field was invalid
                 return HttpResponseBadRequest(
@@ -188,6 +190,18 @@ class ConfigureUserView(View):
                 profile = user.get_profile()
                 profile.should_send_email = False
                 profile.save()
+
+                avatar_service = avatar_services.get_avatar_service(
+                    URLAvatarService.avatar_service_id)
+                extension = ReviewBotExtension.instance
+                avatar_service.setup(
+                    user,
+                    {
+                        '1x': extension.get_static_url(
+                            'images/reviewbot.png'),
+                        '2x': extension.get_static_url(
+                            'images/reviewbot@2x.png'),
+                    })
         except IntegrityError:
             return HttpResponseBadRequest()
 

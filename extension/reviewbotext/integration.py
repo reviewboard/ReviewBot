@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import json
 import logging
 
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from djblets.extensions.hooks import SignalHook
 from reviewboard.admin.server import get_server_url
@@ -29,6 +30,18 @@ class ReviewBotIntegration(Integration):
         """Initialize the integration hooks."""
         SignalHook(self, review_request_published,
                    self._on_review_request_published)
+
+    @cached_property
+    def icon_static_urls(self):
+        """The icons used for the integration."""
+        from reviewbotext.extension import ReviewBotExtension
+
+        extension = ReviewBotExtension.instance
+
+        return {
+            '1x': extension.get_static_url('images/reviewbot.png'),
+            '2x': extension.get_static_url('images/reviewbot@2x.png'),
+        }
 
     def _on_review_request_published(self, sender, review_request, **kwargs):
         """Handle when a review request is published.
