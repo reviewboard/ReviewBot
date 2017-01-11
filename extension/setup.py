@@ -20,6 +20,6 @@ setup(
             '%s = reviewbotext.extension:ReviewBotExtension' % PACKAGE,
     },
     install_requires=[
-          'celery',
+        'celery>=3.1.25,<=3.9999',
     ],
 )
