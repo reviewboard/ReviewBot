@@ -122,15 +122,30 @@ class ToolOptionsWidget(MultiWidget):
 
             field = self.fields[i]
 
+            if field['form_field'].required:
+                label_class = 'required'
+            else:
+                label_class = ''
+
+            if field['form_field'].help_text:
+                help_text = format_html('<p class="help">{0}</p>',
+                                        field['form_field'].help_text)
+            else:
+                help_text = ''
+
             output.append(format_html(
                 '<div class="form-row" data-tool-id="{tool_id}" '
                 '     style="display: none;">'
-                ' <label for="{widget_name}">{field_label}:</label>'
+                ' <label for="{widget_name}" '
+                '        class="{label_class}">{field_label}:</label>'
                 ' {widget}'
+                ' {help_text}'
                 '</div>',
                 tool_id=field['tool_id'],
-                widget_name=widget_name,
                 field_label=field['form_field'].label,
+                help_text=help_text,
+                label_class=label_class,
+                widget_name=widget_name,
                 widget=widget.render(widget_name, widget_value, final_attrs)))
 
         return mark_safe(self.format_output(output))
