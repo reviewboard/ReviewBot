@@ -79,8 +79,13 @@ class ReviewBotConfigForm(IntegrationConfigForm):
         self.css_bundle_names = [extension.get_bundle_id('integration-config')]
         self.js_bundle_names = [extension.get_bundle_id('integration-config')]
 
-        self.fields['tool_options'] = forms.CharField(
-            widget=ToolOptionsWidget(self.fields['tool'].queryset))
+    def load(self):
+        """Load the form."""
+        if 'tool_options' not in self.fields:
+            self.fields['tool_options'] = forms.CharField(
+                widget=ToolOptionsWidget(self.fields['tool'].queryset))
+
+        super(ReviewBotConfigForm, self).load()
 
     def serialize_tool_field(self, value):
         """Serialize the tool field.
