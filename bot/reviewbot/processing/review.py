@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import json
 import os.path
 
-from reviewbot.processing.filesystem import cleanup_tempfiles, make_tempfile
+from reviewbot.utils.filesystem import cleanup_tempfiles, make_tempfile
 
 
 class File(object):
@@ -43,7 +43,6 @@ class File(object):
             bytes:
             The contents of the patched file.
         """
-        # TODO: Cache the contents.
         if not hasattr(self._api_filediff, 'get_patched_file'):
             return None
 
@@ -58,7 +57,6 @@ class File(object):
             bytes:
             The contents of the original file.
         """
-        # TODO Cache the contents
         if not hasattr(self._api_filediff, 'get_original_file'):
             return None
 
@@ -74,6 +72,7 @@ class File(object):
             contents. If the file is empty, return None.
         """
         contents = self.patched_file_contents
+
         if contents:
             return make_tempfile(contents, self.file_extension)
         else:
@@ -88,6 +87,7 @@ class File(object):
             contents. If the file is empty, return None.
         """
         contents = self.original_file_contents
+
         if contents:
             return make_tempfile(contents, self.file_extension)
         else:
@@ -180,6 +180,7 @@ class File(object):
         # modification. Current tools will only comment on single lines, but
         # future tools might create multi-line comments.
         line_num_index = 4
+
         if original:
             line_num_index = 1
 

@@ -1,14 +1,16 @@
 from __future__ import unicode_literals
 
 from reviewbot.tools import Tool
-from reviewbot.tools.process import execute
+from reviewbot.utils.process import execute
 
 
 class BuildBotTool(Tool):
-    name = 'BuildBot try plugin'
+    """Review Bot tool to do a build using `buildbot try`."""
+
+    name = 'BuildBot try'
     version = '0.2'
     description = ('Runs the buildbot try command and posts the result of the '
-                   'build')
+                   'build.')
     options = [
         {
             'name': 'address',
@@ -17,7 +19,7 @@ class BuildBotTool(Tool):
             'field_options': {
                 'label': 'Buildmaster Address',
                 'help_text': ('The address of the buildmaster. Used by both '
-                              'PB and SSH'),
+                              'PB and SSH.'),
                 'required': True,
             },
         },
@@ -27,7 +29,7 @@ class BuildBotTool(Tool):
             'field_options': {
                 'label': 'Connect Method',
                 'help_text': ('Connection method used by buildbot to contact '
-                              'the try server'),
+                              'the try server.'),
                 'required': True,
                 'choices': (('PB', 'PB authentication'),
                             ('SSH', 'SSH authentication')),
@@ -40,7 +42,7 @@ class BuildBotTool(Tool):
             'field_options': {
                 'label': 'Port',
                 'help_text': ('Port used to communicate with buildbot. Not '
-                              'the the ssh connection port'),
+                              'the the ssh connection port.'),
                 'required': False,
             },
         },
@@ -51,7 +53,7 @@ class BuildBotTool(Tool):
             'field_options': {
                 'label': 'Username',
                 'help_text': ('Username, used by both PB and SSH '
-                              'authentication'),
+                              'authentication.'),
                 'required': True,
             },
         },
@@ -62,7 +64,7 @@ class BuildBotTool(Tool):
             'field_options': {
                 'label': 'PB Password',
                 'help_text': ('PB Password: Stored as plaintext in database. '
-                              'Use with extreme caution'),
+                              'Use with extreme caution.'),
                 'required': False,
             },
         },
@@ -73,7 +75,7 @@ class BuildBotTool(Tool):
             'field_options': {
                 'label': 'Job directory',
                 'help_text': ('SSH Job dir: Directory chosen in buildbot '
-                              'config to be writeable by all allowed users'),
+                              'config to be writeable by all allowed users.'),
                 'required': False,
             },
         },
@@ -84,7 +86,7 @@ class BuildBotTool(Tool):
             'field_options': {
                 'label': 'PB listener port',
                 'help_text': ('Required when using SSH. Indicate port used to '
-                              'check build status'),
+                              'check build status.'),
                 'required': False,
             },
         },
@@ -96,7 +98,7 @@ class BuildBotTool(Tool):
                 'label': 'buildbot binary location',
                 'help_text': ('SSH buildbot binary location: path to buildbot '
                               'if not in user\'s path. For use with '
-                              'virtualenv'),
+                              'virtualenv.'),
                 'required': False,
             },
         },
@@ -108,7 +110,8 @@ class BuildBotTool(Tool):
                 'label': 'Use Branch Field',
                 'help_text': ('Tell BuildBot to use the contents of the '
                               'branch field in the review request. WARNING: '
-                              'this field is free form'),
+                              'this field is free-form and may not contain '
+                              'a valid branch name.'),
                 'required': False,
             },
 
@@ -128,14 +131,23 @@ class BuildBotTool(Tool):
             'field_type': 'django.forms.CharField',
             'field_options': {
                 'label': 'Builder',
-                'help_text': ('Comma seperated list of builders to use. '
-                              'Required when using SSH'),
+                'help_text': ('Comma-separated list of builders to use. '
+                              'Required when using SSH.'),
                 'required': False,
             },
         },
     ]
 
     def execute(self, review, settings={}):
+        """Perform a review using the tool.
+
+        Args:
+            review (reviewbot.processing.review.Review):
+                The review object.
+
+            settings (dict):
+                Tool-specific settings.
+        """
         cmd = [
             'buildbot',
             'try',
@@ -176,10 +188,4 @@ class BuildBotTool(Tool):
             if settings['buildbotbin'] != '':
                 cmd.append('--buildbotbin=%s' % settings['buildbotbin'])
 
-        output = execute(cmd, ignore_errors=True)
-
-        review.body_top = 'This is a review from Review Bot.\n'
-        review.body_top += '  Tool: %s\n\n' % self.name
-        review.body_top += 'Buildbot Output:\n%s' % output
-
-        self.post_process(review)
+        review.body_top = execute(cmd, ignore_errors=True)

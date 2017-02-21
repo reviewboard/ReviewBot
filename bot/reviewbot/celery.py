@@ -7,26 +7,37 @@ from celery import Celery
 from kombu import Exchange, Queue
 
 
-default_exchange = Exchange('celery', type='direct')
+def create_queues():
+    """Create the celery queues.
+
+    Returns:
+        list of kombu.Queue:
+        The queues that this worker will listen to.
+    """
+    default_exchange = Exchange('celery', type='direct')
+    queues = [
+        Queue('celery', default_exchange, routing_key='celery'),
+    ]
+
+    # Detect the installed tools and select the corresponding
+    # queues to consume from.
+    for ep in pkg_resources.iter_entry_points(group='reviewbot.tools'):
+        tool_class = ep.load()
+        tool = tool_class()
+        queue_name = '%s.%s' % (ep.name, tool_class.version)
+
+        if tool.check_dependencies():
+            queues.append(Queue(queue_name,
+                                Exchange(queue_name, type='direct'),
+                                routing_key=queue_name))
+        else:
+            logging.warning('%s dependency check failed.', ep.name)
+
+    return queues
+
+
 celery = Celery('reviewbot.celery', include=['reviewbot.tasks'])
-celery.conf.CELERY_QUEUES = [
-    Queue('celery', default_exchange, routing_key='celery'),
-]
-
-
-# Detect the installed tools and select the corresponding
-# queues to consume from.
-for ep in pkg_resources.iter_entry_points(group='reviewbot.tools'):
-    tool_class = ep.load()
-    tool = tool_class()
-    queue_name = '%s.%s' % (ep.name, tool_class.version)
-
-    if tool.check_dependencies():
-        celery.conf.CELERY_QUEUES.append(
-            Queue(queue_name, Exchange(queue_name, type='direct'),
-                  routing_key=queue_name))
-    else:
-        logging.warning('%s dependency check failed.', ep.name)
+celery.conf.CELERY_QUEUES = create_queues()
 
 
 def main():

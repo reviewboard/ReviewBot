@@ -22,15 +22,16 @@
 from __future__ import unicode_literals
 
 from reviewbot.tools import Tool
-from reviewbot.tools.process import execute
-from reviewbot.utils import is_exe_in_path
+from reviewbot.utils.process import execute, is_exe_in_path
 
 
 class CPPCheckTool(Tool):
-    name = 'CPPCheck - Static Code Analysis'
+    """Review Bot tool to run cppcheck."""
+
+    name = 'Cppcheck'
     version = '0.1'
-    description = ('Checks code for errors using Cppcheck - '
-                   'A tool for static C/C++ code analysis')
+    description = ('Checks code for errors using Cppcheck, a tool for static '
+                   'C/C++ code analysis.')
     timeout = 30
     options = [
         {
@@ -39,9 +40,8 @@ class CPPCheckTool(Tool):
             'default': True,
             'field_options': {
                 'label': 'Enable standard style checks',
-                'help_text': 'This will enable the standard style checks '
-                             '- this also enables most warning, style and '
-                             'performance checks.',
+                'help_text': ('Enable the standard style checks, including '
+                              'most warning, style, and performance checks.'),
                 'required': False,
             },
         },
@@ -51,34 +51,51 @@ class CPPCheckTool(Tool):
             'default': False,
             'field_options': {
                 'label': 'Enable ALL error checks',
-                'help_text': 'This will enable ALL the error checks '
-                             '- likely to have many false postives.',
+                'help_text': ('Enable all the error checks. This is likely '
+                              'to include many false positives.'),
                 'required': False,
             },
         },
     ]
 
     def check_dependencies(self):
+        """Verify the tool's dependencies are installed.
+
+        Returns:
+            bool:
+            True if all dependencies for the tool are satisfied. If this
+            returns False, the worker will not listen for this Tool's queue,
+            and a warning will be logged.
+        """
         return is_exe_in_path('cppcheck')
 
-    def handle_file(self, f):
+    def handle_file(self, f, settings):
+        """Perform a review of a single file.
+
+        Args:
+            f (reviewbot.processing.review.File):
+                The file to process.
+
+            settings (dict):
+                Tool-specific settings.
+        """
         if not (f.dest_file.lower().endswith('.cpp') or
                 f.dest_file.lower().endswith('.h') or
                 f.dest_file.lower().endswith('.c')):
             # Ignore the file.
-            return False
+            return
 
         path = f.get_patched_file_path()
         if not path:
-            return False
+            return
 
         enabled_checks = []
 
         # Check the options we want to pass to cppcheck.
-        if self.settings['style_checks_enabled']:
+        if settings['style_checks_enabled']:
             enabled_checks.append('style')
 
-        if self.settings['all_checks_enabled']:
+        if settings['all_checks_enabled']:
             enabled_checks.append('all')
 
         # Create string to pass to cppcheck
@@ -90,7 +107,7 @@ class CPPCheckTool(Tool):
                 'cppcheck',
                 '--template=\"{file}::{line}::{severity}::{id}::{message}\"',
                 '--enable=%s' % enable_settings,
-                path
+                path,
             ],
             split_lines=True,
             ignore_errors=True)
@@ -130,5 +147,3 @@ class CPPCheckTool(Tool):
                     f.comment('%s.\n\nCategory: %s\nSub Category: %s' %
                               (freetext, category, sub_category),
                               linenumber, issue=False)
-
-        return True

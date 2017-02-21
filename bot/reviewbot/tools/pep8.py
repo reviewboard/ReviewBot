@@ -1,14 +1,15 @@
 from __future__ import unicode_literals
 
 from reviewbot.tools import Tool
-from reviewbot.tools.process import execute
-from reviewbot.utils import is_exe_in_path
+from reviewbot.utils.process import execute, is_exe_in_path
 
 
 class PEP8Tool(Tool):
+    """Review Bot tool to run pep8."""
+
     name = 'PEP8 Style Checker'
     version = '0.2'
-    description = "Checks code for style errors using the PEP8 tool."
+    description = 'Checks code for style errors using the PEP8 tool.'
     timeout = 30
     options = [
         {
@@ -27,42 +28,55 @@ class PEP8Tool(Tool):
             'default': "",
             'field_options': {
                 'label': 'Ignore',
-                'help_text': 'A comma seperated list of errors and warnings '
-                             'to ignore. This will be passed to the --ignore '
-                             'command line argument (e.g. E4,W).',
+                'help_text': ('A comma-separated list of errors and warnings '
+                              'to ignore. This will be passed to the --ignore '
+                              'command line argument (e.g. E4,W).'),
                 'required': False,
             },
         },
     ]
 
     def check_dependencies(self):
+        """Verify the tool's dependencies are installed.
+
+        Returns:
+            bool:
+            True if all dependencies for the tool are satisfied. If this
+            returns False, the worker will not listen for this Tool's queue,
+            and a warning will be logged.
+        """
         return is_exe_in_path('pep8')
 
-    def handle_file(self, f):
+    def handle_file(self, f, settings):
+        """Perform a review of a single file.
+
+        Args:
+            f (reviewbot.processing.review.File):
+                The file to process.
+
+            settings (dict):
+                Tool-specific settings.
+        """
         if not f.dest_file.endswith('.py'):
             # Ignore the file.
-            return False
+            return
 
         path = f.get_patched_file_path()
+
         if not path:
-            return False
+            return
 
         output = execute(
             [
                 'pep8',
                 '-r',
-                '--max-line-length=%s' % self.settings['max_line_length'],
-                '--ignore=%s' % self.settings['ignore'],
-                path
+                '--max-line-length=%s' % settings['max_line_length'],
+                '--ignore=%s' % settings['ignore'],
+                path,
             ],
             split_lines=True,
             ignore_errors=True)
 
         for line in output:
-            parsed = line.split(':', 3)
-            lnum = int(parsed[1])
-            col = int(parsed[2])
-            msg = parsed[3]
-            f.comment('Col: %s\n%s' % (col, msg), lnum)
-
-        return True
+            line_num, column, message = line.split(':', 3)
+            f.comment('Col: %s\n%s' % (column, message), int(line_num))

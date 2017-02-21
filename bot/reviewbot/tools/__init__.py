@@ -10,7 +10,7 @@ class Tool(object):
     method.
     """
 
-    name = 'Tool'
+    name = ''
     description = ''
     version = '1'
     options = []
@@ -24,7 +24,6 @@ class Tool(object):
     def check_dependencies(self):
         """Verify the tool's dependencies are installed.
 
-        requires is missing, otherwise it should return True. This can
         Subclasses should implement this to check for scripts or external
         programs the tool assumes exist on the path.
 
@@ -46,46 +45,35 @@ class Tool(object):
             settings (dict):
                 Tool-specific settings.
         """
-        self.review = review
-        self.settings = settings
-        self.processed_files = set()
-        self.ignored_files = set()
+        self.handle_files(review.files, settings)
 
-        self.handle_files(review.files)
-        self.post_process(review)
+    def handle_files(self, files, settings):
+        """Perform a review of all files.
 
-    def handle_files(self, files):
-        """Perform a review of each file."""
+        This may be overridden by subclasses for tools that process all files
+        at once.
+
+        Args:
+            files (list of reviewbot.processing.review.File):
+                The files to process.
+
+            settings (dict):
+                Tool-specific settings.
+        """
         for f in files:
-            if self.handle_file(f):
-                self.processed_files.add(f.dest_file)
-            else:
-                self.ignored_files.add(f.dest_file)
+            self.handle_file(f, settings)
 
-    def handle_file(self, f):
+    def handle_file(self, f, settings):
         """Perform a review of a single file.
 
-        This method should be overridden by a Tool to execute its static
-        analysis.
+        This method may be overridden by subclasses to process an individual
+        file.
 
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-        Returns:
-            bool:
-            Whether the tool executed successfully on the file.
-        """
-        return False
-
-    def post_process(self, review):
-        """Modify the review after the tool has completed.
-
-        This can be overridden by subclasses to make changes to the review
-        before it is published.
-
-        Args:
-            review (reviewbot.processing.review.Review):
-                The review object.
+            settings (dict):
+                Tool-specific settings.
         """
         pass

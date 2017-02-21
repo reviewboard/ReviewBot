@@ -2,17 +2,18 @@ from __future__ import unicode_literals
 
 import re
 
-from reviewbot.processing.filesystem import make_tempfile
 from reviewbot.tools import Tool
-from reviewbot.tools.process import execute
-from reviewbot.utils import is_exe_in_path
+from reviewbot.utils.filesystem import make_tempfile
+from reviewbot.utils.process import execute, is_exe_in_path
 
 
 class JSHintTool(Tool):
+    """Review Bot tool to run jshint."""
+
     name = 'JSHint'
     version = '0.1'
     description = ('Checks JavaScript code for style errors and potential '
-                   'bugs using JSHint.')
+                   'problems using JSHint, a JavaScript Code Quality Tool.')
     timeout = 30
     options = [
         {
@@ -82,40 +83,65 @@ class JSHintTool(Tool):
         r'\S+: line (?P<line_num>\d+), col (?P<col>\d+),(?P<msg>.+)')
 
     def check_dependencies(self):
+        """Verify the tool's dependencies are installed.
+
+        Returns:
+            bool:
+            True if all dependencies for the tool are satisfied. If this
+            returns False, the worker will not listen for this Tool's queue,
+            and a warning will be logged.
+        """
         return is_exe_in_path('jshint')
 
-    def handle_files(self, files):
+    def handle_files(self, files, settings):
+        """Perform a review of all files.
+
+        Args:
+            files (list of reviewbot.processing.review.File):
+                The files to process.
+
+            settings (dict):
+                Tool-specific settings.
+        """
         # Get any extra file extensions we should process.
         self.file_exts = None
 
-        if self.settings['extra_ext_checks']:
+        if settings['extra_ext_checks']:
             self.file_exts = tuple(
-                self.settings['extra_ext_checks'].split(','))
+                settings['extra_ext_checks'].split(','))
 
         # If any configuration was specified, create a temporary config file.
         self.config_file = None
 
-        if self.settings['config']:
-            self.config_file = make_tempfile(content=self.settings['config'])
+        if settings['config']:
+            self.config_file = make_tempfile(content=settings['config'])
 
-        super(JSHintTool, self).handle_files(files)
+        super(JSHintTool, self).handle_files(files, settings)
 
-    def handle_file(self, f):
+    def handle_file(self, f, settings):
+        """Perform a review of a single file.
+
+        Args:
+            f (reviewbot.processing.review.File):
+                The file to process.
+
+            settings (dict):
+                Tool-specific settings.
+        """
         # Check if we should process this file, based on its extension.
         if not (f.dest_file.endswith('.js') or
                 (self.file_exts and f.dest_file.endswith(self.file_exts))):
             # Ignore the file.
-            return False
+            return
 
         path = f.get_patched_file_path()
 
         if not path:
-            return False
+            return
 
-        cmd = ['jshint',
-               '--extract=%s' % self.settings['extract_js_from_html']]
+        cmd = ['jshint', '--extract=%s' % settings['extract_js_from_html']]
 
-        if self.settings['verbose']:
+        if settings['verbose']:
             cmd.append('--verbose')
 
         if self.config_file:
@@ -130,5 +156,3 @@ class JSHintTool(Tool):
             if m:
                 f.comment('Col: %s\n%s' % (m.group('col'), m.group('msg')),
                           int(m.group('line_num')))
-
-        return True
