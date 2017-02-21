@@ -94,7 +94,7 @@ class File(object):
             return None
 
     def comment(self, text, first_line, num_lines=1, issue=None,
-                original=False):
+                rich_text=False, original=False):
         """Make a comment on the file.
 
         Args:
@@ -109,6 +109,9 @@ class File(object):
 
             issue (bool, optional):
                 Whether an issue should be opened.
+
+            rich_text (bool, optional):
+                Whether the comment text should be formatted using Markdown.
 
             original (bool, optional):
                 If True, the ``first_line`` argument corresponds to the line
@@ -127,6 +130,7 @@ class File(object):
                 'num_lines': num_lines,
                 'text': text,
                 'issue_opened': issue,
+                'rich_text': rich_text,
             }
             self.review.comments.append(data)
 
@@ -239,11 +243,8 @@ class Review(object):
         max_comments = self.settings['max_comments']
 
         if len(self.comments) > max_comments:
-            warning = (
-                'WARNING: Number of comments exceeded maximum, showing %d '
-                'of %d.'
-                % (max_comments, len(self.comments))
-            )
+            warning = ('**Warning:** Showing %d of %d failures.'
+                       % (max_comments, len(self.comments)))
 
             if self.body_top:
                 self.body_top = '%s\n%s' % (self.body_top, warning)
@@ -261,6 +262,7 @@ class Review(object):
         return bot_reviews.create(
             review_request_id=self.review_request_id,
             body_top=self.body_top,
+            body_top_rich_text=True,
             body_bottom=self.body_bottom,
             diff_comments=json.dumps(self.comments))
 

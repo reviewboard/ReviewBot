@@ -160,9 +160,19 @@ class ReviewBotReviewResource(WebAPIResource):
                 'type': str,
                 'description': 'The review content above the comments.',
             },
+            'body_top_rich_text': {
+                'type': bool,
+                'description': 'Whether the body-top should be formatted '
+                               'using Markdown.',
+            },
             'body_bottom': {
                 'type': str,
                 'description': 'The review content below the comments.',
+            },
+            'body_bottom_rich_text': {
+                'type': bool,
+                'description': 'Whether the body-bottom should be formatted '
+                               'using Markdown.',
             },
             'diff_comments': {
                 'type': str,
@@ -170,8 +180,16 @@ class ReviewBotReviewResource(WebAPIResource):
             },
         },
     )
-    def create(self, request, review_request_id, ship_it=False, body_top='',
-               body_bottom='', diff_comments=None, *args, **kwargs):
+    def create(self,
+               request,
+               review_request_id,
+               ship_it=False,
+               body_top='',
+               body_top_rich_text=False,
+               body_bottom='',
+               body_bottom_rich_text=False,
+               diff_comments=None,
+               *args, **kwargs):
         """Creates a new review and publishes it."""
         try:
             review_request = resources.review_request.get_object(
@@ -191,7 +209,9 @@ class ReviewBotReviewResource(WebAPIResource):
             review_request=review_request,
             user=request.user,
             body_top=body_top,
+            body_top_rich_text=body_top_rich_text,
             body_bottom=body_bottom,
+            body_bottom_rich_text=body_bottom_rich_text,
             ship_it=ship_it)
 
         if diff_comments:
@@ -217,7 +237,8 @@ class ReviewBotReviewResource(WebAPIResource):
                         first_line=comment['first_line'],
                         num_lines=comment['num_lines'],
                         issue_opened=issue,
-                        issue_status=issue_status)
+                        issue_status=issue_status,
+                        rich_text=comment['rich_text'])
 
             except KeyError:
                 # TODO: Reject the DB transaction.
