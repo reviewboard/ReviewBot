@@ -71,7 +71,8 @@ class ReviewBotExtension(Extension):
     @property
     def celery(self):
         """The celery instance."""
-        self._celery.conf.broker_url = self.settings['broker_url']
+        self._celery.conf['BROKER_URL'] = self.settings['broker_url']
+        self._celery.conf['CELERY_TASK_SERIALIZER'] = 'json'
         return self._celery
 
     @property

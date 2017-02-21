@@ -6,6 +6,11 @@ import pkg_resources
 from celery import Celery
 from kombu import Exchange, Queue
 
+from reviewbot.config import init as init_config
+
+
+celery = None
+
 
 def create_queues():
     """Create the celery queues.
@@ -36,11 +41,13 @@ def create_queues():
     return queues
 
 
-celery = Celery('reviewbot.celery', include=['reviewbot.tasks'])
-celery.conf.CELERY_QUEUES = create_queues()
-
-
 def main():
+    global celery
+
+    init_config()
+    celery = Celery('reviewbot.celery', include=['reviewbot.tasks'])
+    celery.conf.CELERY_ACCEPT_CONTENT = ['json']
+    celery.conf.CELERY_QUEUES = create_queues()
     celery.start()
 
 

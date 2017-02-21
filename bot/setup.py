@@ -31,6 +31,7 @@ setup(
         ],
     },
     install_requires=[
+        'appdirs',
         'buildbot>=0.8.7',
         'celery>=3.0',
         'cpplint>=0.0.3',
