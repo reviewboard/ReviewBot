@@ -24,6 +24,7 @@ setup(
             'cpplint = reviewbot.tools.cpplint:CPPLintTool',
             'jshint = reviewbot.tools.jshint:JSHintTool',
             'pep8 = reviewbot.tools.pep8:PEP8Tool',
+            'pmd = reviewbot.tools.pmd:PMDTool',
             'pyflakes = reviewbot.tools.pyflakes:PyflakesTool',
         ],
     },

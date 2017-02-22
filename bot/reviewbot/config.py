@@ -7,6 +7,7 @@ import appdirs
 
 
 config = {
+    'pmd_path': None,
 }
 
 
