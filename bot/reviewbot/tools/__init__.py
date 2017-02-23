@@ -1,5 +1,9 @@
 from __future__ import unicode_literals
 
+import logging
+
+from reviewbot.utils.filesystem import chdir
+
 
 class Tool(object):
     """The base class all Review Bot tools should inherit from.
@@ -14,12 +18,14 @@ class Tool(object):
     description = ''
     version = '1'
     options = []
+    working_directory_required = False
 
     #: Timeout for tool execution, in seconds.
     timeout = None
 
     def __init__(self):
-        pass
+        """Initialize the tool."""
+        self.output = None
 
     def check_dependencies(self):
         """Verify the tool's dependencies are installed.
@@ -35,7 +41,8 @@ class Tool(object):
         """
         return True
 
-    def execute(self, review, settings={}):
+    def execute(self, review, settings={}, repository=None,
+                base_commit_id=None):
         """Perform a review using the tool.
 
         Args:
@@ -44,6 +51,12 @@ class Tool(object):
 
             settings (dict):
                 Tool-specific settings.
+
+            repository (reviewbot.repositories.Repository):
+                The repository.
+
+            base_commit_id (unicode):
+                The ID of the commit that the patch should be applied to.
         """
         self.handle_files(review.files, settings)
 
@@ -77,3 +90,42 @@ class Tool(object):
                 Tool-specific settings.
         """
         pass
+
+
+class RepositoryTool(Tool):
+    """Tool base class for tools that need access to the entire repository."""
+
+    working_directory_required = True
+
+    def execute(self, review, settings={}, repository=None,
+                base_commit_id=None):
+        """Perform a review using the tool.
+
+        Args:
+            review (reviewbot.processing.review.Review):
+                The review object.
+
+            settings (dict):
+                Tool-specific settings.
+
+            repository (reviewbot.repositories.Repository):
+                The repository.
+
+            base_commit_id (unicode):
+                The ID of the commit that the patch should be applied to.
+        """
+        repository.sync()
+        working_dir = repository.checkout(base_commit_id)
+
+        # Patch all the files first.
+        with chdir(working_dir):
+            for f in review.files:
+                logging.info('Patching %s', f.dest_file)
+
+                with open(f.dest_file, 'wb') as fp:
+                    fp.write(f.patched_file_contents)
+
+                f.patched_file_path = f.dest_file
+
+            # Now run the tool for everything.
+            self.handle_files(review.files, settings)

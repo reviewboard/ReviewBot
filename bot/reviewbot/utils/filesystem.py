@@ -1,10 +1,31 @@
 from __future__ import unicode_literals
 
+import logging
 import os
+import shutil
 import tempfile
+from contextlib import contextmanager
 
 
-tempfiles = []
+tmpdirs = []
+tmpfiles = []
+
+
+@contextmanager
+def chdir(path):
+    """Temporarily change directory into the given working directory.
+
+    Args:
+        path (unicode):
+            The directory to operate within.
+    """
+    cwd = os.getcwd()
+
+    try:
+        os.chdir(path)
+        yield
+    finally:
+        os.chdir(cwd)
 
 
 def cleanup_tempfiles():
@@ -12,15 +33,25 @@ def cleanup_tempfiles():
 
     This will delete all the files created by :py:func:`make_tempfile`.
     """
-    global tempfiles
+    global tmpdirs
+    global tmpfiles
 
-    for tmpfile in tempfiles:
+    for tmpdir in tmpdirs:
         try:
+            logging.debug('Removing temporary directory %s', tmpdir)
+            shutil.rmtree(tmpdir)
+        except:
+            pass
+
+    for tmpfile in tmpfiles:
+        try:
+            logging.debug('Removing temporary file %s', tmpdir)
             os.unlink(tmpfile)
         except:
             pass
 
-    tempfiles = []
+    tmpdirs = []
+    tmpfiles = []
 
 
 def make_tempfile(content=None, extension=''):
@@ -37,11 +68,26 @@ def make_tempfile(content=None, extension=''):
         unicode:
         The name of the new file.
     """
+    global tmpfiles
     fd, tmpfile = tempfile.mkstemp(suffix=extension)
 
     if content:
         os.write(fd, content)
 
     os.close(fd)
-    tempfiles.append(tmpfile)
+    tmpfiles.append(tmpfile)
     return tmpfile
+
+
+def make_tempdir():
+    """Create a temporary directory and return the path.
+
+    Returns:
+        unicode:
+        The name of the new directory.
+    """
+    global tmpdirs
+
+    tmpdir = tempfile.mkdtemp()
+    tmpdirs.append(tmpdir)
+    return tmpdir

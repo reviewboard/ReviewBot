@@ -113,6 +113,8 @@ class ToolResource(WebAPIResource):
                     'tool_options': tool['tool_options'],
                     'in_last_update': True,
                     'timeout': tool['timeout'],
+                    'working_directory_required':
+                        tool['working_directory_required'],
                 })
 
             if not created and not obj.in_last_update:

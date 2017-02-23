@@ -135,15 +135,24 @@ class ReviewBotIntegration(Integration):
                 timeout=tool.timeout,
                 user=user)
 
+            repository = review_request.repository
+            queue = '%s.%s' % (tool.entry_point, tool.version)
+
+            if tool.working_directory_required:
+                queue = '%s.%s' % (queue, repository.name)
+
             extension.celery.send_task(
                 'reviewbot.tasks.RunTool',
                 [
                     server_url,
                     session,
+                    user.username,
                     review_request_id,
                     diffset.revision,
                     status_update.pk,
                     review_settings,
                     tool_options,
+                    repository.name,
+                    diffset.base_commit_id,
                 ],
-                queue='%s.%s' % (tool.entry_point, tool.version))
+                queue=queue)

@@ -9,6 +9,8 @@ from reviewbot.celery import celery
 from rbtools.api.client import RBClient
 
 from reviewbot.processing.review import Review
+from reviewbot.repositories import repositories
+from reviewbot.utils.filesystem import cleanup_tempfiles
 
 
 # TODO: Make the cookie file configurable.
@@ -32,11 +34,14 @@ logger = get_task_logger(__name__)
 @celery.task(ignore_result=True)
 def RunTool(server_url,
             session,
+            username,
             review_request_id,
             diff_revision,
             status_update_id,
             review_settings,
-            tool_options):
+            tool_options,
+            repository_name,
+            base_commit_id):
     """Execute an automated review on a review request.
 
     Args:
@@ -62,108 +67,144 @@ def RunTool(server_url,
         tool_options (dict):
             The tool-specific settings.
 
+        repository_name (unicode):
+            The name of the repository to clone to run the tool, if the tool
+            requires full working directory access.
+
     Returns:
         bool:
         Whether the task completed successfully.
     """
-    routing_key = RunTool.request.delivery_info['routing_key']
-    route_parts = routing_key.partition('.')
-    tool_name = route_parts[0]
-
-    log_detail = ('(server=%s, review_request_id=%s, diff_revision=%s)'
-                  % (server_url, review_request_id, diff_revision))
-
-    logger.info('Running tool "%s" %s', tool_name, log_detail)
-
     try:
-        logger.info('Initializing RB API %s', log_detail)
-        api_client = RBClient(server_url,
-                              cookie_file=COOKIE_FILE,
-                              agent=AGENT,
-                              session=session)
-        api_root = api_client.get_root()
-    except Exception as e:
-        logger.error('Could not contact Review Board server: %s %s',
-                     e, log_detail)
-        return False
+        routing_key = RunTool.request.delivery_info['routing_key']
+        route_parts = routing_key.partition('.')
+        tool_name = route_parts[0]
 
-    logger.info('Loading requested tool "%s" %s', tool_name, log_detail)
-    tools = [
-        entrypoint.load()
-        for entrypoint in pkg_resources.iter_entry_points(
-            group='reviewbot.tools', name=tool_name)
-    ]
+        log_detail = ('(server=%s, review_request_id=%s, diff_revision=%s)'
+                      % (server_url, review_request_id, diff_revision))
 
-    if len(tools) == 0:
-        logger.error('Tool "%s" not found %s', tool_name, log_detail)
-        return False
-    elif len(tools) > 1:
-        logger.error('Tool "%s" is ambiguous (found %s) %s',
-                     tool_name, ', '.join(tool.name for tool in tools),
-                     log_detail)
-        return False
-    else:
-        tool = tools[0]
+        logger.info('Running tool "%s" %s', tool_name, log_detail)
 
-    try:
-        logger.info('Creating status update %s', log_detail)
-        status_update = api_root.get_status_update(
-            review_request_id=review_request_id,
-            status_update_id=status_update_id)
-    except Exception as e:
-        logger.exception('Unable to create status update: %s %s',
+        try:
+            logger.info('Initializing RB API %s', log_detail)
+            api_client = RBClient(server_url,
+                                  cookie_file=COOKIE_FILE,
+                                  agent=AGENT,
+                                  session=session)
+            api_root = api_client.get_root()
+        except Exception as e:
+            logger.error('Could not contact Review Board server: %s %s',
                          e, log_detail)
-        return False
+            return False
 
-    try:
-        logger.info('Initializing review %s', log_detail)
-        review = Review(api_root, review_request_id, diff_revision,
-                        review_settings)
-        status_update.update(description='running...')
-    except Exception as e:
-        logger.exception('Failed to initialize review: %s %s', e, log_detail)
-        status_update.update(state=ERROR, description='internal error.')
-        return False
+        logger.info('Loading requested tool "%s" %s', tool_name, log_detail)
+        tools = [
+            entrypoint.load()
+            for entrypoint in pkg_resources.iter_entry_points(
+                group='reviewbot.tools', name=tool_name)
+        ]
 
-    try:
-        logger.info('Initializing tool "%s %s" %s',
-                    tool.name, tool.version, log_detail)
-        t = tool()
-    except Exception as e:
-        logger.exception('Error initializing tool "%s": %s %s',
-                         tool.name, e, log_detail)
-        status_update.update(state=ERROR, description='internal error.')
-        return False
-
-    try:
-        logger.info('Executing tool "%s" %s', tool.name, log_detail)
-        t.execute(review, settings=tool_options)
-        logger.info('Tool "%s" completed successfully %s',
-                    tool.name, log_detail)
-    except Exception as e:
-        logger.exception('Error executing tool "%s": %s %s',
-                         tool.name, e, log_detail)
-        status_update.update(state=ERROR, description='internal error.')
-        return False
-
-    try:
-        if len(review.comments) == 0:
-            status_update.update(state=DONE_SUCCESS,
-                                 description='passed.')
+        if len(tools) == 0:
+            logger.error('Tool "%s" not found %s', tool_name, log_detail)
+            return False
+        elif len(tools) > 1:
+            logger.error('Tool "%s" is ambiguous (found %s) %s',
+                         tool_name, ', '.join(tool.name for tool in tools),
+                         log_detail)
+            return False
         else:
-            logger.info('Publishing review %s', log_detail)
-            review_id = review.publish().id
+            tool = tools[0]
 
-            status_update.update(state=DONE_FAILURE,
-                                 description='failed.',
-                                 review_id=review_id)
-    except Exception as e:
-        logger.exception('Error when publishing review: %s %s', e, log_detail)
-        status_update.update(state=ERROR, description='internal error.')
-        return False
+        repository = None
 
-    logger.info('Review completed successfully %s', log_detail)
-    return True
+        try:
+            logger.info('Creating status update %s', log_detail)
+            status_update = api_root.get_status_update(
+                review_request_id=review_request_id,
+                status_update_id=status_update_id)
+        except Exception as e:
+            logger.exception('Unable to create status update: %s %s',
+                             e, log_detail)
+            return False
+
+        if tool.working_directory_required:
+            if not base_commit_id:
+                logger.error('Working directory is required but the diffset '
+                             'has no base_commit_id %s', log_detail)
+                status_update.update(
+                    state=ERROR,
+                    description='Diff does not include parent commit '
+                                'information.')
+                return False
+
+            try:
+                repository = repositories[repository_name]
+            except KeyError:
+                logger.error('Unable to find configured repository "%s" %s',
+                             repository_name, log_detail)
+                return False
+
+        try:
+            logger.info('Initializing review %s', log_detail)
+            review = Review(api_root, review_request_id, diff_revision,
+                            review_settings)
+            status_update.update(description='running...')
+        except Exception as e:
+            logger.exception('Failed to initialize review: %s %s', e, log_detail)
+            status_update.update(state=ERROR, description='internal error.')
+            return False
+
+        try:
+            logger.info('Initializing tool "%s %s" %s',
+                        tool.name, tool.version, log_detail)
+            t = tool()
+        except Exception as e:
+            logger.exception('Error initializing tool "%s": %s %s',
+                             tool.name, e, log_detail)
+            status_update.update(state=ERROR, description='internal error.')
+            return False
+
+        try:
+            logger.info('Executing tool "%s" %s', tool.name, log_detail)
+            t.execute(review, settings=tool_options, repository=repository,
+                      base_commit_id=base_commit_id)
+            logger.info('Tool "%s" completed successfully %s',
+                        tool.name, log_detail)
+        except Exception as e:
+            logger.exception('Error executing tool "%s": %s %s',
+                             tool.name, e, log_detail)
+            status_update.update(state=ERROR, description='internal error.')
+            return False
+
+        if t.output:
+            file_attachments = \
+                api_root.get_user_file_attachments(username=username)
+            attachment = \
+                file_attachments.upload_attachment('tool-output', t.output)
+
+            status_update.update(url=attachment.absolute_url,
+                                 url_text='Tool console output')
+
+        try:
+            if len(review.comments) == 0:
+                status_update.update(state=DONE_SUCCESS,
+                                     description='passed.')
+            else:
+                logger.info('Publishing review %s', log_detail)
+                review_id = review.publish().id
+
+                status_update.update(state=DONE_FAILURE,
+                                     description='failed.',
+                                     review_id=review_id)
+        except Exception as e:
+            logger.exception('Error when publishing review: %s %s', e, log_detail)
+            status_update.update(state=ERROR, description='internal error.')
+            return False
+
+        logger.info('Review completed successfully %s', log_detail)
+        return True
+    finally:
+        cleanup_tempfiles()
 
 
 @Panel.register
@@ -204,6 +245,8 @@ def update_tools_list(panel, payload):
                 'description': tool_class.description,
                 'tool_options': json.dumps(tool_class.options),
                 'timeout': tool_class.timeout,
+                'working_directory_required':
+                    tool_class.working_directory_required,
             })
         else:
             logger.warning('%s dependency check failed.', ep.name)
@@ -228,7 +271,6 @@ def update_tools_list(panel, payload):
 
     try:
         api_tools = _get_extension_resource(api_root).get_tools()
-
         api_tools.create(hostname=hostname, tools=json.dumps(tools))
     except Exception as e:
         logger.exception('Problem POSTing tools: %s', e)

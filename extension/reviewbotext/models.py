@@ -22,6 +22,7 @@ class Tool(models.Model):
     enabled = models.BooleanField(default=True)
     in_last_update = models.BooleanField()
     timeout = models.IntegerField(blank=True, null=True)
+    working_directory_required = models.BooleanField(default=False)
 
     #: A JSON list describing the options a tool make take. Each entry is a
     #: dictionary which may define the following fields:

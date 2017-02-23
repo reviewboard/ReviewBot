@@ -138,7 +138,8 @@ class BuildBotTool(Tool):
         },
     ]
 
-    def execute(self, review, settings={}):
+    def execute(self, review, settings={}, repository=None,
+                base_commit_id=None):
         """Perform a review using the tool.
 
         Args:
@@ -147,6 +148,12 @@ class BuildBotTool(Tool):
 
             settings (dict):
                 Tool-specific settings.
+
+            repository (reviewbot.repositories.Repository):
+                The repository.
+
+            base_commit_id (unicode):
+                The ID of the commit that the patch should be applied to.
         """
         cmd = [
             'buildbot',
