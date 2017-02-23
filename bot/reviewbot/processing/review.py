@@ -5,7 +5,7 @@ import os.path
 
 from rbtools.api.errors import APIError
 
-from reviewbot.utils.filesystem import cleanup_tempfiles, make_tempfile
+from reviewbot.utils.filesystem import make_tempfile
 
 
 class File(object):
@@ -36,6 +36,7 @@ class File(object):
         self._api_filediff = api_filediff
         self.filename, self.file_extension = os.path.splitext(
             api_filediff.dest_file)
+        self.patched_file_path = None
 
     @property
     def patched_file_contents(self):
@@ -73,19 +74,22 @@ class File(object):
             The filename of a new temporary file containing the patched file
             contents. If the file is empty, return None.
         """
-        try:
-            contents = self.patched_file_contents
-        except APIError as e:
-            if e.http_status == 404:
-                # This was a deleted file.
-                return None
-            else:
-                raise
-
-        if contents:
-            return make_tempfile(contents, self.file_extension)
+        if self.patched_file_path:
+            return self.patched_file_path
         else:
-            return None
+            try:
+                contents = self.patched_file_contents
+            except APIError as e:
+                if e.http_status == 404:
+                    # This was a deleted file.
+                    return None
+                else:
+                    raise
+
+            if contents:
+                return make_tempfile(contents, self.file_extension)
+            else:
+                return None
 
     def get_original_file_path(self):
         """Fetch the original file and return the filename of it.
@@ -128,6 +132,11 @@ class File(object):
         """
         real_line = self._translate_line_num(first_line)
         modified = self._is_modified(first_line, num_lines)
+
+        if num_lines != 1:
+            last_line = first_line + num_lines - 1
+            real_last_line = self._translate_line_num(last_line)
+            num_lines = real_last_line - real_line + 1
 
         if issue is None:
             issue = self.review.settings['open_issues']
@@ -261,8 +270,6 @@ class Review(object):
                 self.body_top = warning
 
             del self.comments[max_comments:]
-
-        cleanup_tempfiles()
 
         bot_reviews = self.api_root.get_extension(
             extension_name='reviewbotext.extension.ReviewBotExtension'

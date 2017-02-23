@@ -20,6 +20,7 @@ setup(
         ],
         'reviewbot.tools': [
             'buildbot = reviewbot.tools.buildbot:BuildBotTool',
+            'clang = reviewbot.tools.clang:ClangTool',
             'cppcheck = reviewbot.tools.cppcheck:CPPCheckTool',
             'cpplint = reviewbot.tools.cpplint:CPPLintTool',
             'jshint = reviewbot.tools.jshint:JSHintTool',
