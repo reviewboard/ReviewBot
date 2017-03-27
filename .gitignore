@@ -8,5 +8,6 @@ reviewbot-cookies.txt
 .DS_Store
 
 # Directories
+_build
 build
 dist
