@@ -78,5 +78,5 @@ class PEP8Tool(Tool):
             ignore_errors=True)
 
         for line in output:
-            line_num, column, message = line.split(':', 3)
+            filename, line_num, column, message = line.split(':', 3)
             f.comment('Col: %s\n%s' % (column, message), int(line_num))
