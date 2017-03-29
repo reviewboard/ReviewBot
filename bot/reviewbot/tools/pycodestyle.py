@@ -4,12 +4,12 @@ from reviewbot.tools import Tool
 from reviewbot.utils.process import execute, is_exe_in_path
 
 
-class PEP8Tool(Tool):
-    """Review Bot tool to run pep8."""
+class PycodestyleTool(Tool):
+    """Review Bot tool to run pycodestyle."""
 
-    name = 'PEP8 Style Checker'
-    version = '0.2'
-    description = 'Checks code for style errors using the PEP8 tool.'
+    name = 'pycodestyle'
+    version = '0.1'
+    description = 'Checks Python code for style errors.'
     timeout = 30
     options = [
         {
@@ -37,15 +37,15 @@ class PEP8Tool(Tool):
     ]
 
     def check_dependencies(self):
-        """Verify the tool's dependencies are installed.
+        """Verify that the tool's dependencies are installed.
 
         Returns:
             bool:
             True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not listen for this Tool's queue,
+            returns False, the worker will not listed for this Tool's queue,
             and a warning will be logged.
         """
-        return is_exe_in_path('pep8')
+        return is_exe_in_path('pycodestyle')
 
     def handle_file(self, f, settings):
         """Perform a review of a single file.
@@ -57,7 +57,7 @@ class PEP8Tool(Tool):
             settings (dict):
                 Tool-specific settings.
         """
-        if not f.dest_file.endswith('.py'):
+        if not f.dest_file.lower().endswith('.py'):
             # Ignore the file.
             return
 
@@ -68,8 +68,7 @@ class PEP8Tool(Tool):
 
         output = execute(
             [
-                'pep8',
-                '-r',
+                'pycodestyle',
                 '--max-line-length=%s' % settings['max_line_length'],
                 '--ignore=%s' % settings['ignore'],
                 path,
@@ -78,5 +77,8 @@ class PEP8Tool(Tool):
             ignore_errors=True)
 
         for line in output:
-            filename, line_num, column, message = line.split(':', 3)
-            f.comment('Col: %s\n%s' % (column, message), int(line_num))
+            try:
+                filename, line_num, column, message = line.split(':', 3)
+                f.comment(message.strip(), int(line_num))
+            except:
+                pass
