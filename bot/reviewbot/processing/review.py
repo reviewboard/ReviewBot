@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 import json
 import os.path
 
+from rbtools.api.errors import APIError
+
 from reviewbot.utils.filesystem import cleanup_tempfiles, make_tempfile
 
 
@@ -71,7 +73,14 @@ class File(object):
             The filename of a new temporary file containing the patched file
             contents. If the file is empty, return None.
         """
-        contents = self.patched_file_contents
+        try:
+            contents = self.patched_file_contents
+        except APIError as e:
+            if e.http_status == 404:
+                # This was a deleted file.
+                return None
+            else:
+                raise
 
         if contents:
             return make_tempfile(contents, self.file_extension)
