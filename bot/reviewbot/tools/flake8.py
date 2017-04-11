@@ -1,15 +1,17 @@
+"""Review Bot tool to run flake8."""
+
 from __future__ import unicode_literals
 
 from reviewbot.tools import Tool
 from reviewbot.utils.process import execute, is_exe_in_path
 
 
-class PycodestyleTool(Tool):
-    """Review Bot tool to run pycodestyle."""
+class Flake8Tool(Tool):
+    """Review Bot tool to run flake8."""
 
-    name = 'pycodestyle'
+    name = 'flake8'
     version = '0.1'
-    description = 'Checks Python code for style errors.'
+    description = 'Checks Python code for style and programming errors.'
     timeout = 30
     options = [
         {
@@ -45,7 +47,7 @@ class PycodestyleTool(Tool):
             returns False, the worker will not listed for this Tool's queue,
             and a warning will be logged.
         """
-        return is_exe_in_path('pycodestyle')
+        return is_exe_in_path('flake8')
 
     def handle_file(self, f, settings):
         """Perform a review of a single file.
@@ -68,7 +70,7 @@ class PycodestyleTool(Tool):
 
         output = execute(
             [
-                'pycodestyle',
+                'flake8',
                 '--max-line-length=%s' % settings['max_line_length'],
                 '--ignore=%s' % settings['ignore'],
                 path,

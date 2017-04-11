@@ -11,6 +11,7 @@ Review Bot Tools
    clang
    cppcheck
    cpplint
+   flake8
    jshint
    pmd
    pycodestyle

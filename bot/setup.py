@@ -23,6 +23,7 @@ setup(
             'clang = reviewbot.tools.clang:ClangTool',
             'cppcheck = reviewbot.tools.cppcheck:CPPCheckTool',
             'cpplint = reviewbot.tools.cpplint:CPPLintTool',
+            'flake8 = reviewbot.tools.flake8:Flake8Tool',
             'jshint = reviewbot.tools.jshint:JSHintTool',
             'pmd = reviewbot.tools.pmd:PMDTool',
             'pycodestyle = reviewbot.tools.pycodestyle:PycodestyleTool',
@@ -34,8 +35,9 @@ setup(
         'buildbot>=0.8.7',
         'celery>=3.0,<4.0',
         'cpplint>=0.0.3',
+        'flake8>=3.3.0',
         'pycodestyle>=2.3.1',
-        'pyflakes>=0.5.0',
+        'pyflakes>=1.5.0',
         'RBTools>=0.6.0',
     ],
     classifiers=[
