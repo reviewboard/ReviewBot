@@ -37,7 +37,7 @@ def create_queues():
                 # Set up a queue for each configured repository. This way only
                 # workers which have the relevant repository configured will
                 # pick up applicable tasks.
-                for repo_name in repositories():
+                for repo_name in repositories:
                     repo_queue_name = '%s.%s' % (queue_name, repo_name)
 
                     queues.append(Queue(
