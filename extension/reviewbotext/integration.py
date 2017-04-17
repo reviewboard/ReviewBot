@@ -143,16 +143,16 @@ class ReviewBotIntegration(Integration):
 
             extension.celery.send_task(
                 'reviewbot.tasks.RunTool',
-                [
-                    server_url,
-                    session,
-                    user.username,
-                    review_request_id,
-                    diffset.revision,
-                    status_update.pk,
-                    review_settings,
-                    tool_options,
-                    repository.name,
-                    diffset.base_commit_id,
-                ],
+                kwargs={
+                    'server_url': server_url,
+                    'session': session,
+                    'username': user.username,
+                    'review_request_id': review_request_id,
+                    'diff_revision': diffset.revision,
+                    'status_update_id': status_update.pk,
+                    'review_settings': review_settings,
+                    'tool_options': tool_options,
+                    'repository_name': repository.name,
+                    'base_commit_id': diffset.base_commit_id,
+                },
                 queue=queue)

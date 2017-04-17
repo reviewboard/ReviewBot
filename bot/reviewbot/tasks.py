@@ -32,16 +32,17 @@ logger = get_task_logger(__name__)
 
 
 @celery.task(ignore_result=True)
-def RunTool(server_url,
-            session,
-            username,
-            review_request_id,
-            diff_revision,
-            status_update_id,
-            review_settings,
-            tool_options,
-            repository_name,
-            base_commit_id):
+def RunTool(server_url='',
+            session='',
+            username='',
+            review_request_id=-1,
+            diff_revision=-1,
+            status_update_id=-1,
+            review_settings={},
+            tool_options={},
+            repository_name='',
+            base_commit_id='',
+            *args, **kwargs):
     """Execute an automated review on a review request.
 
     Args:
@@ -50,6 +51,9 @@ def RunTool(server_url,
 
         session (unicode):
             The encoded session identifier.
+
+        username (unicode):
+            The name of the user who owns the ``session``.
 
         review_request_id (int):
             The ID of the review request being reviewed (ID for use in the
@@ -70,6 +74,17 @@ def RunTool(server_url,
         repository_name (unicode):
             The name of the repository to clone to run the tool, if the tool
             requires full working directory access.
+
+        base_commit_id (unicode):
+            The ID of the commit that the patch should be applied to.
+
+        args (tuple):
+            Any additional positional arguments (perhaps used by a newer
+            version of the Review Bot extension).
+
+        kwargs (dict):
+            Any additional keyword arguments (perhaps used by a newer version
+            of the Review Bot extension).
 
     Returns:
         bool:
