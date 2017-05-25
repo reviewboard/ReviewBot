@@ -8,7 +8,7 @@ class PyflakesTool(Tool):
     """Review Bot tool to run pyflakes."""
 
     name = 'Pyflakes'
-    version = '0.1'
+    version = '1.0'
     description = 'Checks Python code for errors using Pyflakes.'
     timeout = 30
 

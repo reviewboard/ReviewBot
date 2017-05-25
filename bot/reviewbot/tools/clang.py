@@ -12,7 +12,7 @@ class ClangTool(RepositoryTool):
     """Review Bot tool to run clang --analyze."""
 
     name = 'Clang Static Analyzer'
-    version = '0.1'
+    version = '1.0'
     description = 'Checks code using clang --analyze.'
     timeout = 30
     options = [

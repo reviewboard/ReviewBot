@@ -29,7 +29,7 @@ class CPPCheckTool(Tool):
     """Review Bot tool to run cppcheck."""
 
     name = 'Cppcheck'
-    version = '0.1'
+    version = '1.0'
     description = ('Checks code for errors using Cppcheck, a tool for static '
                    'C/C++ code analysis.')
     timeout = 30

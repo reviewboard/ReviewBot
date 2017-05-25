@@ -8,7 +8,7 @@ class PycodestyleTool(Tool):
     """Review Bot tool to run pycodestyle."""
 
     name = 'pycodestyle'
-    version = '0.1'
+    version = '1.0'
     description = 'Checks Python code for style errors.'
     timeout = 30
     options = [

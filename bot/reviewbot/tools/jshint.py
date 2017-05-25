@@ -11,7 +11,7 @@ class JSHintTool(Tool):
     """Review Bot tool to run jshint."""
 
     name = 'JSHint'
-    version = '0.1'
+    version = '1.0'
     description = ('Checks JavaScript code for style errors and potential '
                    'problems using JSHint, a JavaScript Code Quality Tool.')
     timeout = 30

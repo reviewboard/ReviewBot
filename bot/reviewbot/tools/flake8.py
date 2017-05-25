@@ -10,7 +10,7 @@ class Flake8Tool(Tool):
     """Review Bot tool to run flake8."""
 
     name = 'flake8'
-    version = '0.1'
+    version = '1.0'
     description = 'Checks Python code for style and programming errors.'
     timeout = 30
     options = [

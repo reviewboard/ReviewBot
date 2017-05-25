@@ -31,7 +31,7 @@ class CPPLintTool(Tool):
     """Review Bot tool to run cpplint."""
 
     name = 'cpplint'
-    version = '0.1'
+    version = '1.0'
     description = ("Checks code for style errors using Google's cpplint "
                    "tool.")
     timeout = 30

@@ -11,7 +11,7 @@ class PMDTool(Tool):
     """Review Bot tool to run PMD."""
 
     name = 'PMD'
-    version = '0.1'
+    version = '1.0'
     description = 'Checks code for errors using the PMD source code checker.'
     timeout = 30
     options = [

@@ -8,7 +8,7 @@ class BuildBotTool(Tool):
     """Review Bot tool to do a build using `buildbot try`."""
 
     name = 'BuildBot try'
-    version = '0.2'
+    version = '1.0'
     description = ('Runs the buildbot try command and posts the result of the '
                    'build.')
     options = [
