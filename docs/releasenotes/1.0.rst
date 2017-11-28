@@ -1,0 +1,43 @@
+============================
+Review Bot 1.0 Release Notes
+============================
+
+**Release date**: TBD
+
+
+This is the first public release of Review Bot. Review Bot is a tool which
+integrates with Review Board 3.0 and newer which can run static analysis tools
+on prospective code changes and post the results as a :ref:`status update
+<rb3.0:status-updates>` on the review request.
+
+Review Bot has two major components: ``reviewbot-extension``, a Review Board
+extension which triggers the tools, and ``reviewbot-worker``, a service which
+runs the tools. It also requires an AMQP server, such as RabbitMQ_.
+
+This release includes support for the following tools:
+
+* :ref:`BuildBot "try" <reviewbot1.0:tool-buildbot>`
+* :ref:`Clang Static Analyzer <reviewbot1.0:tool-clang>`
+* :ref:`Cppcheck <reviewbot1.0:tool-cppcheck>`
+* :ref:`CppLint <reviewbot1.0:tool-cpplint>`
+* :ref:`flake8 <reviewbot1.0:tool-flake8>`
+* :ref:`JSHint <reviewbot1.0:tool-jshint>`
+* :ref:`PMD <reviewbot1.0:tool-pmd>`
+* :ref:`pycodestyle <reviewbot1.0:tool-pycodestyle>`
+* :ref:`pyflakes <reviewbot1.0:tool-pyflakes>`
+
+.. _RabbitMQ: https://www.rabbitmq.com/
+
+
+Contributors
+============
+
+* Allyshia Sewdat
+* Anselina Chia
+* Christian Hammond
+* Daniel Laird
+* David Trowbridge
+* Max Rabkin
+* Ross Guairno
+* Steven MacLeod
+* Wesley Ellis
