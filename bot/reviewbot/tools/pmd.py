@@ -62,6 +62,7 @@ class PMDTool(Tool):
                 '-R', settings['rulesets'],
                 '-f', 'csv',
             ],
+            with_errors=False,
             split_lines=True,
             ignore_errors=True)
 
