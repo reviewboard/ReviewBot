@@ -9,7 +9,7 @@ $(function() {
             const selectedTool = parseInt($tool.val(), 10);
             let $lastVisibleChild = null;
 
-            $toolOptions.children('.form-row').each((i, el) => {
+            $toolOptions.find('.form-row').each((i, el) => {
                 const $el = $(el);
 
                 if ($el.data('tool-id') === selectedTool) {
