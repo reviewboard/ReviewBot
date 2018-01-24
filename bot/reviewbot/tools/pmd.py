@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
 
 import csv
+import logging
 
 from reviewbot.config import config
 from reviewbot.tools import Tool
+from reviewbot.utils.filesystem import make_tempfile
 from reviewbot.utils.process import execute, is_exe_in_path
 
 
@@ -21,9 +23,17 @@ class PMDTool(Tool):
             'default': '',
             'field_options': {
                 'label': 'Rulesets',
-                'help_text': 'A comma-separated list of rulesets to apply.',
+                'help_text': 'A comma-separated list of rulesets to apply or'
+                             'an XML configuration starting with "<?xml"',
                 'required': True,
             },
+            'widget': {
+                'type': 'django.forms.Textarea',
+                'attrs': {
+                    'cols': 80,
+                    'rows': 10,
+                },
+            }
         },
     ]
 
@@ -54,19 +64,29 @@ class PMDTool(Tool):
         if not path:
             return
 
-        output = execute(
+        rulesets = settings['rulesets']
+
+        if rulesets.startswith('<?xml'):
+            rulesets = make_tempfile(rulesets)
+
+        outfile = make_tempfile()
+
+        execute(
             [
                 config['pmd_path'],
                 'pmd',
                 '-d', path,
-                '-R', settings['rulesets'],
+                '-R', rulesets,
                 '-f', 'csv',
+                '-r', outfile
             ],
-            with_errors=False,
-            split_lines=True,
             ignore_errors=True)
 
-        reader = csv.DictReader(output)
+        with open(outfile) as f:
+            reader = csv.DictReader(f)
 
-        for row in reader:
-            f.comment(row['Description'], int(row['Line']))
+            for row in reader:
+                try:
+                    f.comment(row['Description'], int(row['Line']))
+                except Exception as e:
+                    logging.error('Cannot parse line "%s": %s', row, e)
