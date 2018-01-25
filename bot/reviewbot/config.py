@@ -8,6 +8,7 @@ import appdirs
 
 config = {
     'pmd_path': None,
+    'checkstyle_path': None,
     'repositories': [],
 }
 

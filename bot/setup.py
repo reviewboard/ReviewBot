@@ -20,6 +20,7 @@ setup(
         ],
         'reviewbot.tools': [
             'buildbot = reviewbot.tools.buildbot:BuildBotTool',
+            'checkstyle = reviewbot.tools.checkstyle:CheckstyleTool',
             'clang = reviewbot.tools.clang:ClangTool',
             'cppcheck = reviewbot.tools.cppcheck:CPPCheckTool',
             'cpplint = reviewbot.tools.cpplint:CPPLintTool',
