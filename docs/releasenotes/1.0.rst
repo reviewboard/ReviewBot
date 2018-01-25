@@ -17,6 +17,7 @@ runs the tools. It also requires an AMQP server, such as RabbitMQ_.
 This release includes support for the following tools:
 
 * :ref:`BuildBot "try" <reviewbot1.0:tool-buildbot>`
+* :ref:`Checkstyle <reviewbot1.0:tool-checkstyle>`
 * :ref:`Clang Static Analyzer <reviewbot1.0:tool-clang>`
 * :ref:`Cppcheck <reviewbot1.0:tool-cppcheck>`
 * :ref:`CppLint <reviewbot1.0:tool-cpplint>`
