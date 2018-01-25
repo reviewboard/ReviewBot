@@ -44,7 +44,7 @@ class Flake8Tool(Tool):
         Returns:
             bool:
             True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not listed for this Tool's queue,
+            returns False, the worker will not be listed for this Tool's queue,
             and a warning will be logged.
         """
         return is_exe_in_path('flake8')
@@ -85,5 +85,5 @@ class Flake8Tool(Tool):
 
                 line_num, column, message = line.split(':', 2)
                 f.comment(message.strip(), int(line_num))
-            except:
+            except Exception:
                 pass
