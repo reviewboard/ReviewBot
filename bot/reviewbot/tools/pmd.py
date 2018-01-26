@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import csv
 import logging
+from os.path import splitext
 
 from reviewbot.config import config
 from reviewbot.tools import Tool
@@ -15,7 +16,7 @@ class PMDTool(Tool):
     name = 'PMD'
     version = '1.0'
     description = 'Checks code for errors using the PMD source code checker.'
-    timeout = 30
+    timeout = 90
     options = [
         {
             'name': 'rulesets',
@@ -23,7 +24,7 @@ class PMDTool(Tool):
             'default': '',
             'field_options': {
                 'label': 'Rulesets',
-                'help_text': 'A comma-separated list of rulesets to apply or'
+                'help_text': 'A comma-separated list of rulesets to apply or '
                              'an XML configuration starting with "<?xml"',
                 'required': True,
             },
@@ -34,6 +35,17 @@ class PMDTool(Tool):
                     'rows': 10,
                 },
             }
+        },
+        {
+            'name': 'file_ext',
+            'field_type': 'django.forms.CharField',
+            'default': 'java',
+            'field_options': {
+                'label': 'Scan files',
+                'help_text': 'Comma-separated list of file extensions '
+                             'to scan. Leave it empty to check any file.',
+                'required': False,
+            },
         },
     ]
 
@@ -59,6 +71,15 @@ class PMDTool(Tool):
             settings (dict):
                 Tool-specific settings.
         """
+        file_ext = settings['file_ext'].strip()
+
+        if file_ext:
+            ext = splitext(f.dest_file)[1][1:]
+
+            if not ext.lower() in file_ext.split(','):
+                # Ignore the file.
+                return
+
         path = f.get_patched_file_path()
 
         if not path:
@@ -82,8 +103,8 @@ class PMDTool(Tool):
             ],
             ignore_errors=True)
 
-        with open(outfile) as f:
-            reader = csv.DictReader(f)
+        with open(outfile) as result:
+            reader = csv.DictReader(result)
 
             for row in reader:
                 try:
