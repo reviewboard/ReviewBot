@@ -2,7 +2,7 @@
 Review Bot 1.0 Release Notes
 ============================
 
-**Release date**: TBD
+**Release date**: January 31, 2018
 
 
 This is the first public release of Review Bot. Review Bot is a tool which
