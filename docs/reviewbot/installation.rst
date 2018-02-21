@@ -79,6 +79,16 @@ To install the Review Bot worker, run::
     $ sudo pip install reviewbot-worker
 
 
+Starting the Worker
+-------------------
+
+Once the worker is installed and your message broker is running, you can start
+the worker node. This is done via the following command (replacing
+:samp:`<broker_url>` with the URL to your message broker)::
+
+    $ reviewbot worker -b <broker_url>
+
+
 Additional Tool Dependencies
 ============================
 
