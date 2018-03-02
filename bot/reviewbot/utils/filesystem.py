@@ -45,7 +45,7 @@ def cleanup_tempfiles():
 
     for tmpfile in tmpfiles:
         try:
-            logging.debug('Removing temporary file %s', tmpdir)
+            logging.debug('Removing temporary file %s', tmpfile)
             os.unlink(tmpfile)
         except:
             pass
