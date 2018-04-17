@@ -109,7 +109,7 @@ class CPPLintTool(Tool):
             output = execute(
                 [
                     'cpplint',
-                    '--verbose=%i' % settings['verbosity'],
+                    '--verbose=%s' % self.settings['verbosity'],
                     path,
                 ],
                 split_lines=True,
@@ -145,8 +145,5 @@ class CPPLintTool(Tool):
                 # verbosity (we just want the number between [])
                 verbosity = match[4][2:-1].strip()
 
-            # If we found a matching_obj then the variables will not be empty
-            # and thus we can add a comment to this file object.
-            if matching_obj:
                 f.comment('%s.\n\nError Group: %s\nVerbosity Level: %s' %
                           (freetext, category, verbosity), linenumber)
