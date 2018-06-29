@@ -76,8 +76,7 @@ class Flake8Tool(Tool):
                 '--ignore=%s' % settings['ignore'],
                 path,
             ],
-            split_lines=True,
-            ignore_errors=True)
+            split_lines=True)
 
         for line in output:
             try:
