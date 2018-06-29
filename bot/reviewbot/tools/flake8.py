@@ -71,6 +71,7 @@ class Flake8Tool(Tool):
         output = execute(
             [
                 'flake8',
+                '--exit-zero',
                 '--max-line-length=%s' % settings['max_line_length'],
                 '--ignore=%s' % settings['ignore'],
                 path,
