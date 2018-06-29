@@ -101,13 +101,13 @@ Repositories
 Some tools require a full clone of the source repository, because they may need
 access to all files, not just those which have been changed.
 
-Right now, Review Bot supports full repository access for Git repositories.
+Right now, Review Bot supports full repository access for Git and hg repositories.
 This requires configuring each repository on the worker, which allows different
 repositories to be spread across different hosts. These are specified in the
 worker config file as a list of dictionaries, with three fields. The ``name``
 should be the configured name of the repository inside the Review Board admin
-interface. The ``type`` should currently always be ``git``, and ``clone_path``
-should be set to the git URL (possibly including credentials) to clone the
+interface. The ``type`` should currently be ``git`` or ``hg``, and ``clone_path``
+should be set to the git or hg URL (possibly including credentials) to clone the
 repository from.
 
 .. code-block:: python
@@ -122,5 +122,10 @@ repository from.
            'name': 'Git',
            'type': 'git',
            'clone_path': 'https://github.com/git/git.git',
+       },
+       {
+           'name': 'MercurialRockz',
+           'type': 'hg',
+           'clone_path': 'https://www.mercurial-scm.org/repo/hg/',
        },
    ]
