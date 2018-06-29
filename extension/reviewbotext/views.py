@@ -241,7 +241,7 @@ class WorkerStatusView(View):
                 reply = extension.celery.control.broadcast('update_tools_list',
                                                            payload=payload,
                                                            reply=True,
-                                                           timeout=2)
+                                                           timeout=10)
 
                 response = {
                     'state': 'success',
