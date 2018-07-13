@@ -56,6 +56,21 @@ class CPPCheckTool(Tool):
                 'required': False,
             },
         },
+        {
+            'name': 'force_language',
+            'field_type': 'django.forms.ChoiceField',
+            'field_options': {
+                'label': 'Use language',
+                'help_text': ('Force cppcheck to use a specific language.'),
+                'choices': (
+                    ('', 'auto-detect'),
+                    ('c', 'C'),
+                    ('c++', 'C++'),
+                ),
+                'initial': '',
+                'required': False,
+            },
+        },
     ]
 
     def check_dependencies(self):
@@ -101,16 +116,21 @@ class CPPCheckTool(Tool):
         # Create string to pass to cppcheck
         enable_settings = '%s' % ','.join(map(str, enabled_checks))
 
+        cppcheck_args = [
+            'cppcheck',
+            '--template=\"{file}::{line}::{severity}::{id}::{message}\"',
+            '--enable=%s' % enable_settings,
+        ]
+
+        lang = settings['force_language'].strip()
+
+        if lang:
+            cppcheck_args.append('--language=%s' % lang)
+
+        cppcheck_args.append(path)
+
         # Run the script and capture the output.
-        output = execute(
-            [
-                'cppcheck',
-                '--template=\"{file}::{line}::{severity}::{id}::{message}\"',
-                '--enable=%s' % enable_settings,
-                path,
-            ],
-            split_lines=True,
-            ignore_errors=True)
+        output = execute(cppcheck_args, split_lines=True, ingore_errors=True)
 
         # Now for each line extract the fields and add a comment to the file.
         for line in output:
