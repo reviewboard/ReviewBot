@@ -1,0 +1,79 @@
+.. default-intersphinx:: reviewbot1.0
+
+
+==============================
+Review Bot 1.0.1 Release Notes
+==============================
+
+**Release date**: TBD
+
+
+New Features
+============
+
+* Allow forcing the language for cppcheck (:bug:`4717`).
+
+  :ref:`tool-cppcheck` will default to treating ``.h`` files as C, which will
+  show errors if they're actually C++. You can now force a cppcheck integration
+  configuration to use a specific language.
+
+  Patch by André Klitzing.
+
+* Added full-repository tool support for Mercurial repositories.
+
+  Some tools (such as the ``clang`` static analyzer) need to run on the full
+  repository instead of individual files. This requires Review Bot to create a
+  checkout of the repository. Review Bot can now check out Mercurial
+  repositories in addition to Git.
+
+  Patch by André Klitzing.
+
+
+Bug Fixes
+=========
+
+* Increased the worker detection timeout.
+
+  If a worker node took more than 2 seconds to reply, the detection step in the
+  Review Bot extension configuration page would fail. This timeout has been
+  increased to 10 seconds to allow slower nodes to reply.
+
+* Fixed worker API authentication when running with Review Board 3.0.8+.
+
+  Some internal changes in Review Board 3.0.8 broke the creation of session
+  keys for the worker to authenticate to the API.
+
+* Fixed errors in integration configuration when a tool was not selected
+  (:bug:`4713`).
+
+  Attempting to save an integration configuration without selecting a tool would
+  fail without displaying an error message.
+
+  Patch by Joshua Cannon.
+
+* Fixed reporting of internal errors in flake8 (:bug:`4710`).
+
+  If :ref:`tool-flake8` failed with an internal error, it would report the tool
+  as having passed. These errors are now properly shown.
+
+  Patch by Joshua Cannon.
+
+* Fixed result reporting for cpplint (:bug:`4671`).
+
+  The :ref:`tool-cpplint` tool had some bugs preventing it from properly
+  reporting results. These have been fixed.
+
+  Patch by Sujeevan Rasaratnam.
+
+* Fixed clean-up of temporary files (:bug:`4640`).
+
+  Temporary files were not being properly deleted after each tool run.
+
+
+Contributors
+============
+
+* André Klitzing
+* David Trowbridge
+* Joshua Cannon
+* Sujeevan Rasaratnam
