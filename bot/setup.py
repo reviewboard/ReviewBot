@@ -43,8 +43,6 @@ setup(
         'celery>=3.0,<4.0',
         'cpplint>=0.0.3',
         'flake8>=3.3.0',
-        'pycodestyle>=2.3.1',
-        'pyflakes>=1.5.0',
         'RBTools>=0.7.10',
     ],
     classifiers=[
