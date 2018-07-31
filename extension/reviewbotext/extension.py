@@ -8,6 +8,7 @@ from django.http import HttpRequest
 from django.utils.importlib import import_module
 from django.utils.translation import ugettext_lazy as _
 from djblets.db.query import get_object_or_none
+from reviewboard.accounts.backends import auth_backends
 from reviewboard.admin.server import get_server_url
 from reviewboard.extensions.base import Extension
 from reviewboard.extensions.hooks import IntegrationHook
@@ -98,7 +99,15 @@ class ReviewBotExtension(Extension):
             The session key of the new user session.
         """
         user = self.user
-        user.backend = 'reviewboard.accounts.backends.StandardAuthBackend'
+
+        # Review Board 3.0.8 moved all the auth backends into their own
+        # modules. While the old path works for importing, it won't work
+        # here because this is used to index into a dict of loaded backends
+        # within the django auth middleware. 3.0.8 also shipped with a bug in
+        # get_auth_backend(), so we have to use get() instead.
+        backend_cls = auth_backends.get('backend_id', 'builtin')
+        user.backend = '%s.%s' % (backend_cls.__module__, backend_cls.__name__)
+
         engine = import_module(settings.SESSION_ENGINE)
 
         # Create a fake request to store login details.

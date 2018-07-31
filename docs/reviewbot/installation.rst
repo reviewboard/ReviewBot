@@ -96,3 +96,14 @@ Many Review Bot tools will install the needed dependencies automatically, but
 some will require manual installation of additional components. See the
 individual documentation for each tool for installation requirements and
 instructions.
+
+
+Running the Review Bot Worker
+=============================
+
+To start the worker process, run :command:`reviewbot worker -b broker_url`
+(where ``broker_url`` is the URL of your RabbitMQ or other message broker).
+It's recommended to set this up to run as a service when the server boots. See
+the documentation on `daemonizing celery`_ for more details.
+
+.. _daemonizing celery: https://docs.celeryproject.org/en/latest/userguide/daemonizing.html

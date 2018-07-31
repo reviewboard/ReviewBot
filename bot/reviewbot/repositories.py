@@ -86,6 +86,59 @@ class GitRepository(Repository):
         return workdir
 
 
+class HgRepository(Repository):
+    """A hg repository."""
+
+    def __init__(self, name, clone_path):
+        """Initialize the repository.
+
+        Args:
+            name (unicode):
+                The configured name of the repository.
+
+            clone_path (unicode):
+                The path of the hg repository to clone.
+        """
+        self.name = name
+        self.clone_path = clone_path
+        self.repo_path = os.path.join(appdirs.site_data_dir('reviewbot'),
+                                      'repositories', name)
+
+    def sync(self):
+        """Sync the latest state of the repository."""
+        if not os.path.exists(self.repo_path):
+            os.makedirs(self.repo_path)
+
+            logging.info('Cloning repository %s to %s',
+                         self.clone_path, self.repo_path)
+            execute(['hg', 'clone', '-U', self.clone_path,
+                     self.repo_path])
+        else:
+            logging.info('Pulling into existing repository %s',
+                         self.repo_path)
+            execute(['hg', '-R', self.repo_path, 'pull'])
+
+    def checkout(self, commit_id):
+        """Check out the given commit.
+
+        Args:
+            commit_id (unicode):
+                The ID of the commit to check out.
+
+        Returns:
+            unicode:
+            The name of a directory with the given checkout.
+        """
+        workdir = make_tempdir()
+
+        logging.info('Creating working tree for commit ID %s in %s', commit_id,
+                     workdir)
+        execute(['hg', '-R', self.repo_path, 'archive', '-r', commit_id,
+                 '-t', 'files', workdir])
+
+        return workdir
+
+
 def init_repositories():
     """Set up configured repositories."""
     global repositories
@@ -97,6 +150,9 @@ def init_repositories():
         if repo_type == 'git':
             repositories[repo_name] = \
                 GitRepository(repo_name, repository['clone_path'])
+        elif repo_type == 'hg':
+            repositories[repo_name] = \
+                HgRepository(repo_name, repository['clone_path'])
         else:
             logging.error('Unknown type "%s" for configured repository %s',
                           repo_type, repo_name)

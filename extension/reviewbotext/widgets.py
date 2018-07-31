@@ -166,7 +166,7 @@ class ToolOptionsWidget(MultiWidget):
         # This is a little bit sketchy because it means we're reaching into
         # data owned by a different form field (the tool). That said, I don't
         # know that there's a clean way to do this otherwise.
-        selected_tool = int(data['tool'])
+        selected_tool = int(data['tool'] or 0)
 
         result = {}
 

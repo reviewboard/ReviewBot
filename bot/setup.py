@@ -1,7 +1,12 @@
 #!/usr/bin/env python
+
 from setuptools import find_packages, setup
 
 from reviewbot import get_package_version
+
+
+with open('README.rst', 'r') as fp:
+    long_description = fp.read()
 
 
 setup(
@@ -9,6 +14,7 @@ setup(
     version=get_package_version(),
     license='MIT',
     description='Review Bot, the automated code reviewer (worker)',
+    long_description=long_description,
     author='Beanbag, Inc.',
     author_email='support@beanbaginc.com',
     maintainer='Beanbag, Inc.',
@@ -37,17 +43,18 @@ setup(
         'celery>=3.0,<4.0',
         'cpplint>=0.0.3',
         'flake8>=3.3.0',
-        'pycodestyle>=2.3.1',
-        'pyflakes>=1.5.0',
         'RBTools>=0.7.10',
     ],
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
         'Topic :: Software Development',
+        'Topic :: Software Development :: Quality Assurance',
     ],
 )
