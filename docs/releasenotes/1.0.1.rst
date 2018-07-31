@@ -5,7 +5,7 @@
 Review Bot 1.0.1 Release Notes
 ==============================
 
-**Release date**: TBD
+**Release date**: July 31, 2018
 
 
 New Features
