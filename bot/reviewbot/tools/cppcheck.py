@@ -130,7 +130,7 @@ class CPPCheckTool(Tool):
         cppcheck_args.append(path)
 
         # Run the script and capture the output.
-        output = execute(cppcheck_args, split_lines=True, ingore_errors=True)
+        output = execute(cppcheck_args, split_lines=True, ignore_errors=True)
 
         # Now for each line extract the fields and add a comment to the file.
         for line in output:
