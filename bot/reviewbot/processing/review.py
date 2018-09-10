@@ -130,6 +130,10 @@ class File(object):
                 If True, the ``first_line`` argument corresponds to the line
                 number in the original file, instead of the patched file.
         """
+        # Snap numbers less than 1 (mainly 0) to 1.
+        # (Some tools report general file errors as being on line 0)
+        first_line = max(1, first_line)
+
         real_line = self._translate_line_num(first_line)
         modified = self._is_modified(first_line, num_lines)
 
