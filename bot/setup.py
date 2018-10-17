@@ -39,12 +39,12 @@ setup(
     },
     install_requires=[
         'appdirs',
-        'buildbot>=0.8.7',
         'celery>=3.0,<4.0',
         'RBTools>=0.7.10',
     ],
     extras_require={
         'all': [
+            'buildbot>=0.8.7',
             'cpplint>=0.0.3',
             'flake8>=3.3.0',
             'pycodestyle',

@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from reviewbot.tools import Tool
-from reviewbot.utils.process import execute
+from reviewbot.utils.process import execute, is_exe_in_path
 
 
 class BuildBotTool(Tool):
@@ -137,6 +137,17 @@ class BuildBotTool(Tool):
             },
         },
     ]
+
+    def check_dependencies(self):
+        """Verify the tool's dependencies are installed.
+
+        Returns:
+            bool:
+            True if all dependencies for the tool are satisfied. If this
+            returns False, the worker will not listen for this Tool's queue,
+            and a warning will be logged.
+        """
+        return is_exe_in_path('buildbot')
 
     def execute(self, review, settings={}, repository=None,
                 base_commit_id=None):
