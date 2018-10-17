@@ -13,5 +13,5 @@ CppLint_ is a tool which checks C++ code against `Google's style guide`_.
 Installation
 ============
 
-The necessary dependencies for this tool are installed automatically with the
-Review Bot worker.
+`CppLint` can be installed on most systems by running `pip install cpplint`, or through
+your system's package manager.
