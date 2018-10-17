@@ -42,9 +42,13 @@ setup(
         'buildbot>=0.8.7',
         'celery>=3.0,<4.0',
         'cpplint>=0.0.3',
-        'flake8>=3.3.0',
         'RBTools>=0.7.10',
     ],
+    extras_require={
+        'all': [
+            'flake8>=3.3.0',
+        ],
+    },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',

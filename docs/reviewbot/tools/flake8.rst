@@ -11,5 +11,5 @@ flake8
 Installation
 ============
 
-The necessary dependencies for this tool are installed automatically with the
-Review Bot worker.
+`flake8` can be installed on most systems by running `pip install flake8`, or through
+your system's package manager.
