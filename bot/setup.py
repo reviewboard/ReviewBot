@@ -47,6 +47,8 @@ setup(
     extras_require={
         'all': [
             'flake8>=3.3.0',
+            'pycodestyle',
+            'pyflakes',
         ],
     },
     classifiers=[

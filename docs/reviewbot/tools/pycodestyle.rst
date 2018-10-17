@@ -13,5 +13,5 @@ conventions in :pep:`8`.
 Installation
 ============
 
-The necessary dependencies for this tool are Installed automatically with the
-Review Bot worker.
+`pycodestyle` can be installed on most systems by running `pip install
+pycodestyle`, or through your system's package manager.
