@@ -75,7 +75,7 @@ class GitRepository(Repository):
 
         logging.info('Creating working tree for commit ID %s in %s', commit_id,
                      workdir)
-        execute(['git', 'clone', '--local', '--depth', '1',
+        execute(['git', 'clone', '--local', '--no-hardlinks', '--depth', '1',
                  '--branch', branchname, self.repo_path, workdir])
 
         logging.info('Removing temporary branch for clone in repo %s',
