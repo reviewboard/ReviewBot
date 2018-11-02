@@ -12,5 +12,8 @@ pyflakes_ is a static analysis tool for Python programs.
 Installation
 ============
 
-`pyflakes` can be installed on most systems by running `pip install pyflakes`,
-or through your system's package manager.
+:command:`pyflakes` can be installed on most systems by running::
+
+    $ pip install pyflakes
+
+It may also be available in your system's package manager.

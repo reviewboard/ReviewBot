@@ -13,5 +13,8 @@ conventions in :pep:`8`.
 Installation
 ============
 
-`pycodestyle` can be installed on most systems by running `pip install
-pycodestyle`, or through your system's package manager.
+:command:`pycodestyle` can be installed on most systems by running::
+
+    $ pip install pycodestyle
+
+It may also be available in your system's package manager.

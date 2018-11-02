@@ -13,5 +13,8 @@ The result of the build is posted to the review request.
 Installation
 ============
 
-`buildbot` can be installed on most systems by running `pip install buildbot`, or through
-your system's package manager.
+:command:`buildbot` can be installed on most systems by running::
+
+    $ pip install buildbot
+
+It may also be available in your system's package manager.
