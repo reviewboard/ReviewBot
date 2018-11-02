@@ -24,31 +24,31 @@ following tools:
 
 * `BuildBot "try"
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/buildbot/>`_
-  – Builds the patch in a configured BuildBot environment
+  - Builds the patch in a configured BuildBot environment
 
 * `checkstyle
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/checkstyle/>`_
-  – A static analysis tool that provides a variety of checkers for Java code
+  - A static analysis tool that provides a variety of checkers for Java code
 
 * `Cppcheck
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/cppcheck/>`_
-  – A static analysis tool for C/C++ code
+  - A static analysis tool for C/C++ code
 
 * `CppLint <https://www.reviewboard.org/docs/reviewbot/latest/tools/cpplint/>`_
-  – Checks C++ code against Google's style guide
+  - Checks C++ code against Google's style guide
 
 * `flake8 <https://www.reviewboard.org/docs/reviewbot/latest/tools/flake8/>`_
-  – A wrapper around several Python code quality tools
+  - A wrapper around several Python code quality tools
 
 * `PMD <https://www.reviewboard.org/docs/reviewbot/latest/tools/pmd/>`_
-  – A static analysis tool that provides checkers for many languages
+  - A static analysis tool that provides checkers for many languages
 
 * `pycodestyle
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/pycodestyle/>`_
-  – A code style checker for Python code
+  - A code style checker for Python code
 
 * `pyflakes <https://www.reviewboard.org/docs/reviewbot/latest/tools/pyflakes/>`_
-  – A static analysis tool for Python code
+  - A static analysis tool for Python code
 
 See the links above for installation and usage instructions.
 
@@ -137,11 +137,11 @@ on over to our `development discussion list`_.
 Related Projects
 ================
 
-* `Review Board`_ –
+* `Review Board`_ -
   Our extensible, open source code review tool.
-* RBTools_ –
+* RBTools_ -
   The RBTools command line suite.
-* `RB Gateway`_ –
+* `RB Gateway`_ -
   Manages Git repositories, providing a full API enabling all of Review Board's
   feaures.
 
