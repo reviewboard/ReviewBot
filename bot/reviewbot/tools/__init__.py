@@ -1,8 +1,9 @@
 from __future__ import unicode_literals
 
 import logging
+import os
 
-from reviewbot.utils.filesystem import chdir
+from reviewbot.utils.filesystem import chdir, ensure_dirs_exist
 
 
 class Tool(object):
@@ -121,6 +122,8 @@ class RepositoryTool(Tool):
         with chdir(working_dir):
             for f in review.files:
                 logging.info('Patching %s', f.dest_file)
+
+                ensure_dirs_exist(os.path.abspath(f.dest_file))
 
                 with open(f.dest_file, 'wb') as fp:
                     fp.write(f.patched_file_contents)

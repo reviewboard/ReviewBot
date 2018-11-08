@@ -91,3 +91,27 @@ def make_tempdir():
     tmpdir = tempfile.mkdtemp()
     tmpdirs.append(tmpdir)
     return tmpdir
+
+
+def ensure_dirs_exist(path):
+    """Ensure directories exist to an absolute path.
+
+    Args:
+        path (unicode):
+            The absolute path for which directories should be created if they
+            don't exist.
+
+    Raises:
+        ValueError:
+            If the path is not absolute.
+
+        OSError:
+            If making the directory failed.
+    """
+    if not os.path.isabs(path):
+        raise ValueError
+
+    folder_path = os.path.dirname(path)
+
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
