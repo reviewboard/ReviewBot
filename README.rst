@@ -54,6 +54,10 @@ tools:
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/pycodestyle/>`_
   - A code style checker for Python code
 
+* `pydocstyle
+  <https://www.reviewboard.org/docs/reviewbot/latest/tools/pydocstyle/>`_
+  - A static analysis tool for Python docstring conventions
+
 * `pyflakes <https://www.reviewboard.org/docs/reviewbot/latest/tools/pyflakes/>`_
   - A static analysis tool for Python code
 

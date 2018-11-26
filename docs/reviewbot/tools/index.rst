@@ -16,4 +16,5 @@ Review Bot Tools
    jshint
    pmd
    pycodestyle
+   pydocstyle
    pyflakes
