@@ -12,6 +12,7 @@ Review Bot Tools
    clang
    cppcheck
    cpplint
+   doc8
    flake8
    jshint
    pmd

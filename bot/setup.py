@@ -30,6 +30,7 @@ setup(
             'clang = reviewbot.tools.clang:ClangTool',
             'cppcheck = reviewbot.tools.cppcheck:CPPCheckTool',
             'cpplint = reviewbot.tools.cpplint:CPPLintTool',
+            'doc8 = reviewbot.tools.doc8:Doc8Tool',
             'flake8 = reviewbot.tools.flake8:Flake8Tool',
             'jshint = reviewbot.tools.jshint:JSHintTool',
             'pmd = reviewbot.tools.pmd:PMDTool',
@@ -47,6 +48,7 @@ setup(
         'all': [
             'buildbot>=0.8.7',
             'cpplint>=0.0.3',
+            'doc8>=0.8.0',
             'flake8>=3.3.0',
             'pycodestyle',
             'pydocstyle',
