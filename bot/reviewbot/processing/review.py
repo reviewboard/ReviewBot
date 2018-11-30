@@ -115,7 +115,8 @@ class File(object):
                 The text of the comment.
 
             first_line (int):
-                The line number that the comment starts on.
+                The line number that the comment starts on. If ``None``, the
+                comment is considered to be for the entire file.
 
             num_lines (int, optional):
                 The number of lines that the comment should span.
@@ -130,12 +131,17 @@ class File(object):
                 If True, the ``first_line`` argument corresponds to the line
                 number in the original file, instead of the patched file.
         """
-        # Snap numbers less than 1 (mainly 0) to 1.
-        # (Some tools report general file errors as being on line 0)
-        first_line = max(1, first_line)
+
+        # Some tools report a first_line of 0 to mean a 'global comment' on a
+        # particular file. For now, we handle this as a special case as
+        # Review Board does not currently support rendering this.
+        if first_line is None or first_line <= 0:
+            first_line = 1
+            modified = True
+        else:
+            modified = self._is_modified(first_line, num_lines)
 
         real_line = self._translate_line_num(first_line)
-        modified = self._is_modified(first_line, num_lines)
 
         if num_lines != 1:
             last_line = first_line + num_lines - 1
@@ -186,11 +192,11 @@ class File(object):
         """Return whether the given region is modified in the diff.
 
         Args:
-            first_line (int):
+            line_num (int):
                 The line number that the comment starts on.
 
             num_lines (int):
-                The number of lines that the comment should span.
+                The number of lines to check after line_num.
 
             original (bool, optional):
                 If True, the ``first_line`` argument corresponds to the line
@@ -200,20 +206,21 @@ class File(object):
             bool:
             True if the region corresponds to modified code.
         """
-        # TODO: Convert to a faster search algorithm.
-
-        # TODO: Change this to check all chunks within a range for a
-        # modification. Current tools will only comment on single lines, but
-        # future tools might create multi-line comments.
-        line_num_index = 4
-
+        # The index in a diff line of a chunk that the relevant (original vs.
+        # patched) line number is stored at.
         if original:
             line_num_index = 1
+        else:
+            line_num_index = 4
 
-        for chunk in self.diff_data.chunks:
+        for chunk in self.diff_data.changed_chunk_indexes:
+            chunk = self.diff_data.chunks[chunk]
+
             for row in chunk.lines:
-                if row[line_num_index] == line_num:
-                    return not (chunk.change == 'equal')
+                if line_num <= row[line_num_index] < line_num + num_lines:
+                    return True
+
+        return False
 
 
 class Review(object):
