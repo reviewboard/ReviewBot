@@ -255,6 +255,7 @@ class Review(object):
         self.review_request_id = review_request_id
         self.diff_revision = diff_revision
         self.comments = []
+        self.general_comments = []
 
         # Get the list of files.
         self.files = []
@@ -265,22 +266,46 @@ class Review(object):
 
             self.files = [File(self, f) for f in files]
 
+    def general_comment(self, text, issue=None, rich_text=False):
+        """Make a general comment.
+
+        Args:
+            text (unicode):
+                The text of the comment.
+
+            issue (bool, optional):
+                Whether an issue should be opened.
+
+            rich_text (bool, optional):
+                Whether the comment text should be formatted using Markdown.
+        """
+        self.general_comments.append({
+            'text': text,
+            'issue_opened': issue or self.settings['open_issues'],
+            'rich_text': rich_text,
+        })
+
     def publish(self):
         """Upload the review to Review Board."""
         # Truncate comments to the maximum permitted amount to avoid
         # overloading the review and freezing the browser.
         max_comments = self.settings['max_comments']
+        num_comments = len(self.comments) + len(self.general_comments)
 
-        if len(self.comments) > max_comments:
+        if num_comments > max_comments:
             warning = ('**Warning:** Showing %d of %d failures.'
-                       % (max_comments, len(self.comments)))
+                       % (max_comments, num_comments))
 
             if self.body_top:
                 self.body_top = '%s\n%s' % (self.body_top, warning)
             else:
                 self.body_top = warning
 
-            del self.comments[max_comments:]
+            if len(self.general_comments) > max_comments:
+                del self.general_comments[max_comments:]
+                del self.comments[:]
+            else:
+                del self.comments[max_comments - len(self.general_comments):]
 
         bot_reviews = self.api_root.get_extension(
             extension_name='reviewbotext.extension.ReviewBotExtension'
@@ -291,7 +316,13 @@ class Review(object):
             body_top=self.body_top,
             body_top_rich_text=True,
             body_bottom=self.body_bottom,
-            diff_comments=json.dumps(self.comments))
+            diff_comments=json.dumps(self.comments),
+            general_comments=json.dumps(self.general_comments))
+
+    @property
+    def has_comments(self):
+        """Whether the review has comments."""
+        return len(self.comments) + len(self.general_comments) != 0
 
     @property
     def patch_contents(self):

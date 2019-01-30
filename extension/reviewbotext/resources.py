@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import json
+import logging
 
 from django.core.exceptions import ObjectDoesNotExist
 from djblets.webapi.decorators import (webapi_login_required,
@@ -16,6 +17,19 @@ from reviewboard.webapi.decorators import webapi_check_local_site
 from reviewboard.webapi.resources import resources, WebAPIResource
 
 from reviewbotext.models import Tool
+
+
+class InvalidFormDataError(Exception):
+    """Error that signals to return INVALID_FORM_DATA with attached data."""
+
+    def __init__(self, data):
+        """Initialize the Error.
+
+        Args:
+            data (dict):
+                The data that should be returned from the webapi method.
+        """
+        self.data = data
 
 
 class ToolResource(WebAPIResource):
@@ -180,6 +194,11 @@ class ReviewBotReviewResource(WebAPIResource):
                 'type': str,
                 'description': 'A JSON payload containing the diff comments.',
             },
+            'general_comments': {
+                'type': str,
+                'description':
+                    'A JSON payload containing the general comments.',
+            },
         },
     )
     def create(self,
@@ -191,8 +210,51 @@ class ReviewBotReviewResource(WebAPIResource):
                body_bottom='',
                body_bottom_rich_text=False,
                diff_comments=None,
+               general_comments=None,
                *args, **kwargs):
-        """Creates a new review and publishes it."""
+        """Creates a new review and publishes it.
+
+        Args:
+            request (reviewboard.reviews.models.review_request.
+                     ReviewRequest):
+                The review request the review is filed against.
+
+            review_request_id (int):
+                The ID of the review request being reviewed (ID for use in the
+                API, which is the "display_id" field).
+
+            ship_it (bool, optional):
+                The Ship It state for the review.
+
+            body_top (unicode, optional):
+                The text for the ``body_top`` field.
+
+            body_top_rich_text (unicode, optional):
+                Whether the body_top text should be formatted using Markdown.
+
+            body_bottom (unicode, optional):
+                The text for the ``body_bottom`` field.
+
+            body_bottom_rich_text (unicode, optional):
+                Whether the body_bottom text should be formatted using
+                Markdown.
+
+            diff_comments (string, optional):
+                A JSON payload containing the diff comments.
+
+            general_comments (string, optional):
+                A JSON payload containing the general comments.
+
+            *args (tuple):
+                Positional arguments to set in the review.
+
+            **kwargs (dict):
+                Additional attributes to set in the review.
+
+        Returns:
+            tuple:
+            A 2-tuple containing an HTTP return code and the API payload.
+        """
         try:
             review_request = resources.review_request.get_object(
                 request,
@@ -207,6 +269,44 @@ class ReviewBotReviewResource(WebAPIResource):
         if not body_bottom:
             body_bottom = ''
 
+        try:
+            diff_comment_keys = ['filediff_id', 'first_line', 'num_lines']
+            diff_comments = self._normalizeCommentsJSON(
+                'diff_comments', diff_comment_keys, diff_comments)
+
+            general_comments = self._normalizeCommentsJSON(
+                'general_comments', [], general_comments)
+
+            filediff_pks = {
+                comment['filediff_id']
+                for comment in diff_comments
+            }
+
+            filediffs = {
+                filediff.pk: filediff
+                for filediff in FileDiff.objects.filter(
+                    pk__in=filediff_pks,
+                    diffset__history__review_request=review_request
+                )
+            }
+
+            for comment in diff_comments:
+                filediff_id = comment.pop('filediff_id')
+
+                try:
+                    comment['filediff'] = filediffs[filediff_id]
+                    comment['interfilediff'] = None
+                except KeyError:
+                    return INVALID_FORM_DATA, {
+                        'fields': {
+                            'diff_comments': [
+                                'Invalid filediff ID: %s' % filediff_id,
+                            ],
+                        },
+                    }
+        except InvalidFormDataError as e:
+            return INVALID_FORM_DATA, e.data
+
         new_review = Review.objects.create(
             review_request=review_request,
             user=request.user,
@@ -216,51 +316,72 @@ class ReviewBotReviewResource(WebAPIResource):
             body_bottom_rich_text=body_bottom_rich_text,
             ship_it=ship_it)
 
-        if diff_comments:
-            try:
-                diff_comments = json.loads(diff_comments)
-
-                for comment in diff_comments:
-                    filediff = FileDiff.objects.get(
-                        pk=comment['filediff_id'],
-                        diffset__history__review_request=review_request)
-
-                    if comment['issue_opened']:
-                        issue = True
-                        issue_status = BaseComment.OPEN
-                    else:
-                        issue = False
-                        issue_status = None
-
-                    new_review.comments.create(
-                        filediff=filediff,
-                        interfilediff=None,
-                        text=comment['text'],
-                        first_line=comment['first_line'],
-                        num_lines=comment['num_lines'],
-                        issue_opened=issue,
-                        issue_status=issue_status,
-                        rich_text=comment['rich_text'])
-
-            except KeyError:
-                # TODO: Reject the DB transaction.
-                return INVALID_FORM_DATA, {
-                    'fields': {
-                        'diff_comments': 'Diff comments were malformed',
-                    },
-                }
-            except ObjectDoesNotExist:
-                return INVALID_FORM_DATA, {
-                    'fields': {
-                        'diff_comments': 'Invalid filediff_id',
-                    },
-                }
+        for comment_type, comments in (
+            (new_review.comments, diff_comments),
+            (new_review.general_comments, general_comments)):
+            for comment in comments:
+                comment_type.create(**comment)
 
         new_review.publish(user=request.user)
 
         return 201, {
             self.item_result_key: new_review,
         }
+
+    def _normalizeCommentsJSON(self, comment_type, extra_keys, comments):
+        """Normalize all the comments.
+
+        Args:
+            comment_type (string):
+                Type of the comment.
+
+            extra_keys (list):
+                Extra comment keys expected beyond the base comment keys.
+
+            comments (string):
+                A JSON payload containing the comments.
+
+        Returns:
+            list:
+            A list of the decoded and normalized comments.
+        """
+        base_comment_keys = ['issue_opened', 'text', 'rich_text']
+        expected_keys = set(base_comment_keys + extra_keys)
+
+        try:
+            comments = json.loads(comments or '[]')
+        except ValueError:
+            raise InvalidFormDataError({
+                'fields': {
+                    comment_type: 'Malformed JSON.',
+                }
+            })
+
+        for comment in comments:
+            comment_keys = set(comment.keys())
+            missing_keys = expected_keys - comment_keys
+
+            if missing_keys:
+                missing_keys = ', '.join(missing_keys)
+                raise InvalidFormDataError({
+                    'fields': {
+                        comment_type: [
+                            'Element missing keys "%s".' % missing_keys,
+                        ],
+                    },
+                })
+
+            for key in comment_keys:
+                if key not in expected_keys:
+                    logging.warning('%s field ignored.', key)
+                    del comment[key]
+
+            if comment['issue_opened']:
+                comment['issue_status'] = BaseComment.OPEN
+            else:
+                comment['issue_status'] = None
+
+        return comments
 
 
 review_bot_review_resource = ReviewBotReviewResource()

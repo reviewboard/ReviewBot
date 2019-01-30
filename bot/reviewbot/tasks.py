@@ -201,7 +201,7 @@ def RunTool(server_url='',
                                  url_text='Tool console output')
 
         try:
-            if len(review.comments) == 0:
+            if not review.has_comments:
                 status_update.update(state=DONE_SUCCESS,
                                      description='passed.')
             else:
