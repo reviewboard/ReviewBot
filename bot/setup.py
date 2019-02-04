@@ -42,7 +42,7 @@ setup(
     install_requires=[
         'appdirs',
         'celery>=3.0,<4.0',
-        'RBTools>=0.7.10',
+        'RBTools>=1.0',
     ],
     extras_require={
         'all': [

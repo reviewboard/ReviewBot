@@ -110,6 +110,12 @@ interface. The ``type`` should currently be ``git`` or ``hg``, and ``clone_path`
 should be set to the git or hg URL (possibly including credentials) to clone the
 repository from.
 
+The repository ``path`` or ``mirror_path`` field must be the URL of a repository
+which is accessible to the Review Bot worker. If you use a local file path for
+your repository and the worker is not running on the same host as the Review
+Board server, you must also expose the repository over http and set
+the ``mirror_path``.
+
 .. code-block:: python
 
    repositories = [
@@ -129,3 +135,37 @@ repository from.
            'clone_path': 'https://www.mercurial-scm.org/repo/hg/',
        },
    ]
+
+
+Automatically Fetch Repositories From Review Board
+--------------------------------------------------
+
+If you have many workers and repositories, it may not be feasible to configure
+repositories by hand. You can also configure a list of Review Board servers to
+fetch all supported repositories from. If you disabled ``anonymous read-only
+access`` you need to register a separate user and generate an API token. The
+access via token can be ``read-only``.
+
+Be aware that manually configured repositories will override any
+automatically fetched configuration of a duplicate repository entry.
+
+The repository ``path`` or ``mirror_path`` field must be the URL of a repository
+which is accessible to the Review Bot worker. If you use a local file path for
+your repository and the worker is not running on the same host as the Review
+Board server, you must also expose the repository over HTTP and set
+the ``mirror_path``.
+
+
+.. code-block:: python
+
+   review_board_servers = [
+       {
+           'user': 'reviewbot',
+           'token': 'dd16b7208a2a8c88be6788c22340ae46823fc57e',
+           'url': 'http://reviewboard',
+       },
+       {
+           'url': 'http://rb',
+       },
+   ]
+

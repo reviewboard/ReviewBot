@@ -5,6 +5,8 @@ import os
 
 import appdirs
 
+from rbtools.api.client import RBClient
+
 from reviewbot.config import config
 from reviewbot.utils.filesystem import make_tempdir
 from reviewbot.utils.process import execute
@@ -139,20 +141,80 @@ class HgRepository(Repository):
         return workdir
 
 
+def fetch_repositories(url, user=None, token=None):
+    """Fetch repositories from Review Board.
+
+    Args:
+        url (unicode):
+            The configured url for the connection.
+
+        user (unicode):
+            The configured user for the connection.
+
+        token (unicode):
+            The configured API token for the user.
+    """
+    logging.info('Fetching repositories from Review Board: %s', url)
+    # TODO: merge with COOKIE_FILE/AGENT in tasks.py
+    root = RBClient(url, username=user, api_token=token,
+                    cookie_file='reviewbot-cookies.txt',
+                    agent='ReviewBot').get_root()
+
+    for tool_type in ('Mercurial', 'Git'):
+        repos = root.get_repositories(tool=tool_type, only_links='',
+                                      only_fields='path,mirror_path,name')
+
+        for repo in repos.all_items:
+            repo_source = None
+
+            for path in (repo.path, repo.mirror_path):
+                if (os.path.exists(path) or path.startswith('http') or
+                    path.startswith('git')):
+                    repo_source = path
+                    break
+
+            if repo_source:
+                init_repository(repo.name, tool_type.lower(), repo_source)
+            else:
+                logging.warn('Cannot find usable path for repository: %s',
+                             repo.name)
+
+
+def init_repository(repo_name, repo_type, repo_source):
+    """Add repository entry to global list.
+
+    Args:
+        repo_name (unicode):
+            The name of the repository.
+
+        repo_type (unicode):
+            The type of the repository.
+
+        repo_source (unicode):
+            The source of the repository.
+    """
+    global repositories
+
+    if repo_type == 'git':
+        repositories[repo_name] = \
+            GitRepository(repo_name, repo_source)
+    elif repo_type in ('hg', 'mercurial'):
+        repositories[repo_name] = \
+            HgRepository(repo_name, repo_source)
+    else:
+        logging.error('Unknown type "%s" for configured repository %s',
+                      repo_type, repo_name)
+
+
 def init_repositories():
     """Set up configured repositories."""
-    global repositories
+    for server in config['review_board_servers']:
+        fetch_repositories(server['url'],
+                           server.get('user'),
+                           server.get('token'))
 
     for repository in config['repositories']:
         repo_name = repository['name']
         repo_type = repository.get('type')
-
-        if repo_type == 'git':
-            repositories[repo_name] = \
-                GitRepository(repo_name, repository['clone_path'])
-        elif repo_type == 'hg':
-            repositories[repo_name] = \
-                HgRepository(repo_name, repository['clone_path'])
-        else:
-            logging.error('Unknown type "%s" for configured repository %s',
-                          repo_type, repo_name)
+        repo_source = repository['clone_path']
+        init_repository(repo_name, repo_type, repo_source)

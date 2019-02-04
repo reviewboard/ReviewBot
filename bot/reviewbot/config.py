@@ -9,6 +9,7 @@ import appdirs
 config = {
     'pmd_path': None,
     'checkstyle_path': None,
+    'review_board_servers': [],
     'repositories': [],
 }
 
