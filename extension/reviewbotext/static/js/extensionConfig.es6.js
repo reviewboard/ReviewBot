@@ -507,7 +507,7 @@ ReviewBot.ExtensionConfigView = Backbone.View.extend({
             .append(this._$saveButton)
             .appendTo(this.$el);
 
-        $('#content_container').append(this._brokerStatusView.$el);
+        $('#content').append(this._brokerStatusView.$el);
 
         return this;
     },

@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import json
+from importlib import import_module
 
 from django.forms.widgets import MultiWidget
 from django.utils.html import format_html
@@ -66,14 +67,9 @@ class ToolOptionsWidget(MultiWidget):
             type:
             The imported class.
         """
-        class_path = class_path.encode('ascii').split(b'.')
-
-        if class_path:
-            module_name = '.'.join(class_path[:-1])
-        else:
-            module_name = '.'
-
-        module = __import__(module_name, {}, {}, class_path[-1])
+        class_path = class_path.split('.')
+        module_name = '.'.join(class_path[:-1])
+        module = import_module(module_name)
         return getattr(module, class_path[-1])
 
     def render(self, name, value, attrs=None):
@@ -148,7 +144,7 @@ class ToolOptionsWidget(MultiWidget):
                 widget_name=widget_name,
                 widget=widget.render(widget_name, widget_value, final_attrs)))
 
-        return mark_safe(self.format_output(output))
+        return mark_safe(''.join(output))
 
     def value_from_datadict(self, data, files, name):
         """Return the value for this widget's field from the form data.

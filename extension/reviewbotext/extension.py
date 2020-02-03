@@ -1,11 +1,12 @@
 from __future__ import unicode_literals
 
+from importlib import import_module
+
 from celery import Celery
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.http import HttpRequest
-from django.utils.importlib import import_module
 from django.utils.translation import ugettext_lazy as _
 from djblets.db.query import get_object_or_none
 from reviewboard.accounts.backends import auth_backends

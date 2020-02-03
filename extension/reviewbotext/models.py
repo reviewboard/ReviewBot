@@ -51,4 +51,5 @@ class Tool(models.Model):
         return '%s - v%s' % (self.name, self.version)
 
     class Meta:
+        app_label = 'reviewbotext'
         unique_together = ('entry_point', 'version')

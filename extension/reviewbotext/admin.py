@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.contrib import admin
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -62,10 +62,10 @@ class ToolAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super(ToolAdmin, self).get_urls()
 
-        my_urls = patterns(
-            '',
+        my_urls = [
             url('^refresh/$',
-                self.admin_site.admin_view(self.refresh_tools_view)))
+                self.admin_site.admin_view(self.refresh_tools_view)),
+        ]
         return my_urls + urls
 
     def has_add_permission(self, request):
