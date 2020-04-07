@@ -51,9 +51,7 @@ ReviewBot.ExtensionConfig = Backbone.Model.extend({
  * A view for configuring the Review Bot user.
  */
 const UserConfigView = Backbone.View.extend({
-    tagName: 'fieldset',
-
-    className: 'module aligned wide',
+    className: 'rb-c-form-row',
 
     id: 'reviewbot-user',
 
@@ -62,17 +60,19 @@ const UserConfigView = Backbone.View.extend({
     },
 
     _template: _.template(dedent`
-        <h2><%- titleText %></h2>
-        <div class="form-row">
-         <label class="required" for="reviewbot-user-field"><%- labelText %></label>
-         <select class="related-object-options reviewbot-user-select"
-                 name="reviewbot_user"
-                 placeholder="<%- selectPlaceholderText %>"
-                 id="reviewbot-user-field"></select>
-         <span class="reviewbot-user-create-details">
-          <% if (!hasUser) { %><%= orHTML %><% } %>
-         </span>
-         <p class="help"><%- descriptionText %></p>
+        <div class="rb-c-form-field -is-required">
+         <label class="rb-c-form-field__label" for="reviewbot-user-field"><%- labelText %></label>
+
+         <div class="rb-c-form-field__input">
+          <select class="related-object-options reviewbot-user-select"
+                  name="reviewbot_user"
+                  placeholder="<%- selectPlaceholderText %>"
+                  id="reviewbot-user-field"></select>
+          <span class="reviewbot-user-create-details">
+           <% if (!hasUser) { %><%= orHTML %><% } %>
+          </span>
+          <div class="rb-c-form-field__help"><%- descriptionText %></div>
+         </div>
         </div>
     `),
 
@@ -233,11 +233,7 @@ const UserConfigView = Backbone.View.extend({
 /**
  * A view to show the current broker status.
  */
-const BrokerStatusView = Backbone.View.extend({
-    className: 'colM',
-
-    id: 'reviewbot-broker-status',
-
+ReviewBot.BrokerStatusView = Backbone.View.extend({
     events: {
         'click #reviewbot-broker-status-refresh': '_onRefreshClicked',
     },
@@ -313,10 +309,6 @@ const BrokerStatusView = Backbone.View.extend({
      *     This object, for chaining.
      */
     render() {
-        $('<h1 class="title">')
-            .text(gettext('Broker Status'))
-            .appendTo(this.$el);
-
         const $wrapper = $('<div id="content-main">')
             .appendTo(this.$el);
 
@@ -422,19 +414,19 @@ const BrokerStatusView = Backbone.View.extend({
  * A view for configuring the broker URL.
  */
 const BrokerConfigView = Backbone.View.extend({
-    tagName: 'fieldset',
-
     id: 'reviewbot-broker',
 
-    className: 'module aligned wide',
+    className: 'rb-c-form-row',
 
     _template: _.template(dedent`
-        <h2><%- titleText %></h2>
-        <div class="form-row">
-         <label class="required" for="reviewbot-broker-field"><%- labelText %></label>
-         <input id="reviewbot-broker-field" name="reviewbot_broker_url"
-                type="text" value="<%- brokerURL %>">
-         <p class="help"><%- descriptionText %></p>
+        <div class="rb-c-form-field -is-required">
+         <label class="rb-c-form-field__label" for="reviewbot-broker-field"><%- labelText %></label>
+
+         <div class="rb-c-form-field__input">
+          <input id="reviewbot-broker-field" name="reviewbot_broker_url"
+                 type="text" value="<%- brokerURL %>">
+          <div class="rb-c-form-field__help"><%- descriptionText %></div>
+         </div>
         </div>
     `),
 
@@ -466,6 +458,22 @@ ReviewBot.ExtensionConfigView = Backbone.View.extend({
         'click input[type="submit"]': '_onSaveClicked',
     },
 
+    _template: dedent`
+        <form class="rb-c-form -is-aligned">
+         <fieldset class="rb-c-form-fieldset">
+          <div class="rb-c-form-fieldset__content">
+           <div class="rb-c-form-fieldset__fields">
+           </div>
+          </div>
+         </fieldset>
+         <div class="rb-c-form__actions">
+          <div class="rb-c-form__actions-primary">
+           <input type="submit" class="rb-c-form__action -is-primary">
+          </div>
+         </div>
+        </form>
+    `,
+
     /**
      * Initialize the view.
      */
@@ -475,10 +483,6 @@ ReviewBot.ExtensionConfigView = Backbone.View.extend({
         });
 
         this._brokerConfigView = new BrokerConfigView({
-            model: this.model,
-        });
-
-        this._brokerStatusView = new BrokerStatusView({
             model: this.model,
         });
     },
@@ -493,21 +497,16 @@ ReviewBot.ExtensionConfigView = Backbone.View.extend({
     render() {
         this._userConfigView.render();
         this._brokerConfigView.render();
-        this._brokerStatusView.render();
 
-        this._$form = $('<form>')
+        this.$el.html(this._template);
+        this._$form = this.$('form');
+
+        this.$('.rb-c-form-fieldset__fields')
             .append(this._userConfigView.$el)
-            .append(this._brokerConfigView.$el)
-            .appendTo(this.$el);
+            .append(this._brokerConfigView.$el);
 
-        this._$saveButton = $('<input type="submit" class="default">')
+        this._$saveButton = this.$('input[type="submit"]')
             .val(gettext('Save'));
-
-        $('<div class="submit-row">')
-            .append(this._$saveButton)
-            .appendTo(this.$el);
-
-        $('#content').append(this._brokerStatusView.$el);
 
         return this;
     },

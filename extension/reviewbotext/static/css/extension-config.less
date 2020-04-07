@@ -2,16 +2,6 @@
 
 @config_control_width: 25rem;
 
-#content_container {
-  padding-left: 1.5em;
-}
-
-#content {
-  margin: 0 0 1.5em 0;
-  padding: 0;
-  width: 100%;
-}
-
 #reviewbot-broker {
   input[type="text"] {
     box-sizing: border-box;
@@ -21,6 +11,10 @@
   input[type="button"] {
     font-size: @admin_font_size;
   }
+}
+
+#reviewbot-extension-config {
+  margin-bottom: 3em;
 }
 
 #reviewbot-broker-status {
@@ -53,12 +47,6 @@
     display: inline-block;
     margin-left: -6px;
     width: @config_control_width;
-    vertical-align: middle;
-  }
-
-  label {
-    display: inline-block;
-    float: none;
     vertical-align: middle;
   }
 
