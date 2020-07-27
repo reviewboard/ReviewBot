@@ -59,7 +59,7 @@ const UserConfigView = Backbone.View.extend({
         'click #reviewbot-user-create': '_createUser',
     },
 
-    _template: _.template(dedent`
+    _templateRB4: _.template(dedent`
         <div class="rb-c-form-field -is-required">
          <label class="rb-c-form-field__label" for="reviewbot-user-field"><%- labelText %></label>
 
@@ -73,6 +73,20 @@ const UserConfigView = Backbone.View.extend({
           </span>
           <div class="rb-c-form-field__help"><%- descriptionText %></div>
          </div>
+        </div>
+    `),
+
+    _templateRB3: _.template(dedent`
+        <div class="form-row">
+         <label class="required" for="reviewbot-user-field"><%- labelText %></label>
+         <select class="related-object-options reviewbot-user-select"
+                 name="reviewbot_user"
+                 placeholder="<%- selectPlaceholderText %>"
+                 id="reviewbot-user-field"></select>
+         <span class="reviewbot-user-create-details">
+          <% if (!hasUser) { %><%= orHTML %><% } %>
+         </span>
+         <p class="help"><%- descriptionText %></p>
         </div>
     `),
 
@@ -99,8 +113,9 @@ const UserConfigView = Backbone.View.extend({
      */
     render() {
         const user = this.model.get('user');
+        const template = RB.Product ? this._templateRB4 : this._templateRB3;
 
-        this.$el.html(this._template({
+        this.$el.html(template({
             titleText: gettext('Review Bot User'),
             labelText: gettext('Review Bot User:'),
             descriptionText: gettext('Review Bot will use this user account to post reviews.'),
@@ -233,7 +248,7 @@ const UserConfigView = Backbone.View.extend({
 /**
  * A view to show the current broker status.
  */
-ReviewBot.BrokerStatusView = Backbone.View.extend({
+const BrokerStatusView = Backbone.View.extend({
     events: {
         'click #reviewbot-broker-status-refresh': '_onRefreshClicked',
     },
@@ -309,11 +324,8 @@ ReviewBot.BrokerStatusView = Backbone.View.extend({
      *     This object, for chaining.
      */
     render() {
-        const $wrapper = $('<div id="content-main">')
-            .appendTo(this.$el);
-
         this._$content = $('<div class="form-row">')
-            .appendTo($wrapper);
+            .appendTo(this.$el);
 
         this._rendered = true;
 
@@ -383,6 +395,10 @@ ReviewBot.BrokerStatusView = Backbone.View.extend({
      * Request status from the server and update the UI.
      */
     _update() {
+        if (this._updating) {
+            return;
+        }
+
         this._updating = true;
         this._updateDisplay();
 
@@ -418,7 +434,7 @@ const BrokerConfigView = Backbone.View.extend({
 
     className: 'rb-c-form-row',
 
-    _template: _.template(dedent`
+    _templateRB4: _.template(dedent`
         <div class="rb-c-form-field -is-required">
          <label class="rb-c-form-field__label" for="reviewbot-broker-field"><%- labelText %></label>
 
@@ -430,6 +446,15 @@ const BrokerConfigView = Backbone.View.extend({
         </div>
     `),
 
+    _templateRB3: _.template(dedent`
+        <div class="form-row">
+         <label class="required" for="reviewbot-broker-field"><%- labelText %></label>
+         <input id="reviewbot-broker-field" name="reviewbot_broker_url"
+                type="text" value="<%- brokerURL %>">
+         <p class="help"><%- descriptionText %></p>
+        </div>
+    `),
+
     /**
      * Render the view.
      *
@@ -438,7 +463,9 @@ const BrokerConfigView = Backbone.View.extend({
      *     This object, for chaining.
      */
     render() {
-        this.$el.html(this._template({
+        const template = RB.Product ? this._templateRB4 : this._templateRB3;
+
+        this.$el.html(template({
             titleText: gettext('Broker'),
             labelText: gettext('Broker URL:'),
             descriptionText: gettext('The URL to your AMQP broker.'),
@@ -453,12 +480,12 @@ const BrokerConfigView = Backbone.View.extend({
 /**
  * A view containing the entire Review Bot extension configuration.
  */
-ReviewBot.ExtensionConfigView = Backbone.View.extend({
+const ConfigView = Backbone.View.extend({
     events: {
         'click input[type="submit"]': '_onSaveClicked',
     },
 
-    _template: dedent`
+    _templateRB4: dedent`
         <form class="rb-c-form -is-aligned">
          <fieldset class="rb-c-form-fieldset">
           <div class="rb-c-form-fieldset__content">
@@ -472,6 +499,14 @@ ReviewBot.ExtensionConfigView = Backbone.View.extend({
           </div>
          </div>
         </form>
+    `,
+
+    _templateRB3: dedent`
+        <form class="rb-c-form-fieldset__fields">
+        </form>
+        <div class="submit-row">
+         <input type="submit" class="rb-c-form-action -is-primary default">
+        </div>
     `,
 
     /**
@@ -491,14 +526,16 @@ ReviewBot.ExtensionConfigView = Backbone.View.extend({
      * Render the view.
      *
      * Returns:
-     *     ReviewBot.ExtensionConfigView:
+     *     ConfigView:
      *     This object, for chaining.
      */
     render() {
         this._userConfigView.render();
         this._brokerConfigView.render();
 
-        this.$el.html(this._template);
+        const template = RB.Product ? this._templateRB4 : this._templateRB3;
+        this.$el.html(template);
+
         this._$form = this.$('form');
 
         this.$('.rb-c-form-fieldset__fields')
@@ -559,6 +596,65 @@ ReviewBot.ExtensionConfigView = Backbone.View.extend({
                               errorThrown);
             },
         });
+    },
+});
+
+
+/**
+ * A view containing the extension config and broker status.
+ */
+ReviewBot.ExtensionConfigView = Backbone.View.extend({
+    _templateRB4: _.template(dedent`
+        <header class="rb-c-content-header -is-main">
+         <h1 class="rb-c-content-header__title"><%- configureText %></h1>
+        </header>
+        <div class="rb-c-page-content-box -is-content-flush"
+	        id="reviewbot-extension-config"></div>
+
+        <header class="rb-c-content-header -is-main">
+         <h1 class="rb-c-content-header__title"><%- brokerText %></h1>
+        </header>
+        <div class="rb-c-page-content-box" id="reviewbot-broker-status"></div>
+    `),
+
+    _templateRB3: _.template(dedent`
+        <h1 class="title"><%- configureText %></h1>
+        <div id="content-main">
+         <fieldset class="module aligned" id="reviewbot-extension-config"></fieldset>
+
+         <fieldset class="module aligned" id="reviewbot-broker-status">
+          <h2><%- brokerText %></h2>
+         </div>
+        </fieldset>
+    `),
+
+    /**
+     * Render the view.
+     *
+     * Returns:
+     *     ReviewBot.ExtensionConfigView:
+     *     This object, for chaining.
+     */
+    render() {
+        const template = RB.Product ? this._templateRB4 : this._templateRB3;
+        this.$el.html(template({
+            configureText: gettext('Configure Review Bot'),
+            brokerText: gettext('Broker Status'),
+        }));
+
+        this._view = new ConfigView({
+	    model: this.model,
+            el: this.$('#reviewbot-extension-config')
+	});
+	this._statusView = new BrokerStatusView({
+	    model: this.model,
+	    el: this.$('#reviewbot-broker-status')
+	});
+
+        this._view.render();
+        this._statusView.render();
+
+        return this;
     },
 });
 

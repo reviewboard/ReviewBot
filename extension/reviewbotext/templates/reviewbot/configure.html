@@ -1,4 +1,4 @@
-{% extends "admin/base_site.html" %}
+{% extends "admin/change_form.html" %}
 {% load avatars i18n staticfiles %}
 
 {% block title %}
@@ -7,24 +7,9 @@
 {% endblock %}
 
 {% block bodyclass %}{{block.super}} change-form{% endblock %}
+{% block content %}{% endblock %}
 
 {% block coltype %}colM clearfix{% endblock %}
-
-{% block content %}
-<header class="rb-c-content-header -is-main">
- <h1 class="rb-c-content-header__title">
-{%  blocktrans with extension.info.name as name %}Configure {{name}}{%  endblocktrans %}
- </h1>
-</header>
-<div class="rb-c-page-content-box -is-content-flush"
-	id="reviewbot-extension-config"></div>
-
-<header class="rb-c-content-header -is-main">
- <h1 class="rb-c-content-header__title">{% trans "Broker Status" %}</h1>
- </h1>
-</header>
-<div class="rb-c-page-content-box" id="reviewbot-broker-status"></div>
-{% endblock %}
 
 {% block scripts-post %}
 <script>
@@ -49,15 +34,10 @@ $(function() {
         ),
         view = new ReviewBot.ExtensionConfigView({
 	    model: model,
-            el: $('#reviewbot-extension-config')
-	}),
-	statusView = new ReviewBot.BrokerStatusView({
-	    model: model,
-	    el: $('#reviewbot-broker-status')
+            el: $('#content')
 	});
 
     view.render();
-    statusView.render();
 });
 </script>
 {% endblock %}
