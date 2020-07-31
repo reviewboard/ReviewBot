@@ -2,10 +2,11 @@ from __future__ import unicode_literals
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext, ugettext_lazy as _
 from djblets.forms.fields import ConditionsField
 from reviewboard.integrations.forms import IntegrationConfigForm
 from reviewboard.reviews.conditions import ReviewRequestConditionChoices
+from reviewboard.reviews.models import StatusUpdate
 
 from reviewbotext.models import Tool
 from reviewbotext.widgets import ToolOptionsWidget
@@ -28,6 +29,7 @@ class ReviewBotConfigForm(IntegrationConfigForm):
 
     COMMENT_ON_UNMODIFIED_CODE_DEFAULT = False
     OPEN_ISSUES_DEFAULT = True
+    DROP_OLD_ISSUES_DEFAULT = True
     MAX_COMMENTS_DEFAULT = 30
 
     #: When to run this configuration.
@@ -51,6 +53,15 @@ class ReviewBotConfigForm(IntegrationConfigForm):
         label=_('Open issues'),
         required=False,
         initial=OPEN_ISSUES_DEFAULT)
+
+    #: Whether new runs of this tool should drop open issues from previous
+    #  runs.
+    drop_old_issues = forms.BooleanField(
+        label=_('Drop old issues'),
+        help_text=_('When running this tool against new revisions of a '
+                    'change, drop open issues from previous runs.'),
+        required=False,
+        initial=DROP_OLD_ISSUES_DEFAULT)
 
     #: Maximum number of comments to make.
     max_comments = forms.IntegerField(
@@ -85,6 +96,14 @@ class ReviewBotConfigForm(IntegrationConfigForm):
         if 'tool_options' not in self.fields:
             self.fields['tool_options'] = forms.CharField(
                 widget=ToolOptionsWidget(self.fields['tool'].queryset))
+
+        if not hasattr(StatusUpdate, 'drop_open_issues'):
+            self.disabled_fields = ['drop_old_issues']
+            self.disabled_reasons = {
+                'drop_old_issues': ugettext(
+                    'Requires Review Board 3.0.19 or newer.'),
+            }
+            self.fields['drop_old_issues'].initial = False
 
         super(ReviewBotConfigForm, self).load()
 
@@ -139,6 +158,7 @@ class ReviewBotConfigForm(IntegrationConfigForm):
             (_('Tool options'), {
                 'fields': ('comment_on_unmodified_code',
                            'open_issues',
+                           'drop_old_issues',
                            'max_comments',
                            'tool_options'),
             }),

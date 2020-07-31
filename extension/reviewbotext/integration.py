@@ -125,8 +125,16 @@ class ReviewBotIntegration(Integration):
                                   config.name, config.pk, e)
                 tool_options = {}
 
+            # Use the config ID rather than the tool name because it is unique
+            # and unchanging. This allows us to find other status updates from
+            # the same tool config.
+            service_id = 'reviewbot.%s' % config.id
+
+            if config.settings.get('drop_old_issues'):
+                self._drop_old_issues(user, service_id, review_request)
+
             status_update = StatusUpdate.objects.create(
-                service_id='reviewbot.%s' % tool.name,
+                service_id=service_id,
                 summary=tool.name,
                 description='starting...',
                 review_request=review_request,
@@ -156,3 +164,28 @@ class ReviewBotIntegration(Integration):
                     'base_commit_id': diffset.base_commit_id,
                 },
                 queue=queue)
+
+    def _drop_old_issues(self, user, service_id, review_request):
+        """Drop old issues associated with the given tool config.
+
+        Args:
+            user (django.contrib.auth.models.User):
+                The Review Bot user.
+
+            service_id (unicode):
+                The service ID set on the status update objects.
+
+            review_request (reviewboard.reviews.models.ReviewRequest):
+                The review request that Review Bot is currently checking.
+        """
+        status_updates = (
+            StatusUpdate.objects.all()
+            .filter(user=user,
+                    service_id=service_id,
+                    review_request=review_request)
+            .exclude(review__isnull=True)
+            .select_related('review')
+        )
+
+        for update in status_updates:
+            update.drop_open_issues()
