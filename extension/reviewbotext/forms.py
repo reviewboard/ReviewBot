@@ -30,6 +30,7 @@ class ReviewBotConfigForm(IntegrationConfigForm):
     COMMENT_ON_UNMODIFIED_CODE_DEFAULT = False
     OPEN_ISSUES_DEFAULT = True
     DROP_OLD_ISSUES_DEFAULT = True
+    RUN_MANUALLY_DEFAULT = False
     MAX_COMMENTS_DEFAULT = 30
 
     #: When to run this configuration.
@@ -55,7 +56,7 @@ class ReviewBotConfigForm(IntegrationConfigForm):
         initial=OPEN_ISSUES_DEFAULT)
 
     #: Whether new runs of this tool should drop open issues from previous
-    #  runs.
+    #: runs.
     drop_old_issues = forms.BooleanField(
         label=_('Drop old issues'),
         help_text=_('When running this tool against new revisions of a '
@@ -63,9 +64,17 @@ class ReviewBotConfigForm(IntegrationConfigForm):
         required=False,
         initial=DROP_OLD_ISSUES_DEFAULT)
 
+    #: Whether this tool should be run manually
+    run_manually = forms.BooleanField(
+        label=_('Run this tool manually'),
+        required=False,
+        help_text=_('Wait to run this tool until manually started. This will '
+                    'add a "Run" button on the tool\'s result entry.'),
+        initial=RUN_MANUALLY_DEFAULT)
+
     #: Maximum number of comments to make.
     max_comments = forms.IntegerField(
-        label=_('Maximum Comments'),
+        label=_('Maximum comments'),
         help_text=_('The maximum number of comments to make at one time. If '
                     'the tool generates more than this number, a warning will '
                     'be shown in the review. If this is set to a large value '
@@ -97,13 +106,17 @@ class ReviewBotConfigForm(IntegrationConfigForm):
             self.fields['tool_options'] = forms.CharField(
                 widget=ToolOptionsWidget(self.fields['tool'].queryset))
 
+        # Supporting APIs for these features were added in RB 3.0.19.
         if not hasattr(StatusUpdate, 'drop_open_issues'):
-            self.disabled_fields = ['drop_old_issues']
+            self.disabled_fields = ['drop_old_issues', 'run_manually']
             self.disabled_reasons = {
                 'drop_old_issues': ugettext(
                     'Requires Review Board 3.0.19 or newer.'),
+                'run_manually': ugettext(
+                    'Requires Review Board 3.0.19 or newer.'),
             }
             self.fields['drop_old_issues'].initial = False
+            self.fields['run_manually'].initial = False
 
         super(ReviewBotConfigForm, self).load()
 
@@ -160,6 +173,7 @@ class ReviewBotConfigForm(IntegrationConfigForm):
                            'open_issues',
                            'drop_old_issues',
                            'max_comments',
-                           'tool_options'),
+                           'tool_options',
+                           'run_manually'),
             }),
         )
