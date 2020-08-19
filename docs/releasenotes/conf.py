@@ -361,4 +361,5 @@ intersphinx_mapping = {
     'python': ('https://docs.python.org/2.7', None),
     'rb3.0': ('%s/docs/manual/3.0/' % rbwebsite_url, None),
     'reviewbot1.0': ('%s/docs/reviewbot/1.0/' % rbwebsite_url, None),
+    'reviewbot2.0': ('%s/docs/reviewbot/2.0/' % rbwebsite_url, None),
 }

@@ -1,0 +1,131 @@
+.. default-intersphinx:: reviewbot2.0
+
+
+============================
+Review Bot 2.0 Release Notes
+============================
+
+**Release date**: TBD
+
+
+Packaging Changes
+=================
+
+Review Bot now uses a limited set of dependencies. In Review Bot 1.0, all
+Python-based tools would be automatically installed when installing the worker.
+In 2.0, the default installation does not include any tools as dependencies.
+The full set of Python tools can be installed by installing the ``all``
+metapackage::
+
+    $ pip install reviewbot-worker[all]
+
+
+Review Bot 2.0 includes support for running on Review Board 3.0 and 4.0, and
+Python 2.7 and 3.6-3.8.
+
+
+New Tools
+=========
+
+* doc8
+
+  Support has been added for :ref:`tool-doc8`, a tool to check
+  Sphinx/docutils-based documentation.
+
+  Patch by André Klitzing.
+
+* pydocstyle
+
+  Support for the :ref:`tool-pydocstyle` checker for Python docstrings has been
+  added.
+
+  Patch by Iris Law.
+
+
+New Features
+============
+
+* Drop open issues on previous revisions. (:bug:`4709`)
+
+  One common complaint with Review Bot was that a tool could add many duplicate
+  comments if a diff is being iterated on and the author does not go through
+  and close out issues from previous reviews. Review Bot now allows tool
+  configurations to automatically drop any open issues from previous runs of
+  the same tool, keeping the open issue list clean and up to date.
+
+  This requires Review Board 3.0.19 or 4.0.
+
+  Patch by Joshua Cannon.
+
+* Added manual trigger and retry for tools. (:bug:`4649`)
+
+  Some tools may be expensive to run or infrequently needed. Review Bot now
+  allows tool configurations to specify that they should be run manually
+  instead of automatically. If this is set, the tool's entry on the review
+  request will include a "Run" button which can be triggered by any viewing
+  user.
+
+  With this, you can now also retry tools which have failed or timed out
+  (usually due to some configuration or deployment issue).
+
+  This requires Review Board 3.0.19 or 4.0.
+
+  Based on work by Alex Klemenchuk.
+
+* Tools can now add general comments.
+
+  While not yet used by any existing tools, the Review Bot framework now allows
+  tools to create general comments as part of their review.
+
+  Patch by Ammar Akhtar.
+
+* Added automatic syncing of Git and Mercurial repositories for full clones.
+
+  Using tools which require a full clone of the repository required configuring
+  that repository in the Review Bot worker's config file. This was intended to
+  allow segmentation of repositories on a worker-by-worker basis (a worker
+  would not pick up a task if it didn't have access to the given repository),
+  but in the case where there's a limited number of workers but a lot of
+  configured repositories, it meant a lot of manual configuration which had to
+  be changed any time a new repository was added.
+
+  The worker now allows configuration of a list of Review Board servers along
+  with optional API credentials. If this is set in the config file, the worker
+  will automatically sync any necessary configured repositories from the
+  server, rather than requiring them to be configured individually.
+
+  See :ref:`worker-configuration-auto-fetch` for more details.
+
+  Patch by André Klitzing.
+
+
+Bugs Fixed
+==========
+
+* Fixed use of hardlinks when cloning Git repositories.
+
+  When using a tool that requires a full clone of a Git repository which is
+  hosted on the same server as the Review Bot worker, Git would attempt to use
+  hardlinks to save some space. Unfortunately, since the contents of
+  :file:`/tmp` are often stored in RAM, this could fail.
+
+  Patch by Alex Klemenchuk.
+
+* Fixed creation of directories when applying patches.
+
+  When applying a patch for tools which use full clones, if the patch added new
+  files in directories which did not already exist, it would fail. This has
+  been fixed to create any needed directories first.
+
+  Patch by Alex Klemenchuk.
+
+
+Contributors
+============
+
+* Alex Klemenchuk
+* Ammar Akhtar
+* André Klitzing
+* David Trowbridge
+* Iris Law
+* Joshua Cannon

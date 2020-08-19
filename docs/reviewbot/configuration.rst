@@ -137,6 +137,8 @@ the ``mirror_path``.
    ]
 
 
+.. _worker-configuration-auto-fetch:
+
 Automatically Fetch Repositories From Review Board
 --------------------------------------------------
 
