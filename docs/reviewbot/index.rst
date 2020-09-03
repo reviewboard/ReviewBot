@@ -6,5 +6,6 @@ Review Bot Documentation
    :maxdepth: 2
 
    installation
+   upgrading
    configuration
    tools/index

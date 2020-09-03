@@ -142,6 +142,8 @@ the ``mirror_path``.
 Automatically Fetch Repositories From Review Board
 --------------------------------------------------
 
+.. versionadded:: 2.0
+
 If you have many workers and repositories, it may not be feasible to configure
 repositories by hand. You can also configure a list of Review Board servers to
 fetch all supported repositories from. If you disabled ``anonymous read-only

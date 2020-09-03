@@ -4,6 +4,8 @@
 doc8
 ====
 
+.. versionadded:: 2.0
+
 DOC8_ is a style checker for Sphinx (or other) reStructuredText
 documentation. Also it has basic support for plain text.
 :command:`doc8` uses RST_LINT_ as a backend for the verification.
@@ -34,7 +36,7 @@ doc8 verifies the following styles in ``.rst`` files.
 Installation
 ============
 
-:command:`pydocstyle` can be installed on most systems by running::
+:command:`doc8` can be installed on most systems by running::
 
     $ pip install doc8
 
