@@ -44,6 +44,9 @@ tools:
 * `CppLint <https://www.reviewboard.org/docs/reviewbot/latest/tools/cpplint/>`_
   - Checks C++ code against Google's style guide
 
+* `doc8 <https://www.reviewboard.org/docs/reviewbot/latest/tools/doc8/>`_
+  - Check ReStructuredText documentation for styling and syntax errors.
+
 * `flake8 <https://www.reviewboard.org/docs/reviewbot/latest/tools/flake8/>`_
   - A wrapper around several Python code quality tools
 

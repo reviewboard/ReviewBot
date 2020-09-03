@@ -5,7 +5,7 @@
 Review Bot 2.0 Release Notes
 ============================
 
-**Release date**: TBD
+**Release date**: September 2, 2020
 
 
 Packaging Changes
