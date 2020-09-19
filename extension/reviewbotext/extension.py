@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from importlib import import_module
 
-from celery import Celery
+from celery import Celery, VERSION as CELERY_VERSION
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
@@ -73,8 +73,13 @@ class ReviewBotExtension(Extension):
     @property
     def celery(self):
         """The celery instance."""
-        self._celery.conf['BROKER_URL'] = self.settings['broker_url']
-        self._celery.conf['CELERY_TASK_SERIALIZER'] = 'json'
+        if CELERY_VERSION >= (4, 0):
+            self._celery.conf.broker_url = self.settings['broker_url']
+            self._celery.conf.task_serializer = 'json'
+        else:
+            self._celery.conf.BROKER_URL = self.settings['broker_url']
+            self._celery.conf.CELERY_TASK_SERIALIZER = 'json'
+
         return self._celery
 
     @property
