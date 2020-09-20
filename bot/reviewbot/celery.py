@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import pkg_resources
 
-from celery import Celery
+from celery import Celery, VERSION as CELERY_VERSION
 from kombu import Exchange, Queue
 
 from reviewbot.config import init as init_config
@@ -60,9 +60,16 @@ def main():
 
     init_config()
     init_repositories()
+
     celery = Celery('reviewbot.celery', include=['reviewbot.tasks'])
-    celery.conf.CELERY_ACCEPT_CONTENT = ['json']
-    celery.conf.CELERY_QUEUES = create_queues()
+
+    if CELERY_VERSION >= (4, 0):
+        celery.conf.accept_content = ['json']
+        celery.conf.task_queues = create_queues()
+    else:
+        celery.conf.CELERY_ACCEPT_CONTENT = ['json']
+        celery.conf.CELERY_QUEUES = create_queues()
+
     celery.start()
 
 
