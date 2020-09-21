@@ -22,20 +22,12 @@ $(function() {
 
             $toolOptions.find('.form-row').each((i, el) => {
                 const $el = $(el);
-                const $input = $toolOptions.find('input, select, textarea');
 
                 if ($el.data('tool-id') === selectedTool) {
                     $el.show();
                     $lastVisibleChild = $el;
-
-                    /*
-                     * Chrome validation will go nuts even on form fields that
-                     * aren't visible unless they're also disabled.
-                     */
-                    $input.prop('disabled', true);
                 } else {
                     $el.hide();
-                    $input.prop('disabled', false);
                 }
             });
 
