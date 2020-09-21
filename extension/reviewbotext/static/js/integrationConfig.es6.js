@@ -2,6 +2,17 @@ $(function() {
     const $tool = $('#id_tool');
     const $toolOptions = $('#row-tool_options');
 
+    /*
+     * Until we can update to use the subform support in Review Board 4.0, turn
+     * off all client-side validation for the form. This is required because
+     * Chrome will still attempt to validate hidden tool options inputs, and
+     * fail the form submission.
+     *
+     * For some reason, using jquery's .prop() doesn't work, so just use the
+     * bare DOM API.
+     */
+    $('#integrationconfig_form')[0].noValidate = true;
+
     if ($tool.length === 1 && $toolOptions.length === 1) {
         const $itemAboveOptions = $toolOptions.prev();
 
@@ -11,20 +22,12 @@ $(function() {
 
             $toolOptions.find('.form-row').each((i, el) => {
                 const $el = $(el);
-                const $input = $toolOptions.find('input, select, textarea');
 
                 if ($el.data('tool-id') === selectedTool) {
                     $el.show();
                     $lastVisibleChild = $el;
-
-                    /*
-                     * Chrome validation will go nuts even on form fields that
-                     * aren't visible unless they're also disabled.
-                     */
-                    $input.prop('disabled', true);
                 } else {
                     $el.hide();
-                    $input.prop('disabled', false);
                 }
             });
 

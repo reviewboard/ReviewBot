@@ -12,6 +12,8 @@
 {% block coltype %}colM clearfix{% endblock %}
 
 {% block scripts-post %}
+{{block.super}}
+
 <script>
 $(function() {
     var model = new ReviewBot.ExtensionConfig(
