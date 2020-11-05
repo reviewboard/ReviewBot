@@ -52,6 +52,14 @@ class ToolAdmin(admin.ModelAdmin):
     )
 
     def refresh_tools_view(self, request, template_name='refresh.html'):
+        """
+        Refresh the tools.
+
+        Args:
+            self: (todo): write your description
+            request: (todo): write your description
+            template_name: (str): write your description
+        """
         Tool.objects.all().update(in_last_update=False)
         ReviewBotExtension.instance.send_refresh_tools()
 
@@ -60,6 +68,12 @@ class ToolAdmin(admin.ModelAdmin):
             RequestContext(request, {},  current_app=self.admin_site.name))
 
     def get_urls(self):
+        """
+        Add the admin urls.
+
+        Args:
+            self: (todo): write your description
+        """
         urls = super(ToolAdmin, self).get_urls()
 
         my_urls = [
@@ -69,6 +83,13 @@ class ToolAdmin(admin.ModelAdmin):
         return my_urls + urls
 
     def has_add_permission(self, request):
+        """
+        Returns true if the request has permission.
+
+        Args:
+            self: (todo): write your description
+            request: (todo): write your description
+        """
         return False
 
 

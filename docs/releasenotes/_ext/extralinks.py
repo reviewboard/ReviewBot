@@ -6,12 +6,30 @@ from docutils import nodes, utils
 
 
 def setup(app):
+    """
+    Required sphinx extension.
+
+    Args:
+        app: (todo): write your description
+    """
     app.add_config_value('bugtracker_url', '', True)
     app.add_role('bug', bug_role)
     app.add_role('cve', cve_role)
 
 
 def bug_role(role, rawtext, text, linenum, inliner, options={}, content=[]):
+    """
+    Send a role.
+
+    Args:
+        role: (str): write your description
+        rawtext: (str): write your description
+        text: (str): write your description
+        linenum: (int): write your description
+        inliner: (todo): write your description
+        options: (dict): write your description
+        content: (str): write your description
+    """
     try:
         bugnum = int(text)
         if bugnum <= 0:
@@ -40,6 +58,18 @@ def bug_role(role, rawtext, text, linenum, inliner, options={}, content=[]):
 
 
 def cve_role(role, rawtext, text, linenum, inliner, options={}, content=[]):
+    """
+    Cve role.
+
+    Args:
+        role: (str): write your description
+        rawtext: (str): write your description
+        text: (str): write your description
+        linenum: (int): write your description
+        inliner: (todo): write your description
+        options: (dict): write your description
+        content: (str): write your description
+    """
     ref = 'http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-%s' % text
     node = nodes.reference(rawtext, 'CVE-' + utils.unescape(text),
                            refuri=ref, **options)
