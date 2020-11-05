@@ -56,6 +56,11 @@ def create_queues():
 
 
 def main():
+    """
+    Main function.
+
+    Args:
+    """
     global celery
 
     init_config()
