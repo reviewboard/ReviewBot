@@ -31,6 +31,7 @@ setup(
             'cppcheck = reviewbot.tools.cppcheck:CPPCheckTool',
             'cpplint = reviewbot.tools.cpplint:CPPLintTool',
             'doc8 = reviewbot.tools.doc8:Doc8Tool',
+            'fbinfer = reviewbot.tools.fbinfer:FBInferTool',
             'flake8 = reviewbot.tools.flake8:Flake8Tool',
             'jshint = reviewbot.tools.jshint:JSHintTool',
             'pmd = reviewbot.tools.pmd:PMDTool',
