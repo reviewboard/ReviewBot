@@ -13,6 +13,7 @@ Review Bot Tools
    cppcheck
    cpplint
    doc8
+   fbinfer
    flake8
    jshint
    pmd
