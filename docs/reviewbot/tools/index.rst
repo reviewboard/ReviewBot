@@ -13,9 +13,11 @@ Review Bot Tools
    cppcheck
    cpplint
    doc8
+   fbinfer
    flake8
    jshint
    pmd
    pycodestyle
    pydocstyle
    pyflakes
+   shellcheck
