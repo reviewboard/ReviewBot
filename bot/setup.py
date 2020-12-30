@@ -38,6 +38,7 @@ setup(
             'pycodestyle = reviewbot.tools.pycodestyle:PycodestyleTool',
             'pydocstyle = reviewbot.tools.pydocstyle:PydocstyleTool',
             'pyflakes = reviewbot.tools.pyflakes:PyflakesTool',
+            'shellcheck = reviewbot.tools.shellcheck:ShellCheckTool',
         ],
     },
     install_requires=[

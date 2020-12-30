@@ -20,3 +20,4 @@ Review Bot Tools
    pycodestyle
    pydocstyle
    pyflakes
+   shellcheck
