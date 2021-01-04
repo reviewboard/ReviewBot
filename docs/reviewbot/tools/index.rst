@@ -15,6 +15,7 @@ Review Bot Tools
    doc8
    fbinfer
    flake8
+   gofmt
    jshint
    pmd
    pycodestyle
