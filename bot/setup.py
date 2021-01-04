@@ -34,6 +34,7 @@ setup(
             'fbinfer = reviewbot.tools.fbinfer:FBInferTool',
             'flake8 = reviewbot.tools.flake8:Flake8Tool',
             'gofmt = reviewbot.tools.gofmt:GofmtTool',
+            'gotool = reviewbot.tools.gotool:GoTool',
             'jshint = reviewbot.tools.jshint:JSHintTool',
             'pmd = reviewbot.tools.pmd:PMDTool',
             'pycodestyle = reviewbot.tools.pycodestyle:PycodestyleTool',
