@@ -33,6 +33,7 @@ setup(
             'doc8 = reviewbot.tools.doc8:Doc8Tool',
             'fbinfer = reviewbot.tools.fbinfer:FBInferTool',
             'flake8 = reviewbot.tools.flake8:Flake8Tool',
+            'gofmt = reviewbot.tools.gofmt:GofmtTool',
             'jshint = reviewbot.tools.jshint:JSHintTool',
             'pmd = reviewbot.tools.pmd:PMDTool',
             'pycodestyle = reviewbot.tools.pycodestyle:PycodestyleTool',
