@@ -23,6 +23,7 @@ Review Bot Tools
    pycodestyle
    pydocstyle
    pyflakes
+   rbcredentialchecker
    rubocop
    rustfmt
    shellcheck
