@@ -8,6 +8,7 @@ Review Bot Tools
    :maxdepth: 1
 
    buildbot
+   cargotool
    checkstyle
    clang
    cppcheck
