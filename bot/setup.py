@@ -41,6 +41,7 @@ setup(
             'pycodestyle = reviewbot.tools.pycodestyle:PycodestyleTool',
             'pydocstyle = reviewbot.tools.pydocstyle:PydocstyleTool',
             'pyflakes = reviewbot.tools.pyflakes:PyflakesTool',
+            'rubocop = reviewbot.tools.rubocop:RubocopTool',
             'rustfmt = reviewbot.tools.rustfmt:RustfmtTool',
             'shellcheck = reviewbot.tools.shellcheck:ShellCheckTool',
         ],

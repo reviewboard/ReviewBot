@@ -23,5 +23,6 @@ Review Bot Tools
    pycodestyle
    pydocstyle
    pyflakes
+   rubocop
    rustfmt
    shellcheck
