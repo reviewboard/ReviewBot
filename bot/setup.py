@@ -26,6 +26,7 @@ setup(
         ],
         'reviewbot.tools': [
             'buildbot = reviewbot.tools.buildbot:BuildBotTool',
+            'cargotool = reviewbot.tools.cargotool:CargoTool',
             'checkstyle = reviewbot.tools.checkstyle:CheckstyleTool',
             'clang = reviewbot.tools.clang:ClangTool',
             'cppcheck = reviewbot.tools.cppcheck:CPPCheckTool',
