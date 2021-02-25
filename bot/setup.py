@@ -49,8 +49,7 @@ setup(
     },
     install_requires=[
         'appdirs',
-        'celery>=3.1.25,<4.0; python_version=="2.7"',
-        'celery>=4.4,<5.0; python_version>="3.6"',
+        'celery>=3.0,<4.0',
         'RBTools>=1.0',
     ],
     extras_require={
@@ -73,10 +72,6 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
         'Topic :: Software Development',
         'Topic :: Software Development :: Quality Assurance',
     ],
