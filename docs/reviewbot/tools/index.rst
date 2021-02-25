@@ -8,6 +8,7 @@ Review Bot Tools
    :maxdepth: 1
 
    buildbot
+   cargotool
    checkstyle
    clang
    cppcheck
@@ -15,9 +16,14 @@ Review Bot Tools
    doc8
    fbinfer
    flake8
+   gofmt
+   gotool
    jshint
    pmd
    pycodestyle
    pydocstyle
    pyflakes
+   rbcredentialchecker
+   rubocop
+   rustfmt
    shellcheck
