@@ -20,7 +20,7 @@ class CredentialCheckerTool(Tool):
         """Initialize the tool."""
         super(CredentialCheckerTool, self).__init__()
         self.pattern = re.compile(
-            rb"""(
+            br"""(
 
             # AWS Access Key
             ((A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|
