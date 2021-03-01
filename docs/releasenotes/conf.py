@@ -43,6 +43,7 @@ extensions = [
     'beanbag_docutils.sphinx.ext.django_utils',
     'beanbag_docutils.sphinx.ext.extlinks',
     'beanbag_docutils.sphinx.ext.http_role',
+    'beanbag_docutils.sphinx.ext.intersphinx_utils',
     'beanbag_docutils.sphinx.ext.retina_images',
     'extralinks',
 ]
@@ -360,6 +361,8 @@ else:
 intersphinx_mapping = {
     'python': ('https://docs.python.org/2.7', None),
     'rb3.0': ('%s/docs/manual/3.0/' % rbwebsite_url, None),
+    'rb4.0': ('%s/docs/manual/4.0/' % rbwebsite_url, None),
     'reviewbot1.0': ('%s/docs/reviewbot/1.0/' % rbwebsite_url, None),
     'reviewbot2.0': ('%s/docs/reviewbot/2.0/' % rbwebsite_url, None),
+    'reviewbot3.0': ('%s/docs/reviewbot/3.0/' % rbwebsite_url, None),
 }
