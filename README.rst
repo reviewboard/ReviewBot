@@ -33,36 +33,79 @@ tools:
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/buildbot/>`_
   - Builds the patch in a configured BuildBot environment
 
+* `Cargo Tool
+  <https://www.reviewboard.org/docs/reviewbot/latest/tools/cargotool/>`_
+  - Checks Rust code for errors and suspicious constructs
+
 * `checkstyle
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/checkstyle/>`_
-  - A static analysis tool that provides a variety of checkers for Java code
+  - Checks Java code for code formatting issues and code standard
+    inconsistencies
+
+* `Clang Static Analyzer
+  <https://www.reviewboard.org/docs/reviewbot/latest/tools/clang/>`_
+  - Compiles and checks C/C++/Objective-C code for a variety of problems
 
 * `Cppcheck
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/cppcheck/>`_
-  - A static analysis tool for C/C++ code
+  - Checks C/C++ code for undefined behavior and dangerous coding constructs
 
 * `CppLint <https://www.reviewboard.org/docs/reviewbot/latest/tools/cpplint/>`_
   - Checks C++ code against Google's style guide
 
+* `Credential Checker
+  <https://www.reviewboard.org/docs/reviewbot/latest/tools/rbcredentialchecker/>`_
+  - Checks source code and configuration files for accidental inclusion of
+    sensitive keys and credentials
+
 * `doc8 <https://www.reviewboard.org/docs/reviewbot/latest/tools/doc8/>`_
-  - Check ReStructuredText documentation for styling and syntax errors.
+  - Check ReStructuredText documentation for styling and syntax errors
+
+* `FBInfer
+  <https://www.reviewboard.org/docs/reviewbot/latest/tools/fbinfer/>`_
+  - Checks a wide range of programming languages for potential errors
 
 * `flake8 <https://www.reviewboard.org/docs/reviewbot/latest/tools/flake8/>`_
-  - A wrapper around several Python code quality tools
+  - Checks Python code using a variety of common code Python quality tools
+
+* `gofmt <https://www.reviewboard.org/docs/reviewbot/latest/tools/gofmt/>`_
+  - Checks Go code for code formatting issues
+
+* `Go Tool <https://www.reviewboard.org/docs/reviewbot/latest/tools/gotool/>`_
+  - Checks Go code using ``go vet`` and ``go test``
+
+* `JSHint <https://www.reviewboard.org/docs/reviewbot/latest/tools/jshint/>`_
+  - Checks JavaScript code for common errors
 
 * `PMD <https://www.reviewboard.org/docs/reviewbot/latest/tools/pmd/>`_
-  - A static analysis tool that provides checkers for many languages
+  - Checks code in a variety of programming languages for syntax errors and
+    other problems
 
 * `pycodestyle
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/pycodestyle/>`_
-  - A code style checker for Python code
+  - Checks Python code for code formatting issues
 
 * `pydocstyle
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/pydocstyle/>`_
-  - A static analysis tool for Python docstring conventions
+  - Checks Python docstrings for errors and common formatting issues
 
-* `pyflakes <https://www.reviewboard.org/docs/reviewbot/latest/tools/pyflakes/>`_
-  - A static analysis tool for Python code
+* `pyflakes
+  <https://www.reviewboard.org/docs/reviewbot/latest/tools/pyflakes/>`_
+  - Checks Python code for missing imports, unused or undefined variables or
+    functions, and more
+
+* `RuboCop
+  <https://www.reviewboard.org/docs/reviewbot/latest/tools/rubocop/>`_
+  - Checks Ruby code for common code formatting issues
+
+* `rustfmt
+  <https://www.reviewboard.org/docs/reviewbot/latest/tools/rustfmt/>`_
+  - Checks Rust code for code formatting issues based on the automatic
+    formatting rules in ``rustfmt``
+
+* `ShellCheck
+  <https://www.reviewboard.org/docs/reviewbot/latest/tools/rustfmt/>`_
+  - Checks Bash/sh scripts for common problems and misused commands
 
 See the links above for installation and usage instructions.
 

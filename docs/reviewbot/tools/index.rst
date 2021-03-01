@@ -4,6 +4,8 @@
 Review Bot Tools
 ================
 
+.. These are listed in title sort order, rather than filename sort order.
+
 .. toctree::
    :maxdepth: 1
 
@@ -13,6 +15,7 @@ Review Bot Tools
    clang
    cppcheck
    cpplint
+   rbcredentialchecker
    doc8
    fbinfer
    flake8
@@ -23,7 +26,6 @@ Review Bot Tools
    pycodestyle
    pydocstyle
    pyflakes
-   rbcredentialchecker
    rubocop
    rustfmt
    shellcheck
