@@ -7,10 +7,12 @@ Installation
 If you're upgrading from a previous release, see the instructions on
 :ref:`upgrading Review Bot <upgrading>`.
 
+
 Overview
 ========
 
-Review Bot |version| requires Review Board 3.0 or higher and Python 2.7.
+Review Bot |version| supports Review Board 3.0 or 4.0, and Python 2.7 or
+3.6 through 3.9.
 
 A Review Bot setup consists of three pieces:
 

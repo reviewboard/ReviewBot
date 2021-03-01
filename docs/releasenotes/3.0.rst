@@ -1,0 +1,93 @@
+.. default-intersphinx:: reviewbot3.0
+
+
+============================
+Review Bot 3.0 Release Notes
+============================
+
+**Release date**: TBD
+
+
+Compatibility
+=============
+
+Review Bot 3.0 includes full support for Review Board 3.0 and 4.0, and
+Python 2.7 and 3.6 through 3.9.
+
+We previously stated that Review Bot 2.0 offered support for Review Board 4.0
+and Python 3, but due to changes made since that announcement, it's no longer
+compatible. If you're planning to move to Review Board 4.0 or Python 3, you'll
+want to install Review Bot 3.0.
+
+
+New Tools
+=========
+
+* :ref:`tool-cargotool`
+
+  This tool can check Rust source code for errors and suspicious constructs.
+
+  Patch by Jacob Blazusiak.
+
+* :ref:`tool-rbcredentialchecker`
+
+  This in-house tool checks source code and configuration files for any
+  accidental inclusion of credentials or access keys.
+
+  Patch by Cecilia Wei.
+
+* :ref:`tool-fbinfer`
+
+  This from Facebook checks source code from a wide variety of programming
+  languages for many different kinds of issues.
+
+  Patch by Jacob Blazusiak.
+
+* :ref:`tool-gofmt`
+
+  This tool checks Go source code for common formatting issues.
+
+  Patch by Jacob Blazusiak.
+
+* :ref:`tool-gotool`
+
+  This tool checks Go source code for problems by running through
+  :command:`go test` and :command:`go vet`.
+
+  Patch by Jacob Blazusiak.
+
+* :ref:`tool-rubocop`
+
+  This tool checks Ruby code for common errors, potential problems, and
+  source code formatting issues.
+
+  Patch by Cecilia Wei.
+
+* :ref:`tool-rustfmt`
+
+  This tool checks Rust code for code formatting inconsistencies.
+
+  Patch by Jacob Blazusiak.
+
+* :ref:`tool-shellcheck`
+
+  This tool checks Bash/sh shell scripts for common problems and misused
+  commands.
+
+  Patch by Cecilia Wei.
+
+
+Bug Fixes
+=========
+
+* Fixed some browser-side form validation issues that would come up in
+  Review Bot 2.0 if testing against Review Board 4.0 betas.
+
+
+Contributors
+============
+
+* Cecilia Wei
+* Christian Hammond
+* David Trowbridge
+* Jacob Blazusiak

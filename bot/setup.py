@@ -67,6 +67,9 @@ setup(
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
+        'Framework :: Review Board',
+        'Framework :: Review Board :: 3.0',
+        'Framework :: Review Board :: 4.0',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
@@ -77,6 +80,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Software Development',
         'Topic :: Software Development :: Quality Assurance',
     ],
