@@ -1,12 +1,12 @@
 from __future__ import unicode_literals
 
 
-# The version of Review Bot.
-#
-# This is in the format of:
-#
-#   (Major, Minor, Micro, Patch, alpha/beta/rc/final, Release Number, Released)
-#
+#: The version of Review Bot.
+#:
+#: This is in the format of:
+#:
+#: (Major, Minor, Micro, Patch, alpha/beta/rc/final, Release Number, Released)
+#:
 VERSION = (2, 0, 1, 0, 'alpha', 0, False)
 
 
@@ -20,16 +20,18 @@ def get_version_string():
     version = '%s.%s' % (VERSION[0], VERSION[1])
 
     if VERSION[2] or VERSION[3]:
-        version += '.%s' % VERSION[2]
+        version = '%s.%s' % (version, VERSION[2])
 
     if VERSION[3]:
-        version += '.%s' % VERSION[3]
+        version = '%s.%s' % (version, VERSION[3])
 
-    if VERSION[4] != 'final':
-        if VERSION[4] == 'rc':
-            version += ' RC%s' % VERSION[5]
+    tag = VERSION[4]
+
+    if tag != 'final':
+        if tag == 'rc':
+            version = '%s RC%s' % (version, VERSION[5])
         else:
-            version += ' %s %s' % (VERSION[4], VERSION[5])
+            version = '%s %s %s' % (version, tag, VERSION[5])
 
     if not is_release():
         version += ' (dev)'
@@ -46,16 +48,23 @@ def get_package_version():
         unicode:
         The version to use for the package.
     """
-    version = '%s.%s' % (VERSION[0], VERSION[1])
+    version = '%d.%d' % (VERSION[0], VERSION[1])
 
     if VERSION[2] or VERSION[3]:
-        version += '.%s' % VERSION[2]
+        version = '%s.%s' % (version, VERSION[2])
 
     if VERSION[3]:
-        version += '.%s' % VERSION[3]
+        version = '%s.%s' % (version, VERSION[3])
 
-    if VERSION[4] != 'final':
-        version += '%s%s' % (VERSION[4], VERSION[5])
+    tag = VERSION[4]
+
+    if tag != 'final':
+        if tag == 'alpha':
+            tag = 'a'
+        elif tag == 'beta':
+            tag = 'b'
+
+        version = '%s%s%s' % (version, tag, VERSION[5])
 
     return version
 
@@ -70,5 +79,10 @@ def is_release():
     return VERSION[6]
 
 
+#: An alias for the the version information from :py:data:`VERSION`.
+#:
+#: This does not include the last entry in the tuple (the released state).
 __version_info__ = VERSION[:-1]
+
+#: An alias for the version used for the Python package.
 __version__ = get_package_version()
