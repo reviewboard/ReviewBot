@@ -1,10 +1,14 @@
 from __future__ import print_function, unicode_literals
 
-import imp
+import logging
 import os
 from copy import deepcopy
 
 import appdirs
+import six
+
+
+logger = logging.getLogger(__name__)
 
 
 #: The default configuration for Review Bot.
@@ -23,23 +27,53 @@ default_config = {
 config = deepcopy(default_config)
 
 
-def init():
-    """Load the config file."""
+def load_config():
+    """Load the Review Bot configuraiton.
+
+    This will load the configuration file :file:`reviewbot/config.py`,
+    located in the system's main configuration directory (:file:`/etc/` on
+    Linux).
+
+    If the :envvar:`REVIEWBOT_CONFIG_FILE` environment variable is provided,
+    configuration from that file will be loaded instead.
+
+    If anything goes wrong when loading the configuration, the defaults will
+    be used.
+    """
     global config
 
-    config_file = os.path.join(appdirs.site_config_dir('reviewbot'),
-                               'config.py')
+    config_file = os.environ.get(
+        str('REVIEWBOT_CONFIG_FILE'),
+        os.path.join(appdirs.site_config_dir('reviewbot'), 'config.py'))
 
-    print('Loading config file %s' % config_file)
+    # We're going to work on a copy of this and set it only at the end, in
+    # the event that we're sharing state with other threads.
+    new_config = deepcopy(default_config)
 
-    try:
-        with open(config_file) as f:
-            config_module = imp.load_module('config', f, config_file,
-                                            ('py', 'r', imp.PY_SOURCE))
+    if os.path.exists(config_file):
+        logger.info('Loading Review Bot configuration file %s', config_file)
 
-            for key in list(config.keys()):
-                if hasattr(config_module, key):
-                    value = getattr(config_module, key)
-                    config[key] = value
-    except:
-        print('Unable to load config, using defaults')
+        try:
+            with open(config_file, 'r') as f:
+                config_module = {}
+                exec(compile(f.read(), config_file, 'exec'), config_module)
+
+            for key in six.iterkeys(default_config):
+                if key in config_module:
+                    new_config[key] = config_module[key]
+        except IOError as e:
+            logger.error('Unable to read the Review Bot configuration '
+                         'file: %s',
+                         e)
+        except Exception as e:
+            logger.error('Error loading Review Bot configuration file: %s',
+                         e,
+                         exc_info=True)
+    else:
+        logger.warning('Review Bot configuration was not found at %s. '
+                       'Using the defaults.',
+                       config_file)
+
+    # Since we're strict about what keys we let in here, this will safely
+    # replace everything.
+    config.update(new_config)

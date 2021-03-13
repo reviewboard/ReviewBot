@@ -8,6 +8,10 @@ import nose
 
 
 def run_tests():
+    # Make sure we don't have any environment variables here that
+    # could pose problems.
+    os.environ.pop(str('REVIEWBOT_CONFIG_FILE'), None)
+
     nose_argv = [
         'runtests.py',
         '-v',

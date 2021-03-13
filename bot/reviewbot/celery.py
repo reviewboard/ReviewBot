@@ -7,7 +7,7 @@ from celery import Celery, VERSION as CELERY_VERSION
 from celery.signals import celeryd_after_setup
 from kombu import Exchange, Queue
 
-from reviewbot.config import init as init_config
+from reviewbot.config import load_config
 from reviewbot.repositories import repositories, init_repositories
 
 
@@ -73,7 +73,7 @@ def setup_reviewbot(instance, conf, **kwargs):
         **kwargs (dict, unused):
             Additional keyword arguments passed to the signal.
     """
-    init_config()
+    load_config()
     init_repositories()
 
     if CELERY_VERSION >= (4, 0):
