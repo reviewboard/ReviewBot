@@ -13,6 +13,7 @@ def execute(command,
             extra_ignore_errors=(),
             translate_newlines=True,
             with_errors=True,
+            return_errors=False,
             none_on_ignored_error=False):
     """Execute a command and return the output.
 
@@ -41,14 +42,24 @@ def execute(command,
             Whether the stderr output should be merged in with the stdout
             output or just ignored.
 
+        return_errors (bool, optional)
+            Whether to return the content of the stderr stream. This argument
+            is mutually exclusive with the ``with_errors`` argument.
+
         none_on_ignored_error (bool, optional):
             Whether to return ``None`` if there was an ignored error (instead
             of the process output).
 
     Returns:
-        unicode or list of unicode:
-        Either the output of the process, or a list of lines in the output,
-        depending on the value of ``split_lines``.
+        object:
+        This returns a single value or 2-tuple, depending on the arguments.
+
+        If ``return_errors`` is ``True``, this will return the standard output
+        and standard errors as strings in a tuple. Otherwise, this will just
+        result the standard output as a string.
+
+        If ``split_lines`` is ``True``, those strings will instead be lists
+        of lines (preserving newlines).
     """
     if isinstance(command, list):
         logging.debug(subprocess.list2cmdline(command))
@@ -85,10 +96,17 @@ def execute(command,
                              close_fds=True,
                              universal_newlines=translate_newlines,
                              env=env)
+
+    data, errors = p.communicate()
+
     if split_lines:
-        data = p.stdout.readlines()
+        data = data.splitlines(True)
+
+    if return_errors:
+        if split_lines:
+            errors = errors.splitlines(True)
     else:
-        data = p.stdout.read()
+        errors = None
 
     rc = p.wait()
 
@@ -96,9 +114,12 @@ def execute(command,
         raise Exception('Failed to execute command: %s\n%s' % (command, data))
 
     if rc and none_on_ignored_error:
-        return None
+        data = None
 
-    return data
+    if return_errors:
+        return data, errors
+    else:
+        return data
 
 
 def is_exe_in_path(name):
