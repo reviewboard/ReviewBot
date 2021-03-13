@@ -4,6 +4,7 @@ import logging
 import pkg_resources
 
 from celery import Celery, VERSION as CELERY_VERSION
+from celery.signals import celeryd_after_setup
 from kombu import Exchange, Queue
 
 from reviewbot.config import init as init_config
@@ -55,21 +56,38 @@ def create_queues():
     return queues
 
 
-def main():
-    global celery
+@celeryd_after_setup.connect
+def setup_reviewbot(instance, conf, **kwargs):
+    """Set up Review Bot and Celery.
 
+    This will load the Review Bot configuration, store any repository state,
+    and set up the queues for the enabled tools.
+
+    Args:
+        instance (celery.app.base.Celery):
+            The Celery instance.
+
+        conf (celery.app.utils.Settings):
+            The Celery configuration.
+
+        **kwargs (dict, unused):
+            Additional keyword arguments passed to the signal.
+    """
     init_config()
     init_repositories()
 
-    celery = Celery('reviewbot.celery', include=['reviewbot.tasks'])
-
     if CELERY_VERSION >= (4, 0):
-        celery.conf.accept_content = ['json']
-        celery.conf.task_queues = create_queues()
+        conf.accept_content = ['json']
     else:
-        celery.conf.CELERY_ACCEPT_CONTENT = ['json']
-        celery.conf.CELERY_QUEUES = create_queues()
+        conf.CELERY_ACCEPT_CONTENT = ['json']
 
+    instance.app.amqp.queues = create_queues()
+
+
+def main():
+    global celery
+
+    celery = Celery('reviewbot.celery', include=['reviewbot.tasks'])
     celery.start()
 
 
