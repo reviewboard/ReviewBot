@@ -58,7 +58,8 @@ class PMDTool(Tool):
             returns False, the worker will not listen for this Tool's queue,
             and a warning will be logged.
         """
-        pmd_path = config['pmd_path']
+        pmd_path = config.get('pmd_path')
+
         return pmd_path and is_exe_in_path(pmd_path)
 
     def handle_file(self, f, settings):

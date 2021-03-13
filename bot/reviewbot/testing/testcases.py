@@ -9,11 +9,15 @@ from __future__ import unicode_literals
 import pprint
 import re
 import unittest
+from contextlib import contextmanager
+from copy import deepcopy
 
+import six
 from rbtools.api.resource import FileDiffResource, ItemResource, RootResource
 from rbtools.api.tests.base import MockTransport
 from six.moves import range
 
+from reviewbot.config import config, default_config
 from reviewbot.processing.review import File, Review
 
 
@@ -149,6 +153,40 @@ class TestCase(unittest.TestCase):
             doc = self._ws_re.sub(' ', doc).strip()
 
         return doc
+
+    @contextmanager
+    def override_config(self, new_config):
+        """Override the Review Bot configuration temporarily.
+
+        This context manager allows a caller to set brand-new configuration
+        for the duration of the context.
+
+        Args:
+            new_config (dict):
+                The new configuration. This will be merged into a copy of the
+                default configuration.
+
+        Context:
+            Code will be executed with the new configuration.
+        """
+        old_config = deepcopy(config)
+
+        config.clear()
+        config.update(default_config)
+
+        # We'll attempt a very simple sort of merge, since at the time of this
+        # implementation, we have a very simple default config schema.
+        for key, value in six.iteritems(new_config):
+            if isinstance(value, dict):
+                config[key].update(value)
+            else:
+                config[key] = value
+
+        try:
+            yield
+        finally:
+            config.clear()
+            config.update(old_config)
 
     def create_review(self, review_request_id=123, diff_revision=1,
                       settings={}):

@@ -2,16 +2,25 @@ from __future__ import print_function, unicode_literals
 
 import imp
 import os
+from copy import deepcopy
 
 import appdirs
 
 
-config = {
-    'pmd_path': None,
-    'checkstyle_path': None,
+#: The default configuration for Review Bot.
+#:
+#: :py:data:`config` is generated from this.
+#:
+#: Version Added:
+#:     3.0
+default_config = {
     'review_board_servers': [],
     'repositories': [],
 }
+
+
+#: The active configuration for Review Bot.
+config = deepcopy(default_config)
 
 
 def init():
