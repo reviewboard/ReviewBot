@@ -28,6 +28,7 @@ DEFAULT_CONFIG = {
 #: Version Added:
 #:     3.0
 deprecated_keys = {
+    'pmd_path',
     'review_board_servers',
 }
 
@@ -75,6 +76,17 @@ def load_config():
             for key in six.iterkeys(DEFAULT_CONFIG):
                 if key in config_module:
                     new_config[key] = deepcopy(config_module[key])
+
+            if 'pmd_path' in config_module:
+                logger.warning('pmd_path in %s is deprecated and will be '
+                               'removed in Review Bot 4.0. Please put '
+                               'this in "exe_paths". For example:\n'
+                               'exe_paths = {\n'
+                               '    "pmd": "%s",\n'
+                               '}',
+                               config_file, config_module['pmd_path'])
+
+                new_config['exe_paths']['pmd'] = config_module['pmd_path']
 
             if 'review_board_servers' in config_module:
                 logger.warning('review_board_servers in %s is '

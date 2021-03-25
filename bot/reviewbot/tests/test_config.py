@@ -159,6 +159,43 @@ class ConfigTests(kgb.SpyAgency, TestCase):
             'Unable to read the Review Bot configuration file: %s')
         self.assertSpyNotCalled(logger.warning)
 
+    def test_load_config_with_deprecated_pmd_path(self):
+        """Testing load_config with deprecated pmd_path setting"""
+        tempdir = tempfile.mkdtemp()
+        config_file = os.path.join(tempdir, 'config.py')
+
+        try:
+            with open(config_file, 'w') as fp:
+                fp.write('pmd_path = "/path/to/pmd"\n')
+
+            self.spy_on(appdirs.site_config_dir,
+                        op=kgb.SpyOpReturn(tempdir))
+
+            load_config()
+        finally:
+            shutil.rmtree(tempdir)
+
+        self.assertNotIn('pmd_path', config)
+        self.assertIn('exe_paths', config)
+        self.assertIn('pmd', config['exe_paths'])
+        self.assertEqual(config['exe_paths']['pmd'], '/path/to/pmd')
+
+        self.assertSpyCalledWith(
+            logger.info,
+            'Loading Review Bot configuration file %s',
+            config_file)
+        self.assertSpyCalledWith(
+            logger.warning,
+            'pmd_path in %s is deprecated and will be '
+            'removed in Review Bot 4.0. Please put '
+            'this in "exe_paths". For example:\n'
+            'exe_paths = {\n'
+            '    "pmd": "%s",\n'
+            '}',
+            config_file,
+            '/path/to/pmd')
+        self.assertSpyNotCalled(logger.error)
+
     def test_load_config_with_deprecated_review_board_servers(self):
         """Testing load_config with deprecated review_board_servers setting"""
         tempdir = tempfile.mkdtemp()

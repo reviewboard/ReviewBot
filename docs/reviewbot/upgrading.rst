@@ -67,7 +67,18 @@ Review Bot 3.0 Configuration Changes
 
 The following configuration settings have been deprecated:
 
+* ``pmd_path``
+
+  This should now be specified as ``pmd`` in ``exe_paths``. For example:
+
+  .. code-block:: python
+
+      exe_paths = {
+          'pmd': '/opt/pmd/bin/pmd',
+      }
+
 * ``review_board_servers``
 
-   This has been renamed to ``reviewboard_servers``. The old setting will
-   continue to work until Review Bot 4.0.
+  This has been renamed to ``reviewboard_servers``.
+
+The old settings will continue to work until Review Bot 4.0.

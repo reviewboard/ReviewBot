@@ -5,18 +5,21 @@ import logging
 from os.path import splitext
 
 from reviewbot.config import config
-from reviewbot.tools import Tool
+from reviewbot.tools.base import BaseTool
 from reviewbot.utils.filesystem import make_tempfile
 from reviewbot.utils.process import execute, is_exe_in_path
 
 
-class PMDTool(Tool):
+class PMDTool(BaseTool):
     """Review Bot tool to run PMD."""
 
     name = 'PMD'
     version = '1.0'
     description = 'Checks code for errors using the PMD source code checker.'
     timeout = 90
+
+    exe_dependencies = ['pmd']
+
     options = [
         {
             'name': 'rulesets',
@@ -25,7 +28,8 @@ class PMDTool(Tool):
             'field_options': {
                 'label': 'Rulesets',
                 'help_text': 'A comma-separated list of rulesets to apply or '
-                             'an XML configuration starting with "<?xml"',
+                             'a ruleset XML configuration, starting with '
+                             '"<?xml"',
                 'required': True,
             },
             'widget': {
@@ -43,26 +47,30 @@ class PMDTool(Tool):
             'field_options': {
                 'label': 'Scan files',
                 'help_text': 'Comma-separated list of file extensions '
-                             'to scan. Leave it empty to check any file.',
+                             'to scan. Leave it empty to check all files.',
                 'required': False,
             },
         },
     ]
 
-    def check_dependencies(self):
-        """Verify the tool's dependencies are installed.
+    def __init__(self, **kwargs):
+        """Initialize the tool.
 
-        Returns:
-            bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not listen for this Tool's queue,
-            and a warning will be logged.
+        Args:
+            **kwargs (dict):
+                Keyword arguments for the tool.
         """
-        pmd_path = config.get('pmd_path')
+        super(PMDTool, self).__init__(**kwargs)
 
-        return pmd_path and is_exe_in_path(pmd_path)
+        file_extensions = self.settings.get('file_ext', '').strip()
 
-    def handle_file(self, f, settings):
+        if file_extensions:
+            self.file_patterns = [
+                '*.%s' % ext.strip().lstrip('.')
+                for ext in file_extensions.split(',')
+            ]
+
+    def handle_file(self, f, **kwargs):
         """Perform a review of a single file.
 
         Args:
@@ -72,39 +80,32 @@ class PMDTool(Tool):
             settings (dict):
                 Tool-specific settings.
         """
-        file_ext = settings['file_ext'].strip()
-
-        if file_ext:
-            ext = splitext(f.dest_file)[1][1:]
-
-            if not ext.lower() in file_ext.split(','):
-                # Ignore the file.
-                return
-
         path = f.get_patched_file_path()
 
         if not path:
             return
 
-        rulesets = settings['rulesets']
+        rulesets = self.settings['rulesets']
 
         if rulesets.startswith('<?xml'):
-            rulesets = make_tempfile(rulesets)
+            rulesets = make_tempfile(rulesets.encode('utf-8'))
 
         outfile = make_tempfile()
 
+        # TODO: We should move to using json in the future, if there aren't
+        #       any compatibility problems.
         execute(
             [
-                config['pmd_path'],
+                config['exe_paths']['pmd'],
                 'pmd',
                 '-d', path,
                 '-R', rulesets,
                 '-f', 'csv',
-                '-r', outfile
+                '-r', outfile,
             ],
             ignore_errors=True)
 
-        with open(outfile) as result:
+        with open(outfile, 'r') as result:
             reader = csv.DictReader(result)
 
             for row in reader:
