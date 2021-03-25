@@ -122,13 +122,29 @@ def execute(command,
         return data
 
 
-def is_exe_in_path(name):
+def is_exe_in_path(name, cache={}):
     """Check whether an executable is in the user's search path.
+
+    If the provided filename is an absolute path, it will be checked
+    directly without looking in the search path.
+
+    Version Changed:
+        3.0:
+        Added the ``cache`` parameter.
 
     Args:
         name (unicode):
             The name of the executable, without any platform-specific
             executable extension. The extension will be appended if necessary.
+
+        cache (dict, optional):
+            A result cache, to avoid repeated lookups.
+
+            This will store the paths to any files that are found (or ``None``
+            if not found).
+
+            By default, the cache is shared across all calls. A custom cache
+            can be provided instead.
 
     Returns:
         boolean:
@@ -137,8 +153,22 @@ def is_exe_in_path(name):
     if sys.platform == 'win32' and not name.endswith('.exe'):
         name += '.exe'
 
-    for dir in os.environ['PATH'].split(os.pathsep):
-        if os.path.exists(os.path.join(dir, name)):
-            return True
+    if name in cache:
+        return cache[name]
 
-    return False
+    path = None
+
+    if os.path.isabs(name):
+        if os.path.exists(name):
+            path = name
+    else:
+        for dirname in os.environ['PATH'].split(os.pathsep):
+            temp_path = os.path.abspath(os.path.join(dirname, name))
+
+            if os.path.exists(temp_path):
+                path = temp_path
+                break
+
+    cache[name] = path
+
+    return path is not None

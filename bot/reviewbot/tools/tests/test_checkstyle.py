@@ -27,11 +27,11 @@ class CheckstyleToolTests(kgb.SpyAgency, TestCase):
         self.spy_on(is_exe_in_path, op=kgb.SpyOpMatchInOrder([
             {
                 'args': ('/path/to/checkstyle',),
-                'call_fake': lambda path: False,
+                'call_fake': lambda path, **kwargs: False,
             },
             {
                 'args': ('java',),
-                'call_fake': lambda path: True,
+                'call_fake': lambda path, **kwargs: True,
             },
         ]))
 
@@ -48,11 +48,11 @@ class CheckstyleToolTests(kgb.SpyAgency, TestCase):
         self.spy_on(is_exe_in_path, op=kgb.SpyOpMatchInOrder([
             {
                 'args': ('/path/to/checkstyle',),
-                'call_fake': lambda path: True,
+                'call_fake': lambda path, **kwargs: True,
             },
             {
                 'args': ('java',),
-                'call_fake': lambda path: False,
+                'call_fake': lambda path, **kwargs: False,
             },
         ]))
 
