@@ -112,8 +112,7 @@ class FullRepositoryToolMixin(object):
 
     working_directory_required = True
 
-    def execute(self, review, settings={}, repository=None,
-                base_commit_id=None):
+    def execute(self, review, repository=None, base_commit_id=None, **kwargs):
         """Perform a review using the tool.
 
         Args:
@@ -145,4 +144,4 @@ class FullRepositoryToolMixin(object):
                 f.patched_file_path = f.dest_file
 
             # Now run the tool for everything.
-            self.handle_files(review.files, settings)
+            super(FullRepositoryToolMixin, self).execute(review, **kwargs)

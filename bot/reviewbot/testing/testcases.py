@@ -350,6 +350,12 @@ class TestCase(unittest.TestCase):
         3.0
     """
 
+    #: Whether to preserve the PATH environment variable.
+    #:
+    #: Type:
+    #:     bool
+    preserve_path_env = False
+
     # Increase the maximum size allowed for showing diffs of objects.
     maxDiff = 10000
 
@@ -370,7 +376,9 @@ class TestCase(unittest.TestCase):
         # Stub out the PATH environment variable by default, so that we don't
         # have tests dependent on what's installed locally.
         cls._old_path = os.environ['PATH']
-        os.environ['PATH'] = ''
+
+        if not cls.preserve_path_env:
+            os.environ['PATH'] = ''
 
     @classmethod
     def tearDownClass(cls):
@@ -470,6 +478,7 @@ class TestCase(unittest.TestCase):
                            dest_file='/test.txt',
                            patch=None,
                            patched_content=None,
+                           patched_file_path=None,
                            diff_data=None):
         """Create a File representing a review on a filediff for testing.
 
@@ -492,6 +501,9 @@ class TestCase(unittest.TestCase):
             patched_content (bytes, optional):
                 The patched version of the file. If not provided, one will
                 be generated.
+
+            patched_file_path (unicode, optional):
+                The local path to the patched file content.
 
             diff_data (dict, optional):
                 The diff data, used to match up line numbers to diff
