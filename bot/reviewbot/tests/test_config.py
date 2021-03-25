@@ -31,7 +31,7 @@ class ConfigTests(kgb.SpyAgency, TestCase):
 
         with os.fdopen(fd, 'w') as fp:
             fp.write(
-                'review_board_servers = [{\n'
+                'reviewboard_servers = [{\n'
                 '    "url": "https://reviews.example.com/",\n'
                 '}]\n'
                 'repositories = [{\n'
@@ -47,7 +47,7 @@ class ConfigTests(kgb.SpyAgency, TestCase):
         finally:
             del os.environ[str('REVIEWBOT_CONFIG_FILE')]
 
-        self.assertEqual(config['review_board_servers'], [
+        self.assertEqual(config['reviewboard_servers'], [
             {
                 'url': 'https://reviews.example.com/',
             },
@@ -75,7 +75,7 @@ class ConfigTests(kgb.SpyAgency, TestCase):
         try:
             with open(config_file, 'w') as fp:
                 fp.write(
-                    'review_board_servers = [{\n'
+                    'reviewboard_servers = [{\n'
                     '    "url": "https://reviews2.example.com/",\n'
                     '}]\n'
                     'repositories = [{\n'
@@ -91,7 +91,7 @@ class ConfigTests(kgb.SpyAgency, TestCase):
         finally:
             shutil.rmtree(tempdir)
 
-        self.assertEqual(config['review_board_servers'], [
+        self.assertEqual(config['reviewboard_servers'], [
             {
                 'url': 'https://reviews2.example.com/',
             },
@@ -122,7 +122,7 @@ class ConfigTests(kgb.SpyAgency, TestCase):
         finally:
             os.rmdir(tempdir)
 
-        self.assertEqual(config['review_board_servers'], [])
+        self.assertEqual(config['reviewboard_servers'], [])
         self.assertEqual(config['repositories'], [])
 
         self.assertSpyCalledWith(
@@ -147,7 +147,7 @@ class ConfigTests(kgb.SpyAgency, TestCase):
         finally:
             shutil.rmtree(tempdir)
 
-        self.assertEqual(config['review_board_servers'], [])
+        self.assertEqual(config['reviewboard_servers'], [])
         self.assertEqual(config['repositories'], [])
 
         self.assertSpyCalledWith(
@@ -158,3 +158,46 @@ class ConfigTests(kgb.SpyAgency, TestCase):
             logger.error,
             'Unable to read the Review Bot configuration file: %s')
         self.assertSpyNotCalled(logger.warning)
+
+    def test_load_config_with_deprecated_review_board_servers(self):
+        """Testing load_config with deprecated review_board_servers setting"""
+        tempdir = tempfile.mkdtemp()
+        config_file = os.path.join(tempdir, 'config.py')
+
+        try:
+            with open(config_file, 'w') as fp:
+                fp.write(
+                    'review_board_servers = [{\n'
+                    '    "url": "https://reviews2.example.com/",\n'
+                    '}]\n'
+                    'repositories = [{\n'
+                    '    "name": "test",\n'
+                    '    "clone_path": "git@example.com:/repo2.git",\n'
+                    '}]\n'
+                )
+
+            self.spy_on(appdirs.site_config_dir,
+                        op=kgb.SpyOpReturn(tempdir))
+
+            load_config()
+        finally:
+            shutil.rmtree(tempdir)
+
+        self.assertIn('reviewboard_servers', config)
+        self.assertNotIn('review_board_servers', config)
+        self.assertEqual(config['reviewboard_servers'], [
+            {
+                'url': 'https://reviews2.example.com/',
+            },
+        ])
+
+        self.assertSpyCalledWith(
+            logger.info,
+            'Loading Review Bot configuration file %s',
+            config_file)
+        self.assertSpyCalledWith(
+            logger.warning,
+            'review_board_servers in %s is deprecated and will be removed '
+            'in Review Bot 4.0. Please rename it to reviewboard_servers.',
+            config_file)
+        self.assertSpyNotCalled(logger.error)

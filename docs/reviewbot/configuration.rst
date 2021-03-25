@@ -94,6 +94,9 @@ running on. On Linux, the file should be located at
 :file:`/etc/xdg/reviewbot/config.py`. On Mac OS, the file is
 :file:`/Library/Application Support/reviewbot/config.py`.
 
+On Review Bot 3.0 and higher, the location of the configuration file can also
+be set through the :envvar:`REVIEWBOT_CONFIG_FILE` environment variable.
+
 
 Repositories
 ------------
@@ -162,7 +165,7 @@ the ``mirror_path``.
 
 .. code-block:: python
 
-   review_board_servers = [
+   reviewboard_servers = [
        {
            'user': 'reviewbot',
            'token': 'dd16b7208a2a8c88be6788c22340ae46823fc57e',
@@ -173,3 +176,11 @@ the ``mirror_path``.
        },
    ]
 
+
+.. note:: This setting was renamed in Review Bot 3.0.
+
+   In Review Bot 2.0, this setting was called ``review_board_servers``. For
+   consistency, the old setting was deprecated in 3.0, and will be removed in
+   4.0.
+
+   See :ref:`upgrading-config-3.0`.

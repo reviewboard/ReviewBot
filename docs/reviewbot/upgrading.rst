@@ -4,8 +4,13 @@
 Upgrading
 =========
 
-Upgrading from Review Bot 1.0+
-==============================
+.. _upgrading-packages:
+
+Upgrading Review Bot Packages
+=============================
+
+From Review Bot 1.0+
+--------------------
 
 Upgrading Review Bot is easy. To start, upgrade the extension on the Review
 Board server::
@@ -27,9 +32,12 @@ something like the following::
 Open the Review Board administration page and click :guilabel:`Extensions`.
 You should see the new version of Review Bot installed.
 
+Follow :ref:`upgrading-config` for any configuration changes you may need to
+make.
 
-Upgrading from Review Bot 0.1 or 0.2
-====================================
+
+From Review Bot 0.1 or 0.2
+--------------------------
 
 The configuration of Review Bot 0.1 and 0.2 worked differently than modern
 versions, so to start, make a note of all your settings.
@@ -44,3 +52,22 @@ And then uninstall each worker::
 
 Then follow the :ref:`installation instructions <installation>` to install a
 modern version.
+
+
+.. _upgrading-config:
+
+Upgrading Review Bot Configuration
+==================================
+
+
+.. _upgrading-config-3.0:
+
+Review Bot 3.0 Configuration Changes
+------------------------------------
+
+The following configuration settings have been deprecated:
+
+* ``review_board_servers``
+
+   This has been renamed to ``reviewboard_servers``. The old setting will
+   continue to work until Review Bot 4.0.

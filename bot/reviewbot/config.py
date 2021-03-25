@@ -18,8 +18,16 @@ logger = logging.getLogger(__name__)
 #: Version Added:
 #:     3.0
 default_config = {
-    'review_board_servers': [],
+    'reviewboard_servers': [],
     'repositories': [],
+}
+
+#: Deprecated configuration keys.
+#:
+#: Version Added:
+#:     3.0
+deprecated_keys = {
+    'review_board_servers',
 }
 
 
@@ -61,6 +69,16 @@ def load_config():
             for key in six.iterkeys(default_config):
                 if key in config_module:
                     new_config[key] = config_module[key]
+
+            if 'review_board_servers' in config_module:
+                logger.warning('review_board_servers in %s is '
+                               'deprecated and will be removed in '
+                               'Review Bot 4.0. Please rename it to '
+                               'reviewboard_servers.',
+                               config_file)
+
+                new_config['reviewboard_servers'] = \
+                    config_module['review_board_servers']
         except IOError as e:
             logger.error('Unable to read the Review Bot configuration '
                          'file: %s',

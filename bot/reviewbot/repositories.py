@@ -208,7 +208,7 @@ def init_repository(repo_name, repo_type, repo_source):
 
 def init_repositories():
     """Set up configured repositories."""
-    for server in config['review_board_servers']:
+    for server in config['reviewboard_servers']:
         fetch_repositories(server['url'],
                            server.get('user'),
                            server.get('token'))
