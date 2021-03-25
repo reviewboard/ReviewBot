@@ -12,7 +12,7 @@ from reviewbot.tools.base.registry import (get_tool_classes,
                                            load_tool_classes)
 
 
-celery = None
+celery = Celery('reviewbot.celery', include=['reviewbot.tasks'])
 
 
 def create_queues():
@@ -87,9 +87,6 @@ def setup_reviewbot(instance, conf, **kwargs):
 
 
 def main():
-    global celery
-
-    celery = Celery('reviewbot.celery', include=['reviewbot.tasks'])
     celery.start()
 
 

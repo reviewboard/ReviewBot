@@ -14,12 +14,55 @@ from contextlib import contextmanager
 from copy import deepcopy
 
 import six
-from rbtools.api.resource import FileDiffResource, ItemResource, RootResource
+from rbtools.api.resource import (FileAttachmentListResource,
+                                  FileDiffResource,
+                                  ItemResource,
+                                  ListResource,
+                                  RootResource)
 from rbtools.api.tests.base import MockTransport
 from six.moves import range
 
 from reviewbot.config import config, reset_config
 from reviewbot.processing.review import File, Review
+
+
+class FileAttachmentItemResource(ItemResource):
+    """An item resource for file attachments.
+
+    This exists so we can more easily spy on methods for this resource.
+    """
+
+
+class FileAttachmentListResource(FileAttachmentListResource):
+    """A list resource for file attachments.
+
+    This stubs out some functionality for testing purposes.
+    """
+
+    def upload_attachment(self, **kwargs):
+        """Upload a file attachment.
+
+        This will construct a :py:meth:`FileAttachmentItemResource` that can
+        be spied on.
+
+        Args:
+            **kwargs (dict, unused):
+                Unused keyword arguments.
+
+        Returns:
+            FileAttachmentItemResource:
+            The resulting item resource.
+        """
+        return FileAttachmentItemResource(
+            transport=self._transport,
+            payload={
+                'user_file_attachment': {
+                    'id': 123,
+                    'absolute_url': '/path/to/attachment.txt',
+                },
+            },
+            token='user_file_attachment',
+            url='%s/123/' % self._url)
 
 
 class DummyFileDiffResource(FileDiffResource):
@@ -85,8 +128,153 @@ class DummyFileDiffResource(FileDiffResource):
         return self._diff_data
 
 
+class ReviewBotReviewResource(ItemResource):
+    """An item resource for Review Bot reviews.
+
+    This exists so we can more easily spy on methods for this resource.
+    """
+
+
+class ReviewBotReviewsResource(ListResource):
+    """A list resource for Review Bot reviews.
+
+    This stubs out some functionality for testing purposes.
+    """
+
+    def create(self, **kwargs):
+        """Create a new item resource.
+
+        This will construct a :py:meth:`ReviewBotReviewResource` that can be
+        spied on.
+
+        Args:
+            **kwargs (dict, unused):
+                Unused keyword arguments.
+
+        Returns:
+            ReviewBotReviewResource:
+            The resulting item resource.
+        """
+        return ReviewBotReviewResource(
+            transport=self._transport,
+            payload={
+                'review_bot_review': {
+                    'id': 123,
+                }
+            },
+            token='review_bot_review',
+            url='%s123/' % self._url)
+
+
+class ReviewBotToolsResource(ListResource):
+    """A list resource for Review Bot reviews.
+
+    This stubs out some functionality for testing purposes.
+    """
+
+    def create(self, **kwargs):
+        """Create a new item resource.
+
+        This will actually construct nothing at all. It's intended to be
+        spied on.
+
+        Args:
+            **kwargs (dict, unused):
+                Unused keyword arguments.
+
+        Returns:
+            object:
+            ``None``, always.
+        """
+        return None
+
+
+class ReviewBotExtensionResource(ItemResource):
+    """An item resource for the Review Bot extension.
+
+    This stubs out some functionality for testing purposes.
+    """
+
+    def get_review_bot_reviews(self, **kwargs):
+        """Return a new Review Bot reviews list resource.
+
+        Args:
+            **kwargs (dict, unused):
+                Unused keyword arguments.
+
+        Returns:
+            ReviewBotReviewResource:
+            The new list resource.
+        """
+        return ReviewBotReviewsResource(
+            transport=self._transport,
+            payload={
+                'total_results': 0,
+            },
+            url='%sreview-bot-reviews/' % self._url)
+
+    def get_tools(self, **kwargs):
+        """Return a new Review Bot tools list resource.
+
+        Args:
+            **kwargs (dict, unused):
+                Unused keyword arguments.
+
+        Returns:
+            ReviewBotToolsResource:
+            The new list resource.
+        """
+        return ReviewBotToolsResource(
+            transport=self._transport,
+            payload={
+                'total_results': 0,
+            },
+            url='%stools/' % self._url)
+
+
+class StatusUpdateResource(ItemResource):
+    """An item resource for status updates.
+
+    This stubs out some functionality for testing purposes.
+    """
+
+    def update(self, **kwargs):
+        """Update the item resource.
+
+        This does nothing. It's intended to be spied on.
+
+        Args:
+            **kwargs (dict, unused):
+                Unused keyword arguments.
+        """
+        pass
+
+
 class DummyRootResource(RootResource):
     """A specialization of RootResource that stubs out some functions."""
+
+    def get_extension(self, extension_name, **kwargs):
+        """Return an extension resource.
+
+        This only supports the Review Bot extension ID.
+
+        Args:
+            extension_name (unicode):
+                The extension name requested.
+
+            **kwargs (dict):
+                Unused keyword arguments.
+
+        Returns:
+            ReviewBotExtensionResource:
+            The extension resource instance.
+        """
+        assert extension_name == 'reviewbotext.extension.ReviewBotExtension'
+
+        return ReviewBotExtensionResource(
+            transport=self._transport,
+            payload={},
+            url='%sextensions/%s/' % (self._url, extension_name))
 
     def get_files(self, **kwargs):
         """Return all filediffs resources.
@@ -102,6 +290,55 @@ class DummyRootResource(RootResource):
             The empty list.
         """
         return []
+
+    def get_status_update(self, review_request_id, status_update_id,
+                          **kwargs):
+        """Return a status update item resource.
+
+        Args:
+            review_request_id (int):
+                The ID of the review request.
+
+            status_update_id (Int):
+                The ID of the status update.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
+
+        Returns:
+            StatusUpdateResource:
+            The resulting status update resource.
+        """
+        return StatusUpdateResource(
+            transport=self._transport,
+            payload={
+                'status_update': {
+                    'id': status_update_id,
+                },
+            },
+            url=('%sreview-requests/%s/status-updates/%s/'
+                 % (self._url, review_request_id, status_update_id)))
+
+    def get_user_file_attachments(self, username, **kwargs):
+        """Return a user file attachment list resource.
+
+        Args:
+            username (unicode):
+                The username for the user who owns the file attachments.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
+
+        Returns:
+            FileAttachmentListResource:
+            The resulting user file attachment list resource.
+        """
+        return FileAttachmentListResource(
+            transport=self._transport,
+            payload={
+                'total_results': 0,
+            },
+            url='%susers/%s/user-file-attachments/' % (self._url, username))
 
 
 class TestCase(unittest.TestCase):
@@ -265,47 +502,14 @@ class TestCase(unittest.TestCase):
             reviewbot.processing.review.File:
             The resulting File object.
         """
-        if patch is None:
-            patch = (
-                b'diff --git a/%(source_file)s b/%(dest_file)s\n'
-                b'index abc123..def456 100644\n'
-                b'--- a/%(source_file)s\n'
-                b'+++ b/%(dest_file)s\n'
-                b'@@ -2 +2 @@\n'
-                b'-test\n'
-                b'+test!\n'
-                % {
-                    b'dest_file': dest_file.encode('utf-8'),
-                    b'source_file': source_file.encode('utf-8'),
-                }
-            )
-
-        if patched_content is None:
-            patched_content = b'test!'
-
-        if diff_data is None:
-            diff_data = self.create_diff_data(chunks=[
-                {
-                    'change': 'replace',
-                    'lines': [
-                        ('test', 'test!'),
-                    ],
-                }
-            ])
-
-        api_filediff = DummyFileDiffResource(
-            transport=self.api_transport,
-            payload={
-                'id': filediff_id,
-                'source_file': source_file,
-                'dest_file': dest_file,
-                '_diff_data': diff_data,
-                '_patch': patch,
-                '_patched_content': patched_content,
-            },
-            url=('https://reviews.example.com/api/review-requests/%s/'
-                 'diffs/1/files/%s/'
-                 % (review.review_request_id, filediff_id)))
+        api_filediff = self.create_filediff_resource(
+            filediff_id=filediff_id,
+            review_request_id=review.review_request_id,
+            source_file=source_file,
+            dest_file=dest_file,
+            patch=patch,
+            patched_content=patched_content,
+            diff_data=diff_data)
 
         review_file = File(review=review,
                            api_filediff=api_filediff)
@@ -492,3 +696,83 @@ class TestCase(unittest.TestCase):
             'new_file': False,
             'num_changes': num_changes,
         }
+
+    def create_filediff_resource(self, filediff_id=42,
+                                 review_request_id=123,
+                                 source_file='/test.txt',
+                                 dest_file='/test.txt',
+                                 patch=None,
+                                 patched_content=None,
+                                 diff_data=None):
+        """Create a FileDiffResource for testing.
+
+        Args:
+            filediff_id (int, optional):
+                The ID of the FileDiff being reviewed.
+
+            review_request_id (int, optional):
+                The ID of the review request that owns the FileDiff.
+
+            source_file (unicode, optional):
+                The filename of the original version of the file.
+
+            dest_file (unicode, optional):
+                The filename of the modified version of the file.
+
+            patch (bytes, optional):
+                The patch content. If not provided, one will be generated.
+
+            patched_content (bytes, optional):
+                The patched version of the file. If not provided, one will
+                be generated.
+
+            diff_data (dict, optional):
+                The diff data, used to match up line numbers to diff
+                virtual line numbers. If not provided, one will be generated,
+                but most test suites will need to generate this themselves.
+
+        Returns:
+            reviewbot.processing.review.File:
+            The resulting File object.
+        """
+        if patch is None:
+            patch = (
+                b'diff --git a/%(source_file)s b/%(dest_file)s\n'
+                b'index abc123..def456 100644\n'
+                b'--- a/%(source_file)s\n'
+                b'+++ b/%(dest_file)s\n'
+                b'@@ -2 +2 @@\n'
+                b'-test\n'
+                b'+test!\n'
+                % {
+                    b'dest_file': dest_file.encode('utf-8'),
+                    b'source_file': source_file.encode('utf-8'),
+                }
+            )
+
+        if patched_content is None:
+            patched_content = b'test!'
+
+        if diff_data is None:
+            diff_data = self.create_diff_data(chunks=[
+                {
+                    'change': 'replace',
+                    'lines': [
+                        ('test', 'test!'),
+                    ],
+                }
+            ])
+
+        return DummyFileDiffResource(
+            transport=self.api_transport,
+            payload={
+                'id': filediff_id,
+                'source_file': source_file,
+                'dest_file': dest_file,
+                '_diff_data': diff_data,
+                '_patch': patch,
+                '_patched_content': patched_content,
+            },
+            url=('https://reviews.example.com/api/review-requests/%s/'
+                 'diffs/1/files/%s/'
+                 % (review_request_id, filediff_id)))

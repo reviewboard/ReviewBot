@@ -186,7 +186,8 @@ def RunTool(server_url='',
             file_attachments = \
                 api_root.get_user_file_attachments(username=username)
             attachment = \
-                file_attachments.upload_attachment('tool-output', tool.output)
+                file_attachments.upload_attachment(filename='tool-output',
+                                                   content=tool.output)
 
             status_update.update(url=attachment.absolute_url,
                                  url_text='Tool console output')
@@ -252,7 +253,8 @@ def update_tools_list(panel, payload):
                 'entry_point': tool_id,
                 'version': tool_class.version,
                 'description': tool_class.description,
-                'tool_options': json.dumps(tool_class.options),
+                'tool_options': json.dumps(tool_class.options,
+                                           sort_keys=True),
                 'timeout': tool_class.timeout,
                 'working_directory_required':
                     tool_class.working_directory_required,
