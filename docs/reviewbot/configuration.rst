@@ -101,6 +101,36 @@ On Review Bot 3.0 and higher, the location of the configuration file can also
 be set through the :envvar:`REVIEWBOT_CONFIG_FILE` environment variable.
 
 
+.. _worker-configuration-cookies:
+
+Cookie Storage
+--------------
+
+.. versionadded:: 3.0
+
+Review Bot needs to store Review Board API cookies somewhere, in order to
+maintain an authenticated user session. By default, these cookies will be
+stored in one of the following directories, depending on the operating system:
+
+* Linux: ``~/.cache/reviewbot``
+* macOS: ``~/Library/Caches/reviewbot``
+* Windows (Vista on up):
+  ``C:\Users\<username>\AppData\Local\Beanbag\reviewbot\Cache``
+
+The defaults require the user Review Bot is running as to have a home
+directory that can be written to.
+
+If needed, an explicit path can be configured by setting ``cookie_dir`` to an
+absolute path on the local filesystem. For example:
+
+.. code-block:: python
+
+   cookie_dir = '/opt/reviewbot/data/'
+
+Review Bot will refuse to start up if it can't write cookies to the cookie
+directory.
+
+
 .. _worker-configuration-repositories:
 
 Full Repository Access

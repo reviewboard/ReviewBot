@@ -65,6 +65,9 @@ Upgrading Review Bot Configuration
 Review Bot 3.0 Configuration Changes
 ------------------------------------
 
+Deprecated Settings
+~~~~~~~~~~~~~~~~~~~
+
 The following configuration settings have been deprecated:
 
 * ``pmd_path``
@@ -81,4 +84,16 @@ The following configuration settings have been deprecated:
 
   This has been renamed to ``reviewboard_servers``.
 
-The old settings will continue to work until Review Bot 4.0.
+Deprecated settings will continue to work until Review Bot 4.0.
+
+
+Cookie Settings
+~~~~~~~~~~~~~~~
+
+In prior releases, Review Board session cookies were stored in the current
+directory where Review Bot was run from. They're now stored in a dedicated
+cache directory for the user Review Bot is running as.
+
+This path can be configured through the ``cookie_dir`` setting.
+
+See :ref:`worker-configuration-cookies` for details.

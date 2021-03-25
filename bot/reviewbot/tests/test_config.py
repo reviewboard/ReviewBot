@@ -69,27 +69,15 @@ class ConfigTests(kgb.SpyAgency, TestCase):
 
     def test_load_config_with_default_path(self):
         """Testing load_config with default configuration file path"""
-        tempdir = tempfile.mkdtemp()
-        config_file = os.path.join(tempdir, 'config.py')
-
-        try:
-            with open(config_file, 'w') as fp:
-                fp.write(
-                    'reviewboard_servers = [{\n'
-                    '    "url": "https://reviews2.example.com/",\n'
-                    '}]\n'
-                    'repositories = [{\n'
-                    '    "name": "test",\n'
-                    '    "clone_path": "git@example.com:/repo2.git",\n'
-                    '}]\n'
-                )
-
-            self.spy_on(appdirs.site_config_dir,
-                        op=kgb.SpyOpReturn(tempdir))
-
-            load_config()
-        finally:
-            shutil.rmtree(tempdir)
+        config_file = self._load_custom_config(
+            'reviewboard_servers = [{\n'
+            '    "url": "https://reviews2.example.com/",\n'
+            '}]\n'
+            'repositories = [{\n'
+            '    "name": "test",\n'
+            '    "clone_path": "git@example.com:/repo2.git",\n'
+            '}]\n'
+        )
 
         self.assertEqual(config['reviewboard_servers'], [
             {
@@ -161,19 +149,7 @@ class ConfigTests(kgb.SpyAgency, TestCase):
 
     def test_load_config_with_deprecated_pmd_path(self):
         """Testing load_config with deprecated pmd_path setting"""
-        tempdir = tempfile.mkdtemp()
-        config_file = os.path.join(tempdir, 'config.py')
-
-        try:
-            with open(config_file, 'w') as fp:
-                fp.write('pmd_path = "/path/to/pmd"\n')
-
-            self.spy_on(appdirs.site_config_dir,
-                        op=kgb.SpyOpReturn(tempdir))
-
-            load_config()
-        finally:
-            shutil.rmtree(tempdir)
+        config_file = self._load_custom_config('pmd_path = "/path/to/pmd"\n')
 
         self.assertNotIn('pmd_path', config)
         self.assertIn('exe_paths', config)
@@ -198,27 +174,15 @@ class ConfigTests(kgb.SpyAgency, TestCase):
 
     def test_load_config_with_deprecated_review_board_servers(self):
         """Testing load_config with deprecated review_board_servers setting"""
-        tempdir = tempfile.mkdtemp()
-        config_file = os.path.join(tempdir, 'config.py')
-
-        try:
-            with open(config_file, 'w') as fp:
-                fp.write(
-                    'review_board_servers = [{\n'
-                    '    "url": "https://reviews2.example.com/",\n'
-                    '}]\n'
-                    'repositories = [{\n'
-                    '    "name": "test",\n'
-                    '    "clone_path": "git@example.com:/repo2.git",\n'
-                    '}]\n'
-                )
-
-            self.spy_on(appdirs.site_config_dir,
-                        op=kgb.SpyOpReturn(tempdir))
-
-            load_config()
-        finally:
-            shutil.rmtree(tempdir)
+        config_file = self._load_custom_config(
+            'review_board_servers = [{\n'
+            '    "url": "https://reviews2.example.com/",\n'
+            '}]\n'
+            'repositories = [{\n'
+            '    "name": "test",\n'
+            '    "clone_path": "git@example.com:/repo2.git",\n'
+            '}]\n'
+        )
 
         self.assertIn('reviewboard_servers', config)
         self.assertNotIn('review_board_servers', config)
@@ -238,3 +202,102 @@ class ConfigTests(kgb.SpyAgency, TestCase):
             'in Review Bot 4.0. Please rename it to reviewboard_servers.',
             config_file)
         self.assertSpyNotCalled(logger.error)
+
+    def test_load_config_with_default_cookie_dir(self):
+        """Testing load_config with default cookie_dir setting"""
+        self._load_custom_config('')
+
+        cookie_dir = config['cookie_dir']
+        default_cookie_dir = appdirs.user_cache_dir(appname='reviewbot',
+                                                    appauthor='Beanbag')
+
+        self.assertEqual(cookie_dir, default_cookie_dir)
+        self.assertEqual(config['cookie_path'],
+                         os.path.join(cookie_dir, 'reviewbot-cookies.txt'))
+
+        self.assertSpyNotCalled(logger.error)
+
+    def test_load_config_with_custom_cookie_dir(self):
+        """Testing load_config with default cookie_dir setting"""
+        new_cookie_dir = tempfile.mkdtemp()
+
+        try:
+            self._load_custom_config('cookie_dir = "%s"' % new_cookie_dir)
+        finally:
+            os.rmdir(new_cookie_dir)
+
+        cookie_dir = config['cookie_dir']
+
+        self.assertEqual(cookie_dir, new_cookie_dir)
+        self.assertEqual(config['cookie_path'],
+                         os.path.join(cookie_dir, 'reviewbot-cookies.txt'))
+
+        self.assertSpyNotCalled(logger.error)
+
+    def test_load_config_with_blank_cookie_dir(self):
+        """Testing load_config with blank cookie_dir setting"""
+        config_file = self._load_custom_config('cookie_dir = ""\n')
+
+        cookie_dir = config['cookie_dir']
+        default_cookie_dir = appdirs.user_cache_dir(appname='reviewbot',
+                                                    appauthor='Beanbag')
+
+        self.assertEqual(cookie_dir, default_cookie_dir)
+        self.assertEqual(config['cookie_path'],
+                         os.path.join(cookie_dir, 'reviewbot-cookies.txt'))
+
+        self.assertSpyCalledWith(
+            logger.error,
+            'cookie_dir was empty in %s. Using the default of %s instead.',
+            config_file,
+            default_cookie_dir)
+
+    def test_load_config_with_rel_cookie_dir(self):
+        """Testing load_config with relative cookie_dir setting"""
+        config_file = self._load_custom_config('cookie_dir = "./cookies/"\n')
+
+        cookie_dir = config['cookie_dir']
+        default_cookie_dir = appdirs.user_cache_dir(appname='reviewbot',
+                                                    appauthor='Beanbag')
+
+        self.assertEqual(cookie_dir, default_cookie_dir)
+        self.assertEqual(config['cookie_path'],
+                         os.path.join(cookie_dir, 'reviewbot-cookies.txt'))
+
+        self.assertSpyCalledWith(
+            logger.error,
+            'cookie_dir (%s) must be a relative path in %s. Using the '
+            'default of %s instead.',
+            './cookies/',
+            config_file,
+            default_cookie_dir)
+
+    def _load_custom_config(self, config_contents):
+        """Load a custom configuration file.
+
+        This will write the file to a path and force it to be used as the
+        default-loaded configuration file.
+
+        Args:
+            config_contents (unicode):
+                The configuration file contents.
+
+        Returns:
+            unicode:
+            The path to the configuration file.
+        """
+        tempdir = tempfile.mkdtemp()
+        config_file = os.path.join(tempdir, 'config.py')
+
+        try:
+            with open(config_file, 'w') as fp:
+                fp.write(config_contents)
+
+            self.spy_on(appdirs.site_config_dir,
+                        op=kgb.SpyOpReturn(tempdir))
+
+            load_config()
+        finally:
+            shutil.rmtree(tempdir)
+
+        return config_file

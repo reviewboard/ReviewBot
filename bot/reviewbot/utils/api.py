@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 from rbtools.api.client import RBClient
 
 from reviewbot import get_version_string
+from reviewbot.config import config
 
 
 def get_api_root(url, username=None, api_token=None, session=None):
@@ -40,7 +41,7 @@ def get_api_root(url, username=None, api_token=None, session=None):
     """
     client = RBClient(url,
                       agent='ReviewBot/%s' % get_version_string(),
-                      cookie_file='reviewbot-cookies.txt',
+                      cookie_file=config['cookie_path'],
                       username=username,
                       api_token=api_token,
                       session=session)

@@ -4,11 +4,13 @@ import logging
 import os
 from copy import deepcopy
 
-import appdirs
 import six
+from appdirs import AppDirs
 
 
 logger = logging.getLogger(__name__)
+_appdirs = AppDirs(appname='reviewbot',
+                   appauthor='Beanbag')
 
 
 #: The default configuration for Review Bot.
@@ -18,6 +20,7 @@ logger = logging.getLogger(__name__)
 #: Version Added:
 #:     3.0
 DEFAULT_CONFIG = {
+    'cookie_dir': _appdirs.user_cache_dir,
     'exe_paths': {},
     'reviewboard_servers': [],
     'repositories': [],
@@ -59,7 +62,7 @@ def load_config():
 
     config_file = os.environ.get(
         str('REVIEWBOT_CONFIG_FILE'),
-        os.path.join(appdirs.site_config_dir('reviewbot'), 'config.py'))
+        os.path.join(_appdirs.site_config_dir, 'config.py'))
 
     # We're going to work on a copy of this and set it only at the end, in
     # the event that we're sharing state with other threads.
@@ -109,6 +112,30 @@ def load_config():
         logger.warning('Review Bot configuration was not found at %s. '
                        'Using the defaults.',
                        config_file)
+
+    # Ensure some settings are set to sane values.
+    cookie_dir = new_config['cookie_dir']
+
+    if not cookie_dir:
+        logger.error('cookie_dir was empty in %s. Using the default '
+                     'of %s instead.',
+                     config_file,
+                     DEFAULT_CONFIG['cookie_dir'])
+        cookie_dir = DEFAULT_CONFIG['cookie_dir']
+        new_config['cookie_dir'] = cookie_dir
+    elif not os.path.isabs(cookie_dir):
+        logger.error('cookie_dir (%s) must be a relative path in %s. '
+                     'Using the default of %s instead.',
+                     cookie_dir,
+                     config_file,
+                     DEFAULT_CONFIG['cookie_dir'])
+        cookie_dir = DEFAULT_CONFIG['cookie_dir']
+        new_config['cookie_dir'] = cookie_dir
+
+    # Set the full cookie path, for convenience. This setting cannot be
+    # customized.
+    new_config['cookie_path'] = os.path.join(cookie_dir,
+                                             'reviewbot-cookies.txt')
 
     config.clear()
     config.update(new_config)

@@ -1,12 +1,14 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
+import os
+import sys
 
 from celery import Celery, VERSION as CELERY_VERSION
 from celery.signals import celeryd_after_setup
 from kombu import Exchange, Queue
 
-from reviewbot.config import load_config
+from reviewbot.config import config, load_config
 from reviewbot.repositories import repositories, init_repositories
 from reviewbot.tools.base.registry import (get_tool_classes,
                                            load_tool_classes)
@@ -57,6 +59,55 @@ def create_queues():
     return queues
 
 
+def setup_cookies():
+    """Set up cookie storage for API communication.
+
+    This will ensure that the cookie directory exists and that the cookie
+    file can be written to.
+
+    Raises:
+        IOError:
+            The cookie directories could not be created or there's a
+            permission error with cookie storage. The specific error will
+            be in the exception message.
+    """
+    cookie_dir = config['cookie_dir']
+    cookie_path = config['cookie_path']
+
+    logging.debug('Checking cookie storage at %s', cookie_path)
+
+    # Create the cookie storage directory, if it doesn't exist.
+    if not os.path.exists(cookie_dir):
+        try:
+            os.makedirs(cookie_dir, 0o755)
+        except OSError as e:
+            raise IOError('Unable to create cookies directory "%s": %s'
+                          % (cookie_dir, e))
+
+    can_write_cookies = True
+
+    if os.path.exists(cookie_path):
+        # See if we have write access to the file.
+        can_write_cookies = os.access(cookie_path, os.W_OK)
+    else:
+        # Try writing to the file. We'll append, just in case there's another
+        # process that managed to write just before this (super unlikely).
+        try:
+            with open(cookie_path, 'a'):
+                pass
+
+            os.chmod(cookie_path, 0o600)
+        except (IOError, OSError):
+            can_write_cookies = False
+
+    if not can_write_cookies:
+        raise IOError('Unable to write to cookie file "%s". Please make '
+                      'sure Review Bot has the proper permissions.'
+                      % cookie_path)
+
+    logging.debug('Cookies can be stored at %s', cookie_path)
+
+
 @celeryd_after_setup.connect
 def setup_reviewbot(instance, conf, **kwargs):
     """Set up Review Bot and Celery.
@@ -75,6 +126,13 @@ def setup_reviewbot(instance, conf, **kwargs):
             Additional keyword arguments passed to the signal.
     """
     load_config()
+
+    try:
+        setup_cookies()
+    except IOError as e:
+        logging.error(e)
+        sys.exit(1)
+
     load_tool_classes()
     init_repositories()
 
