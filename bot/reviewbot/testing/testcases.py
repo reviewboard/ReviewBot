@@ -6,6 +6,7 @@ Version Added:
 
 from __future__ import unicode_literals
 
+import os
 import pprint
 import re
 import unittest
@@ -129,11 +130,17 @@ class TestCase(unittest.TestCase):
             },
             url='https://reviews.example.com/api/')
 
+        # Stub out the PATH environment variable by default, so that we don't
+        # have tests dependent on what's installed locally.
+        cls._old_path = os.environ['PATH']
+        os.environ['PATH'] = ''
+
     @classmethod
     def tearDownClass(cls):
         super(TestCase, cls).tearDownClass()
 
         cls.api_transport = None
+        os.environ['PATH'] = cls._old_path
 
     def shortDescription(self):
         """Return the description of the current test.

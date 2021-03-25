@@ -20,8 +20,8 @@ class IsExeInPathTests(TestCase):
         cls.tempdir = tempfile.mkdtemp()
         cls.exe_filename = os.path.join(cls.tempdir, 'test.sh')
 
-        cls._old_path = os.environ['PATH']
-
+        # We can freely set this here, because the parent class is going to
+        # handle resetting it in tearDownClass().
         os.environ['PATH'] = '/xxx/abc:%s:/xxx/def' % cls.tempdir
 
         with open(cls.exe_filename, 'w') as fp:
@@ -34,11 +34,9 @@ class IsExeInPathTests(TestCase):
         super(IsExeInPathTests, cls).tearDownClass()
 
         shutil.rmtree(cls.tempdir)
-        os.environ['PATH'] = cls._old_path
 
         cls.tempdir = None
         cls.exe_filename = None
-        cls._old_path = None
 
     def test_with_found_in_path(self):
         """Testing is_exe_in_path with executable found in path"""

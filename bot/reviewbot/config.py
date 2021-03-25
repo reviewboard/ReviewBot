@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 #: Version Added:
 #:     3.0
 default_config = {
+    'exe_paths': {},
     'reviewboard_servers': [],
     'repositories': [],
 }

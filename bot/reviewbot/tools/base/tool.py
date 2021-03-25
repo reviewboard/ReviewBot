@@ -2,6 +2,9 @@
 
 from __future__ import unicode_literals
 
+from reviewbot.config import config
+from reviewbot.utils.process import is_exe_in_path
+
 
 class BaseTool(object):
     """The base class all Review Bot tools should inherit from.
@@ -40,6 +43,23 @@ class BaseTool(object):
     #: Type:
     #:     unicode
     version = '1'
+
+    #: A list of executable tools required by the tool.
+    #:
+    #: Each is the name of an executable on the filesystem, either in the
+    #: :envvar:`PATH` or defined in the ``exe_paths`` configuration.
+    #:
+    #: These will be checked when the worker starts. If a dependency for a
+    #: tool is missing, the worker will not enable it.
+    #:
+    #: Version Added:
+    #:     3.0:
+    #:     Tools that previously implemented :py:meth:`check_dependencies`
+    #:     may want to be updated to use this.
+    #:
+    #: Type:
+    #:     dict
+    exe_dependencies = []
 
     #: Configurable options defined for the tool.
     #:
@@ -93,8 +113,14 @@ class BaseTool(object):
     def check_dependencies(self):
         """Verify the tool's dependencies are installed.
 
-        Subclasses should implement this to check for scripts or external
-        programs the tool assumes exist on the path.
+        By default, this will check :py:attr:`exe_dependencies`, ensuring each
+        is available to the tool.
+
+        For each entry in :py:attr:`exe_dependencies`, :envvar:`PATH` will be
+        checked. If the dependency name is found in the ``exe_paths`` mapping
+        in the Review Bot configuration, that path will be checked.
+
+        Subclasses can implement this if they need more advanced checks.
 
         Returns:
             bool:
@@ -102,6 +128,14 @@ class BaseTool(object):
             returns False, the worker will not listen for this Tool's queue,
             and a warning will be logged.
         """
+        exe_paths = config['exe_paths']
+
+        for exe in self.exe_dependencies:
+            path = exe_paths.get(exe, exe)
+
+            if not path or not is_exe_in_path(path, cache=exe_paths):
+                return False
+
         return True
 
     def execute(self, review, settings={}, repository=None,
