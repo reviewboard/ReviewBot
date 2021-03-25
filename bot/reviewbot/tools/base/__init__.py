@@ -11,10 +11,12 @@ Version Added:
 from __future__ import unicode_literals
 
 from reviewbot.tools.base.tool import BaseTool
-from reviewbot.tools.base.mixins import FullRepositoryToolMixin
+from reviewbot.tools.base.mixins import (FilePatternsFromSettingMixin,
+                                         FullRepositoryToolMixin)
 
 
 __all__ = [
     'BaseTool',
+    'FilePatternsFromSettingMixin',
     'FullRepositoryToolMixin',
 ]

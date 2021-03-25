@@ -2,15 +2,14 @@ from __future__ import unicode_literals
 
 import csv
 import logging
-from os.path import splitext
 
 from reviewbot.config import config
-from reviewbot.tools.base import BaseTool
+from reviewbot.tools.base import BaseTool, FilePatternsFromSettingMixin
 from reviewbot.utils.filesystem import make_tempfile
-from reviewbot.utils.process import execute, is_exe_in_path
+from reviewbot.utils.process import execute
 
 
-class PMDTool(BaseTool):
+class PMDTool(FilePatternsFromSettingMixin, BaseTool):
     """Review Bot tool to run PMD."""
 
     name = 'PMD'
@@ -19,6 +18,8 @@ class PMDTool(BaseTool):
     timeout = 90
 
     exe_dependencies = ['pmd']
+
+    file_extensions_setting = 'file_ext'
 
     options = [
         {
@@ -52,23 +53,6 @@ class PMDTool(BaseTool):
             },
         },
     ]
-
-    def __init__(self, **kwargs):
-        """Initialize the tool.
-
-        Args:
-            **kwargs (dict):
-                Keyword arguments for the tool.
-        """
-        super(PMDTool, self).__init__(**kwargs)
-
-        file_extensions = self.settings.get('file_ext', '').strip()
-
-        if file_extensions:
-            self.file_patterns = [
-                '*.%s' % ext.strip().lstrip('.')
-                for ext in file_extensions.split(',')
-            ]
 
     def handle_file(self, f, **kwargs):
         """Perform a review of a single file.
