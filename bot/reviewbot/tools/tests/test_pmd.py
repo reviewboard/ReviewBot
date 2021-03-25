@@ -60,21 +60,17 @@ class PMDToolTests(kgb.SpyAgency, TestCase):
         def _execute(cmdline, **kwargs):
             self.assertEqual(len(cmdline), 10)
             self.assertEqual(
-                cmdline[:3],
+                cmdline[:7],
                 [
                     '/path/to/pmd',
                     'pmd',
-                    '-d',
-                ])
-            self.assertEqual(
-                cmdline[4:-1],
-                [
                     '-R', 'ruleset1,ruleset2',
                     '-f', 'csv',
-                    '-r',
+                    '-d',
                 ])
+            self.assertEqual(cmdline[8], '-r')
 
-            patch_filename = cmdline[3]
+            patch_filename = cmdline[7]
             output_filename = cmdline[9]
 
             self.assertTrue(os.path.exists(patch_filename))
@@ -131,18 +127,18 @@ class PMDToolTests(kgb.SpyAgency, TestCase):
                 [
                     '/path/to/pmd',
                     'pmd',
-                    '-d',
+                    '-R',
                 ])
-            self.assertEqual(cmdline[4], '-R')
             self.assertEqual(
-                cmdline[6:-1],
+                cmdline[4:7],
                 [
                     '-f', 'csv',
-                    '-r',
+                    '-d',
                 ])
+            self.assertEqual(cmdline[8], '-r')
 
-            patch_filename = cmdline[3]
-            ruleset_filename = cmdline[5]
+            ruleset_filename = cmdline[3]
+            patch_filename = cmdline[7]
             output_filename = cmdline[9]
 
             self.assertTrue(os.path.exists(patch_filename))
@@ -281,6 +277,6 @@ class PMDToolTests(kgb.SpyAgency, TestCase):
 
         with self.override_config(new_config):
             tool = PMDTool(settings=settings)
-            tool.handle_files([review_file])
+            tool.execute(review)
 
         return review, review_file

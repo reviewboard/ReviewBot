@@ -54,7 +54,34 @@ class PMDTool(FilePatternsFromSettingMixin, BaseTool):
         },
     ]
 
-    def handle_file(self, f, path, **kwargs):
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        This creates a command line for running PMD that specifies the
+        correct output format and the rulesets (generating a temporary
+        ruleset configuration file, if needed).
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments.
+
+        Returns:
+            list of unicode:
+            The base command line.
+        """
+        rulesets = self.settings['rulesets']
+
+        if rulesets.startswith('<?xml'):
+            rulesets = make_tempfile(rulesets.encode('utf-8'))
+
+        return [
+            config['exe_paths']['pmd'],
+            'pmd',
+            '-R', rulesets,
+            '-f', 'csv',
+        ]
+
+    def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.
 
         Args:
@@ -64,26 +91,19 @@ class PMDTool(FilePatternsFromSettingMixin, BaseTool):
             path (unicode):
                 The local path to the patched file to review.
 
+            base_command (list of unicode, optional):
+                The common base command line used for reviewing a file.
+
             **kwargs (dict, unused):
                 Additional keyword arguments.
         """
-
-        rulesets = self.settings['rulesets']
-
-        if rulesets.startswith('<?xml'):
-            rulesets = make_tempfile(rulesets.encode('utf-8'))
-
         outfile = make_tempfile()
 
         # TODO: We should move to using json in the future, if there aren't
         #       any compatibility problems.
         execute(
-            [
-                config['exe_paths']['pmd'],
-                'pmd',
+            base_command + [
                 '-d', path,
-                '-R', rulesets,
-                '-f', 'csv',
                 '-r', outfile,
             ],
             ignore_errors=True)

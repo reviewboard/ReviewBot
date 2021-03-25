@@ -241,7 +241,30 @@ class BaseTool(object):
             **kwargs (dict, unused):
                 Additional keyword arguments, for future expansion.
         """
+        if not getattr(self, 'legacy_tool', False):
+            kwargs['base_command'] = self.build_base_command()
+
         self.handle_files(review.files, **kwargs)
+
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        This will be passed to :py:meth:`handle_file` for each file. It's
+        useful for constructing a common command line and arguments that
+        will apply to each file in a diff.
+
+        Version Added:
+            3.0
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments, for future expansion.
+
+        Returns:
+            list of unicode:
+            The base command line.
+        """
+        return []
 
     def handle_files(self, files, **kwargs):
         """Perform a review of all files.
@@ -278,7 +301,7 @@ class BaseTool(object):
                     if path:
                         self.handle_file(f, path=path, **kwargs)
 
-    def handle_file(self, f, path=None, **kwargs):
+    def handle_file(self, f, path=None, base_command=None, **kwargs):
         """Perform a review of a single file.
 
         This method may be overridden by subclasses to process an individual
@@ -293,6 +316,9 @@ class BaseTool(object):
             :py:meth:`~reviewbot.processing.File.get_patched_file_path`
             command, and must be valid for this method to be called.
 
+            ``base_command` is added, which would be the result of
+            :py:meth:`build_base_command`.
+
             ``**kwargs`` is now expected.
 
             These will be enforced in Review Bot 4.0.
@@ -305,6 +331,10 @@ class BaseTool(object):
                 The local path to the patched file to review.
 
                 This won't be passed for legacy tools.
+
+            base_command (list of unicode, optional):
+                The common base command line used for reviewing a file,
+                if returned from :py:meth:`build_base_command`.
 
             **kwargs (dict):
                 Additional keyword arguments passed to :py:meth:`handle_files`.
