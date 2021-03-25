@@ -150,8 +150,10 @@ def RunTool(server_url='',
 
         try:
             logger.info('Initializing review %s', log_detail)
-            review = Review(api_root, review_request_id, diff_revision,
-                            review_settings)
+            review = Review(api_root=api_root,
+                            review_request_id=review_request_id,
+                            diff_revision=diff_revision,
+                            settings=review_settings)
             status_update.update(description='running...')
         except Exception as e:
             logger.exception('Failed to initialize review: %s %s', e, log_detail)
@@ -161,7 +163,7 @@ def RunTool(server_url='',
         try:
             logger.info('Initializing tool "%s %s" %s',
                         tool_cls.name, tool_cls.version, log_detail)
-            tool = tool_cls()
+            tool = tool_cls(settings=tool_options)
         except Exception as e:
             logger.exception('Error initializing tool "%s": %s %s',
                              tool_cls.name, e, log_detail)
@@ -169,6 +171,7 @@ def RunTool(server_url='',
             return False
 
         try:
+            # TODO: In Review Bot 4.0, remove the settings argument.
             logger.info('Executing tool "%s" %s', tool.name, log_detail)
             tool.execute(review,
                          settings=tool_options,

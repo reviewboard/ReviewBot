@@ -19,6 +19,11 @@ class BaseTool(object):
 
     If a tool would like to perform a different style of analysis, it can
     override :py:meth:`handle_files`.
+
+    Attributes:
+        settings (dict):
+            Settings configured for this tool in Review Board, based on
+            :py:attr:`options`.
     """
 
     #: The displayed name of the tool.
@@ -127,11 +132,25 @@ class BaseTool(object):
     #:     int
     timeout = None
 
-    def __init__(self):
-        """Initialize the tool."""
+    def __init__(self, settings=None, **kwargs):
+        """Initialize the tool.
+
+        Version Changed:
+            3.0:
+            Added ``settings`` and ``**kwargs`` arguments. Subclasses must
+            provide this by Review Bot 4.0.
+
+        Args:
+            settings (dict, optional):
+                Settings provided to the tool.
+
+            **kwargs (dict):
+                Additional keyword arguments, for future expansion.
+        """
+        self.settings = settings or {}
         self.output = None
 
-    def check_dependencies(self):
+    def check_dependencies(self, **kwargs):
         """Verify the tool's dependencies are installed.
 
         By default, this will check :py:attr:`exe_dependencies`, ensuring each
@@ -142,6 +161,11 @@ class BaseTool(object):
         in the Review Bot configuration, that path will be checked.
 
         Subclasses can implement this if they need more advanced checks.
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments. This is intended for future
+                expansion.
 
         Returns:
             bool:
@@ -194,54 +218,79 @@ class BaseTool(object):
 
         return False
 
-    def execute(self, review, settings={}, repository=None,
-                base_commit_id=None):
+    def execute(self, review, repository=None, base_commit_id=None, **kwargs):
         """Perform a review using the tool.
+
+        Version Changed:
+            3.0:
+            ``settings`` is deprecated in favor of the :py:attr:`settings`
+            attribute on the instance. It's still provided in 3.0.
+
+            ``**kwargs`` is now expected.
 
         Args:
             review (reviewbot.processing.review.Review):
                 The review object.
-
-            settings (dict, optional):
-                Tool-specific settings.
 
             repository (reviewbot.repositories.Repository, optional):
                 The repository.
 
             base_commit_id (unicode, optional):
                 The ID of the commit that the patch should be applied to.
-        """
-        self.handle_files(review.files, settings)
 
-    def handle_files(self, files, settings):
+            **kwargs (dict, unused):
+                Additional keyword arguments, for future expansion.
+        """
+        self.handle_files(review.files, **kwargs)
+
+    def handle_files(self, files, **kwargs):
         """Perform a review of all files.
 
         This may be overridden by subclasses for tools that process all files
         at once.
 
+        Version Changed:
+            3.0:
+            ``settings`` is deprecated in favor of the :py:attr:`settings`
+            attribute on the instance. It's still provided in 3.0.
+
+            ``**kwargs`` is now expected.
+
+            These will be enforced in Review Bot 4.0.
+
         Args:
             files (list of reviewbot.processing.review.File):
                 The files to process.
 
-            settings (dict):
-                Tool-specific settings.
+            **kwargs (dict):
+                Additional keyword arguments passed to :py:meth:`execute`.
+                This is intended for future expansion.
         """
         for f in files:
-            if self.get_can_handle_file(review_file=f,
-                                        settings=settings):
-                self.handle_file(f, settings)
+            if self.get_can_handle_file(review_file=f, **kwargs):
+                self.handle_file(f, **kwargs)
 
-    def handle_file(self, f, settings):
+    def handle_file(self, f, **kwargs):
         """Perform a review of a single file.
 
         This method may be overridden by subclasses to process an individual
         file.
 
+        Version Changed:
+            3.0:
+            ``settings`` is deprecated in favor of the :py:attr:`settings`
+            attribute on the instance. It's still provided in 3.0.
+
+            ``**kwargs`` is now expected.
+
+            These will be enforced in Review Bot 4.0.
+
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            settings (dict):
-                Tool-specific settings.
+            **kwargs (dict):
+                Additional keyword arguments passed to :py:meth:`handle_files`.
+                This is intended for future expansion.
         """
         pass

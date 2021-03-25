@@ -153,7 +153,7 @@ class RunToolTests(BaseTaskTestCase):
     def test_with_diff_comments(self):
         """Testing RunTool task with diff comments"""
         @self.spy_for(DummyTool.handle_file, owner=DummyTool)
-        def _handle_file(_self, f, settings):
+        def _handle_file(_self, f, **kwargs):
             f.comment('Bad line!', first_line=1)
 
         self.spy_on(
