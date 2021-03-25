@@ -106,9 +106,13 @@ class File(object):
         else:
             return None
 
-    def comment(self, text, first_line, num_lines=1, issue=None,
-                rich_text=False, original=False):
+    def comment(self, text, first_line, num_lines=1, start_column=None,
+                error_code=None, issue=None, rich_text=False, original=False):
         """Make a comment on the file.
+
+        Version Changed:
+            3.0:
+            Added ``start_column`` and ``error_code`` arguments.
 
         Args:
             text (unicode):
@@ -121,6 +125,15 @@ class File(object):
             num_lines (int, optional):
                 The number of lines that the comment should span.
 
+            start_column (int, optional):
+                The starting column within the code line where an error
+                applied, as reported by a linter. If provided, this will be
+                appended to the text.
+
+            error_code (unicode, optional):
+                An error code for the error being reported. If provided,
+                this will be appended to the text.
+
             issue (bool, optional):
                 Whether an issue should be opened.
 
@@ -131,7 +144,6 @@ class File(object):
                 If True, the ``first_line`` argument corresponds to the line
                 number in the original file, instead of the patched file.
         """
-
         # Some tools report a first_line of 0 to mean a 'global comment' on a
         # particular file. For now, we handle this as a special case as
         # Review Board does not currently support rendering this.
@@ -139,19 +151,31 @@ class File(object):
             first_line = 1
             modified = True
         else:
-            modified = self._is_modified(first_line, num_lines)
+            modified = (self.review.settings['comment_unmodified'] or
+                        self._is_modified(first_line, num_lines))
 
-        real_line = self._translate_line_num(first_line)
+        if modified:
+            real_line = self._translate_line_num(first_line)
 
-        if num_lines != 1:
-            last_line = first_line + num_lines - 1
-            real_last_line = self._translate_line_num(last_line)
-            num_lines = real_last_line - real_line + 1
+            if num_lines != 1:
+                last_line = first_line + num_lines - 1
+                real_last_line = self._translate_line_num(last_line)
+                num_lines = real_last_line - real_line + 1
 
-        if issue is None:
-            issue = self.review.settings['open_issues']
+            if issue is None:
+                issue = self.review.settings['open_issues']
 
-        if modified or self.review.settings['comment_unmodified']:
+            if start_column is not None or error_code:
+                extra = []
+
+                if start_column:
+                    extra.append('Column: %s' % start_column)
+
+                if error_code:
+                    extra.append('Error code: %s' % error_code)
+
+                text = '%s\n\n%s' % (text, '\n'.join(extra))
+
             data = {
                 'filediff_id': self.id,
                 'first_line': real_line,
