@@ -54,20 +54,19 @@ class PMDTool(FilePatternsFromSettingMixin, BaseTool):
         },
     ]
 
-    def handle_file(self, f, **kwargs):
+    def handle_file(self, f, path, **kwargs):
         """Perform a review of a single file.
 
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            settings (dict):
-                Tool-specific settings.
-        """
-        path = f.get_patched_file_path()
+            path (unicode):
+                The local path to the patched file to review.
 
-        if not path:
-            return
+            **kwargs (dict, unused):
+                Additional keyword arguments.
+        """
 
         rulesets = self.settings['rulesets']
 

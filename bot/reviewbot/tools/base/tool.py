@@ -266,11 +266,19 @@ class BaseTool(object):
                 Additional keyword arguments passed to :py:meth:`execute`.
                 This is intended for future expansion.
         """
+        legacy_tool = getattr(self, 'legacy_tool', False)
+
         for f in files:
             if self.get_can_handle_file(review_file=f, **kwargs):
-                self.handle_file(f, **kwargs)
+                if legacy_tool:
+                    self.handle_file(f, **kwargs)
+                else:
+                    path = f.get_patched_file_path()
 
-    def handle_file(self, f, **kwargs):
+                    if path:
+                        self.handle_file(f, path=path, **kwargs)
+
+    def handle_file(self, f, path=None, **kwargs):
         """Perform a review of a single file.
 
         This method may be overridden by subclasses to process an individual
@@ -281,6 +289,10 @@ class BaseTool(object):
             ``settings`` is deprecated in favor of the :py:attr:`settings`
             attribute on the instance. It's still provided in 3.0.
 
+            ``path`` is added, which is the result of a
+            :py:meth:`~reviewbot.processing.File.get_patched_file_path`
+            command, and must be valid for this method to be called.
+
             ``**kwargs`` is now expected.
 
             These will be enforced in Review Bot 4.0.
@@ -288,6 +300,11 @@ class BaseTool(object):
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
+
+            path (unicode, optional):
+                The local path to the patched file to review.
+
+                This won't be passed for legacy tools.
 
             **kwargs (dict):
                 Additional keyword arguments passed to :py:meth:`handle_files`.

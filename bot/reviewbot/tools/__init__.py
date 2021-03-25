@@ -18,6 +18,18 @@ class Tool(BaseTool):
         This will be removed in Review Bot 4.0.
     """
 
+    #: Internal state for marking this as a legacy tool.
+    #:
+    #: Do not change this. It is necessary for legacy tools to continue to
+    #: work in Review Bot 3.0.
+    #:
+    #: Version Added:
+    #:     3.0
+    #:
+    #: Type:
+    #:     bool
+    legacy_tool = True
+
     def __new__(cls, *args, **kwargs):
         """Create an instance of the tool.
 
@@ -58,6 +70,18 @@ class RepositoryTool(FullRepositoryToolMixin, BaseTool):
 
         This will be removed in Review Bot 4.0.
     """
+
+    #: Internal state for marking this as a legacy tool.
+    #:
+    #: Do not change this. It is necessary for legacy tools to continue to
+    #: work in Review Bot 3.0.
+    #:
+    #: Version Added:
+    #:     3.0
+    #:
+    #: Type:
+    #:     bool
+    legacy_tool = True
 
     def __new__(cls, *args, **kwargs):
         """Create an instance of the tool.
