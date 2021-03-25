@@ -1,7 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
-import pkg_resources
 
 from celery import Celery, VERSION as CELERY_VERSION
 from celery.signals import celeryd_after_setup
@@ -9,6 +8,8 @@ from kombu import Exchange, Queue
 
 from reviewbot.config import load_config
 from reviewbot.repositories import repositories, init_repositories
+from reviewbot.tools.base.registry import (get_tool_classes,
+                                           load_tool_classes)
 
 
 celery = None
@@ -26,12 +27,12 @@ def create_queues():
         Queue('celery', default_exchange, routing_key='celery'),
     ]
 
-    # Detect the installed tools and select the corresponding
-    # queues to consume from.
-    for ep in pkg_resources.iter_entry_points(group='reviewbot.tools'):
-        tool_class = ep.load()
+    # Detect the installed tools and select the corresponding queues to
+    # consume from.
+    for tool_class in get_tool_classes():
+        tool_id = tool_class.tool_id
         tool = tool_class()
-        queue_name = '%s.%s' % (ep.name, tool_class.version)
+        queue_name = '%s.%s' % (tool_id, tool_class.version)
 
         if tool.check_dependencies():
             if tool.working_directory_required:
@@ -51,7 +52,7 @@ def create_queues():
                     Exchange(queue_name, type='direct'),
                     routing_key=queue_name))
         else:
-            logging.warning('%s dependency check failed.', ep.name)
+            logging.warning('%s dependency check failed.', tool_id)
 
     return queues
 
@@ -74,6 +75,7 @@ def setup_reviewbot(instance, conf, **kwargs):
             Additional keyword arguments passed to the signal.
     """
     load_config()
+    load_tool_classes()
     init_repositories()
 
     if CELERY_VERSION >= (4, 0):
