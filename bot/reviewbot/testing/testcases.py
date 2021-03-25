@@ -18,7 +18,7 @@ from rbtools.api.resource import FileDiffResource, ItemResource, RootResource
 from rbtools.api.tests.base import MockTransport
 from six.moves import range
 
-from reviewbot.config import config, default_config
+from reviewbot.config import config, reset_config
 from reviewbot.processing.review import File, Review
 
 
@@ -142,6 +142,13 @@ class TestCase(unittest.TestCase):
         cls.api_transport = None
         os.environ['PATH'] = cls._old_path
 
+    def setUp(self):
+        super(TestCase, self).setUp()
+
+        # Reset the configuration back to defaults, so tests don't impact
+        # each other.
+        reset_config()
+
     def shortDescription(self):
         """Return the description of the current test.
 
@@ -178,8 +185,7 @@ class TestCase(unittest.TestCase):
         """
         old_config = deepcopy(config)
 
-        config.clear()
-        config.update(default_config)
+        reset_config()
 
         # We'll attempt a very simple sort of merge, since at the time of this
         # implementation, we have a very simple default config schema.

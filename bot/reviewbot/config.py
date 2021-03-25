@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 #:
 #: Version Added:
 #:     3.0
-default_config = {
+DEFAULT_CONFIG = {
     'exe_paths': {},
     'reviewboard_servers': [],
     'repositories': [],
@@ -33,7 +33,7 @@ deprecated_keys = {
 
 
 #: The active configuration for Review Bot.
-config = deepcopy(default_config)
+config = deepcopy(DEFAULT_CONFIG)
 
 
 def load_config():
@@ -48,6 +48,11 @@ def load_config():
 
     If anything goes wrong when loading the configuration, the defaults will
     be used.
+
+    Version Added:
+        3.0:
+        This was previously called ``init``. As it's internal API, hopefully
+        nobody was calling that.
     """
     global config
 
@@ -57,7 +62,7 @@ def load_config():
 
     # We're going to work on a copy of this and set it only at the end, in
     # the event that we're sharing state with other threads.
-    new_config = deepcopy(default_config)
+    new_config = deepcopy(DEFAULT_CONFIG)
 
     if os.path.exists(config_file):
         logger.info('Loading Review Bot configuration file %s', config_file)
@@ -67,9 +72,9 @@ def load_config():
                 config_module = {}
                 exec(compile(f.read(), config_file, 'exec'), config_module)
 
-            for key in six.iterkeys(default_config):
+            for key in six.iterkeys(DEFAULT_CONFIG):
                 if key in config_module:
-                    new_config[key] = config_module[key]
+                    new_config[key] = deepcopy(config_module[key])
 
             if 'review_board_servers' in config_module:
                 logger.warning('review_board_servers in %s is '
@@ -93,6 +98,15 @@ def load_config():
                        'Using the defaults.',
                        config_file)
 
-    # Since we're strict about what keys we let in here, this will safely
-    # replace everything.
+    config.clear()
     config.update(new_config)
+
+
+def reset_config():
+    """Reset the configuration to defaults.
+
+    Version Added:
+        3.0
+    """
+    config.clear()
+    config.update(deepcopy(DEFAULT_CONFIG))
