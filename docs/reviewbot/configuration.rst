@@ -47,6 +47,8 @@ everything is set up correctly. This will also save a list of the available
 tools, which is required for setting up tool configurations.
 
 
+.. _extension-configuration-tools:
+
 Tool Configurations
 ===================
 
@@ -65,7 +67,8 @@ choose :guilabel:`Always match`. Otherwise, you can select a set of conditions
 (such as a specific repository, or an assigned review group).
 
 Next, choose which tool to run. Once a tool is selected, additional
-tool-specific options may appear.
+tool-specific options may appear. See the documentation for the :ref:`tool
+<tools>` you want to configure for more information.
 
 .. image:: tool-configuration.png
 
@@ -98,26 +101,39 @@ On Review Bot 3.0 and higher, the location of the configuration file can also
 be set through the :envvar:`REVIEWBOT_CONFIG_FILE` environment variable.
 
 
-Repositories
-------------
+.. _worker-configuration-repositories:
 
-Some tools require a full clone of the source repository, because they may need
-access to all files, not just those which have been changed.
+Full Repository Access
+----------------------
 
-Right now, Review Bot supports full repository access for Git and hg repositories.
-This requires configuring each repository on the worker, which allows different
-repositories to be spread across different hosts. These are specified in the
-worker config file as a list of dictionaries, with three fields. The ``name``
-should be the configured name of the repository inside the Review Board admin
-interface. The ``type`` should currently be ``git`` or ``hg``, and ``clone_path``
-should be set to the git or hg URL (possibly including credentials) to clone the
-repository from.
+Some tools require a full clone of the source repository, because they may
+need access to all files, not just those which have been changed.
 
-The repository ``path`` or ``mirror_path`` field must be the URL of a repository
-which is accessible to the Review Bot worker. If you use a local file path for
-your repository and the worker is not running on the same host as the Review
-Board server, you must also expose the repository over http and set
-the ``mirror_path``.
+Right now, Review Bot supports full repository access for the following types
+of repositories:
+
+* Git
+* Mercurial
+
+This requires configuring each repository on the worker, which allows
+different repositories to be spread across different hosts. Repositories are
+specified in the worker configuration file as a list of dictionaries, with
+three fields:
+
+``name`` (required)
+    The configured name of the repository in Review Board.
+
+``type`` (required)
+    The repository type:
+
+    * Git: ``git``
+    * Mercurial: ``mercurial``
+
+``clone_path`` (required)
+    The git or Mercurial URL (possibly including credentials) to clone the
+    repository from.
+
+For example:
 
 .. code-block:: python
 
@@ -149,19 +165,35 @@ Automatically Fetch Repositories From Review Board
 
 If you have many workers and repositories, it may not be feasible to configure
 repositories by hand. You can also configure a list of Review Board servers to
-fetch all supported repositories from. If you disabled ``anonymous read-only
-access`` you need to register a separate user and generate an API token. The
-access via token can be ``read-only``.
+fetch lists of repositories from.
 
-Be aware that manually configured repositories will override any
-automatically fetched configuration of a duplicate repository entry.
+This is done by setting ``reviewboard_servers`` to a list of dictionaries,
+each one representing an accessible Review Board server. Each entry has the
+following fields:
 
-The repository ``path`` or ``mirror_path`` field must be the URL of a repository
-which is accessible to the Review Bot worker. If you use a local file path for
-your repository and the worker is not running on the same host as the Review
-Board server, you must also expose the repository over HTTP and set
-the ``mirror_path``.
+``url`` (required)
+    The URL to the Review Board server. This must be accessible to the
+    worker.
 
+``user`` (optional)
+    The username used to authenticate with the API.
+
+    This user must have access to the repositories you want to automatically
+    configure.
+
+``token`` (optional)
+    The :ref:`API token <reviewboard:api-tokens>` used to authenticate with
+    the API.
+
+    The token can be set with a read-only access policy.
+
+``user`` and ``token`` are required if anonymous users are unable to access
+information on the repositories you want to use (i.e., if
+:ref:`anonymous read-only access <reviewboard:auth-general-settings>` is
+turned off or the repositories are set up with access control lists in
+Review Board).
+
+For example:
 
 .. code-block:: python
 
@@ -176,6 +208,20 @@ the ``mirror_path``.
        },
    ]
 
+Be aware that manually configured repositories will override any
+automatically fetched configuration of a duplicate repository entry.
+
+.. important::
+
+   Either the repository's :guilabel:`Path` or :guilabel:`Mirror Path` field
+   in Review Board must be set to a URL that the Review Bot worker can access
+   and clone from.
+
+   If the path is configured to a local file path on the Review Board server,
+   and the worker doesn't have local access to that same path (e.g., it's
+   running on a different server, and you're not using a shared filesystem
+   mount), then you will need to expose the repository over HTTP(S) and set
+   :guilabel:`Mirror Path` to that address.
 
 .. note:: This setting was renamed in Review Bot 3.0.
 
