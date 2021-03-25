@@ -1,16 +1,28 @@
+"""Unit tests for reviewbot.tools.pycodestyle."""
+
 from __future__ import unicode_literals
 
-from reviewbot.tools import Tool
-from reviewbot.utils.process import execute, is_exe_in_path
+from celery.utils.log import get_task_logger
+
+from reviewbot.config import config
+from reviewbot.tools import BaseTool
+from reviewbot.utils.process import execute
 
 
-class PycodestyleTool(Tool):
+logger = get_task_logger(__name__)
+
+
+class PycodestyleTool(BaseTool):
     """Review Bot tool to run pycodestyle."""
 
     name = 'pycodestyle'
     version = '1.0'
     description = 'Checks Python code for style errors.'
     timeout = 30
+
+    exe_dependencies = ['pycodestyle']
+    file_patterns = ['*.py']
+
     options = [
         {
             'name': 'max_line_length',
@@ -25,7 +37,7 @@ class PycodestyleTool(Tool):
         {
             'name': 'ignore',
             'field_type': 'django.forms.CharField',
-            'default': "",
+            'default': '',
             'field_options': {
                 'label': 'Ignore',
                 'help_text': ('A comma-separated list of errors and warnings '
@@ -36,52 +48,61 @@ class PycodestyleTool(Tool):
         },
     ]
 
-    def check_dependencies(self):
-        """Verify that the tool's dependencies are installed.
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments.
 
         Returns:
-            bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not listed for this Tool's queue,
-            and a warning will be logged.
+            list of unicode:
+            The base command line.
         """
-        return is_exe_in_path('pycodestyle')
+        settings = self.settings
+        ignore = settings.get('ignore', '').strip()
 
-    def handle_file(self, f, settings):
+        cmd = [
+            config['exe_paths']['pycodestyle'],
+            '--max-line-length=%s' % settings['max_line_length'],
+            '--format=%(code)s:%(row)d:%(col)d:%(text)s',
+        ]
+
+        if ignore:
+            cmd.append('--ignore=%s' % ignore)
+
+        return cmd
+
+    def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.
 
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            settings (dict):
-                Tool-specific settings.
+            path (unicode):
+                The local path to the patched file to review.
+
+            base_command (list of unicode):
+                The base command used to run pycodestyle.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
         """
-        if not f.dest_file.lower().endswith('.py'):
-            # Ignore the file.
-            return
-
-        path = f.get_patched_file_path()
-
-        if not path:
-            return
-
-        output = execute(
-            [
-                'pycodestyle',
-                '--max-line-length=%s' % settings['max_line_length'],
-                '--ignore=%s' % settings['ignore'],
-                path,
-            ],
-            split_lines=True,
-            ignore_errors=True)
+        output = execute(base_command + [path],
+                         split_lines=True,
+                         ignore_errors=True)
 
         for line in output:
             try:
-                # Strip off the filename, since it might have colons in it.
-                line = line[len(path) + 1:]
+                error_code, line_num, column, message = line.split(':', 3)
+                line_num = int(line_num)
+                column = int(column)
+            except Exception as e:
+                logger.error('Cannot parse pycodestyle line "%s": %s', line, e)
+                continue
 
-                line_num, column, message = line.split(':', 2)
-                f.comment(message.strip(), int(line_num))
-            except:
-                pass
+            f.comment(text=message.strip(),
+                      first_line=line_num,
+                      start_column=column,
+                      error_code=error_code)
