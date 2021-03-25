@@ -2,6 +2,8 @@
 
 from __future__ import unicode_literals
 
+from fnmatch import fnmatchcase
+
 from reviewbot.config import config
 from reviewbot.utils.process import is_exe_in_path
 
@@ -60,6 +62,25 @@ class BaseTool(object):
     #: Type:
     #:     dict
     exe_dependencies = []
+
+    #: A list of filename patterns this tool can process.
+    #:
+    #: This is intended for tools that have a fixed list of file extensions
+    #: or specific filenames they should process. Each entry is a
+    #: glob file pattern (e.g., ``*.py``, ``.config/*.xml``, ``dockerfile``,
+    #: etc.), and must be lowercase (as filenames will be normalized to
+    #: lowercase for comparison). See :py:mod:`fnmatch` for pattern rules.
+    #:
+    #: Tools can leave this empty to process all files, or can override
+    #: :py:meth:`get_can_handle_file` to implement custom logic (e.g., basing
+    #: matching off a tool's settings, or providing case-sensitive matches).
+    #:
+    #: Version Added:
+    #:     3.0
+    #:
+    #: Type:
+    #:     list of unicode
+    file_patterns = []
 
     #: Configurable options defined for the tool.
     #:
@@ -138,6 +159,41 @@ class BaseTool(object):
 
         return True
 
+    def get_can_handle_file(self, review_file, **kwargs):
+        """Return whether this tool can handle a given file.
+
+        By default, this checks the full path of the destination file against
+        the patterns in :py:attr:`file_patterns`. If the file path matches, or
+        that list is empty, this will allow the file to be handled.
+
+        Subclasses can override this to provide custom matching logic.
+
+        Version Added:
+            3.0
+
+        Args:
+            review_file (reviewbot.processing.review.File):
+                The file to check.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments passed to :py:meth:`execute`.
+                This is intended for future expansion.
+
+        Returns:
+            bool:
+            ``True`` if the file can be handled. ``False`` if it cannot.
+        """
+        if not self.file_patterns:
+            return True
+
+        filename = review_file.dest_file.lower()
+
+        for pattern in self.file_patterns:
+            if fnmatchcase(filename, pattern):
+                return True
+
+        return False
+
     def execute(self, review, settings={}, repository=None,
                 base_commit_id=None):
         """Perform a review using the tool.
@@ -171,7 +227,9 @@ class BaseTool(object):
                 Tool-specific settings.
         """
         for f in files:
-            self.handle_file(f, settings)
+            if self.get_can_handle_file(review_file=f,
+                                        settings=settings):
+                self.handle_file(f, settings)
 
     def handle_file(self, f, settings):
         """Perform a review of a single file.

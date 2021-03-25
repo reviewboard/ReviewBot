@@ -88,6 +88,53 @@ class BaseToolTests(kgb.SpyAgency, TestCase):
             # a cache will be updated).
             self.assertFalse(tool.check_dependencies())
 
+    def test_get_can_handle_file_with_empty_list(self):
+        """Testing BaseTool.get_can_handle_file with empty list"""
+        class PatternsTool(BaseTool):
+            pass
+
+        review = self.create_review()
+        review_file = self.create_review_file(review)
+
+        tool = PatternsTool()
+        self.assertTrue(tool.get_can_handle_file(review_file, settings={}))
+
+    def test_get_can_handle_file_with_matching_filename(self):
+        """Testing BaseTool.get_can_handle_file with matching filename"""
+        review = self.create_review()
+        review_file1 = self.create_review_file(review,
+                                               dest_file='/src/foo.c')
+        review_file2 = self.create_review_file(review,
+                                               dest_file='/src/bar.C')
+        review_file3 = self.create_review_file(review,
+                                               dest_file='/src/baz.hpp')
+
+        class PatternsTool(BaseTool):
+            file_patterns = ['*.c', '*.h*']
+
+        tool = PatternsTool()
+        self.assertTrue(tool.get_can_handle_file(review_file1, settings={}))
+        self.assertTrue(tool.get_can_handle_file(review_file2, settings={}))
+        self.assertTrue(tool.get_can_handle_file(review_file3, settings={}))
+
+    def test_get_can_handle_file_without_matching_filename(self):
+        """Testing BaseTool.get_can_handle_file without matching filename"""
+        review = self.create_review()
+        review_file1 = self.create_review_file(review,
+                                               dest_file='/src/foo.c')
+        review_file2 = self.create_review_file(review,
+                                               dest_file='/inc/bar.cc')
+        review_file3 = self.create_review_file(review,
+                                               dest_file='/main.xml')
+
+        class PatternsTool(BaseTool):
+            file_patterns = ['/inc/*.c', '.*.xml']
+
+        tool = PatternsTool()
+        self.assertFalse(tool.get_can_handle_file(review_file1, settings={}))
+        self.assertFalse(tool.get_can_handle_file(review_file2, settings={}))
+        self.assertFalse(tool.get_can_handle_file(review_file3, settings={}))
+
     @contextmanager
     def _setup_deps(cls, filenames=[], set_path=True):
         """Set up an environment for dependency checks.
