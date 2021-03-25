@@ -5,20 +5,12 @@ import json
 from celery.utils.log import get_task_logger
 from celery.worker.control import Panel
 from reviewbot.celery import celery
-from rbtools.api.client import RBClient
 
 from reviewbot.processing.review import Review
 from reviewbot.repositories import repositories
 from reviewbot.tools.base.registry import get_tool_class, get_tool_classes
+from reviewbot.utils.api import get_api_root
 from reviewbot.utils.filesystem import cleanup_tempfiles
-
-
-# TODO: Make the cookie file configurable.
-COOKIE_FILE = 'reviewbot-cookies.txt'
-
-
-# TODO: Include version information in the agent.
-AGENT = 'ReviewBot'
 
 
 # Status Update states
@@ -102,11 +94,8 @@ def RunTool(server_url='',
 
         try:
             logger.info('Initializing RB API %s', log_detail)
-            api_client = RBClient(server_url,
-                                  cookie_file=COOKIE_FILE,
-                                  agent=AGENT,
-                                  session=session)
-            api_root = api_client.get_root()
+            api_root = get_api_root(url=server_url,
+                                    session=session)
         except Exception as e:
             logger.error('Could not contact Review Board server: %s %s',
                          e, log_detail)
@@ -270,12 +259,8 @@ def update_tools_list(panel, payload):
     hostname = panel.hostname
 
     try:
-        api_client = RBClient(
-            payload['url'],
-            cookie_file=COOKIE_FILE,
-            agent=AGENT,
-            session=payload['session'])
-        api_root = api_client.get_root()
+        api_root = get_api_root(url=payload['url'],
+                                session=payload['session'])
     except Exception as e:
         logger.exception('Could not reach RB server: %s', e)
 

@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 
 import kgb
 from celery.worker.control import Panel
-from rbtools.api.client import RBClient
 from rbtools.api.errors import APIError, AuthorizationError
 
 from reviewbot.processing.review import Review
@@ -18,6 +17,7 @@ from reviewbot.tools.base import BaseTool
 from reviewbot.tools.base.registry import (_registered_tools,
                                            register_tool_class,
                                            unregister_tool_class)
+from reviewbot.utils.api import get_api_root
 
 
 class LegacyTool(Tool):
@@ -114,8 +114,7 @@ class RunToolTests(BaseTaskTestCase):
     def setUp(self):
         super(RunToolTests, self).setUp()
 
-        self.spy_on(RBClient.get_root,
-                    owner=RBClient,
+        self.spy_on(get_api_root,
                     op=kgb.SpyOpReturn(self.api_root))
         self.spy_on(DummyTool.execute,
                     owner=DummyTool)
@@ -306,9 +305,8 @@ class RunToolTests(BaseTaskTestCase):
 
     def test_with_error_contacting_rb_api(self):
         """Testing RunTool task with error contacting Review Board API"""
-        RBClient.get_root.unspy()
-        self.spy_on(RBClient.get_root,
-                    owner=RBClient,
+        get_api_root.unspy()
+        self.spy_on(get_api_root,
                     op=kgb.SpyOpRaise(AuthorizationError(http_status=401,
                                                          error_code=103)))
 
@@ -463,8 +461,7 @@ class UpdateToolsListTests(BaseTaskTestCase):
     def setUp(self):
         super(UpdateToolsListTests, self).setUp()
 
-        self.spy_on(RBClient.get_root,
-                    owner=RBClient,
+        self.spy_on(get_api_root,
                     op=kgb.SpyOpReturn(self.api_root))
 
     def test_with_success(self):
@@ -520,9 +517,8 @@ class UpdateToolsListTests(BaseTaskTestCase):
         """Testing update_tools_list task with error contacting Review Board
         API
         """
-        RBClient.get_root.unspy()
-        self.spy_on(RBClient.get_root,
-                    owner=RBClient,
+        get_api_root.unspy()
+        self.spy_on(get_api_root,
                     op=kgb.SpyOpRaise(AuthorizationError(http_status=401,
                                                          error_code=103)))
 

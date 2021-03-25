@@ -5,9 +5,8 @@ import os
 
 import appdirs
 
-from rbtools.api.client import RBClient
-
 from reviewbot.config import config
+from reviewbot.utils.api import get_api_root
 from reviewbot.utils.filesystem import make_tempdir
 from reviewbot.utils.process import execute
 
@@ -155,10 +154,10 @@ def fetch_repositories(url, user=None, token=None):
             The configured API token for the user.
     """
     logging.info('Fetching repositories from Review Board: %s', url)
-    # TODO: merge with COOKIE_FILE/AGENT in tasks.py
-    root = RBClient(url, username=user, api_token=token,
-                    cookie_file='reviewbot-cookies.txt',
-                    agent='ReviewBot').get_root()
+
+    root = get_api_root(url=url,
+                        username=user,
+                        api_token=token)
 
     for tool_type in ('Mercurial', 'Git'):
         repos = root.get_repositories(tool=tool_type, only_links='',
