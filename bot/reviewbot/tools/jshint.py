@@ -1,13 +1,15 @@
 from __future__ import unicode_literals
 
-import re
+import json
+import os
 
-from reviewbot.tools import Tool
+from reviewbot.config import config
+from reviewbot.tools.base import BaseTool, FilePatternsFromSettingMixin
 from reviewbot.utils.filesystem import make_tempfile
-from reviewbot.utils.process import execute, is_exe_in_path
+from reviewbot.utils.process import execute
 
 
-class JSHintTool(Tool):
+class JSHintTool(FilePatternsFromSettingMixin, BaseTool):
     """Review Bot tool to run jshint."""
 
     name = 'JSHint'
@@ -15,17 +17,13 @@ class JSHintTool(Tool):
     description = ('Checks JavaScript code for style errors and potential '
                    'problems using JSHint, a JavaScript Code Quality Tool.')
     timeout = 30
+
+    exe_dependencies = ['jshint']
+
+    file_patterns = ['*.js']
+    file_extension_setting = ['extra_ext_checks']
+
     options = [
-        {
-            'name': 'verbose',
-            'field_type': 'django.forms.BooleanField',
-            'default': False,
-            'field_options': {
-                'label': 'Verbose',
-                'help_text': 'Includes message codes in the JSHint output.',
-                'required': False,
-            },
-        },
         {
             'name': 'extra_ext_checks',
             'field_type': 'django.forms.CharField',
@@ -77,82 +75,65 @@ class JSHintTool(Tool):
         },
     ]
 
-    # Each output line looks something like:
-    # file.js: line 2, col 14, Use '===' to compare with 'null'.
-    REGEX = re.compile(
-        r'\S+: line (?P<line_num>\d+), col (?P<col>\d+),(?P<msg>.+)')
+    REPORTER_PATH = os.path.abspath(os.path.join(__file__, '..', 'support',
+                                                 'js', 'jshint_reporter.js'))
 
-    def check_dependencies(self):
-        """Verify the tool's dependencies are installed.
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
 
-        Returns:
-            bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not listen for this Tool's queue,
-            and a warning will be logged.
-        """
-        return is_exe_in_path('jshint')
-
-    def handle_files(self, files, settings):
-        """Perform a review of all files.
+        If a custom JSHint configuration is set, this will save it to a
+        temporary file and pass it along for all JSHint runs.
 
         Args:
-            files (list of reviewbot.processing.review.File):
-                The files to process.
+            **kwargs (dict, unused):
+                Additional keyword arguments.
 
-            settings (dict):
-                Tool-specific settings.
+        Returns:
+            list of unicode:
+            The base command line.
         """
-        # Get any extra file extensions we should process.
-        self.file_exts = None
+        settings = self.settings
 
-        if settings['extra_ext_checks']:
-            self.file_exts = tuple(
-                settings['extra_ext_checks'].split(','))
+        cmd = [
+            config['exe_paths']['jshint'],
+            '--extract=%s' % settings['extract_js_from_html'],
+            '--reporter=%s' % self.REPORTER_PATH,
+        ]
 
         # If any configuration was specified, create a temporary config file.
-        self.config_file = None
+        # This will be used for each file.
+        config_content = self.settings['config']
 
-        if settings['config']:
-            self.config_file = make_tempfile(content=settings['config'])
+        if config_content:
+            cmd.append('--config=%s'
+                       % make_tempfile(content=config_content.encode('utf-8')))
 
-        super(JSHintTool, self).handle_files(files, settings)
+        return cmd
 
-    def handle_file(self, f, settings):
+    def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.
 
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            settings (dict):
-                Tool-specific settings.
+            path (unicode):
+                The local path to the patched file to review.
+
+            base_command (list of unicode):
+                The base command used to run JSHint.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
         """
-        # Check if we should process this file, based on its extension.
-        if not (f.dest_file.endswith('.js') or
-                (self.file_exts and f.dest_file.endswith(self.file_exts))):
-            # Ignore the file.
-            return
+        output = execute(base_command + [path],
+                         ignore_errors=True)
 
-        path = f.get_patched_file_path()
+        if output:
+            errors = json.loads(output)
 
-        if not path:
-            return
-
-        cmd = ['jshint', '--extract=%s' % settings['extract_js_from_html']]
-
-        if settings['verbose']:
-            cmd.append('--verbose')
-
-        if self.config_file:
-            cmd.append('--config=%s' % self.config_file)
-
-        cmd.append(path)
-        output = execute(cmd, split_lines=True, ignore_errors=True)
-
-        for line in output:
-            m = re.match(self.REGEX, line)
-
-            if m:
-                f.comment('Col: %s\n%s' % (m.group('col'), m.group('msg')),
-                          int(m.group('line_num')))
+            for error in errors:
+                f.comment(text=error['msg'],
+                          first_line=error['line'],
+                          start_column=error['column'],
+                          error_code=error['code'])
