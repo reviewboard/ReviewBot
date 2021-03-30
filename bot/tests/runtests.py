@@ -12,9 +12,14 @@ def run_tests():
     # could pose problems.
     os.environ.pop(str('REVIEWBOT_CONFIG_FILE'), None)
 
+    os.environ['PATH'] = '%s:%s' % (
+        os.path.abspath(os.path.join(__file__, '..', 'node_modules', '.bin')),
+        os.environ['PATH'])
+
     nose_argv = [
         'runtests.py',
         '-v',
+        '--match=^test',
         '--with-coverage',
         '--cover-package=reviewbot',
     ]

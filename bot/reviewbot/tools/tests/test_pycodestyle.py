@@ -2,25 +2,35 @@
 
 from __future__ import unicode_literals
 
-from unittest import SkipTest
-
 import kgb
+import six
 
-from reviewbot.config import config
-from reviewbot.testing import TestCase
 from reviewbot.tools.pycodestyle import PycodestyleTool
+from reviewbot.tools.testing import (BaseToolTestCase,
+                                     ToolTestCaseMetaclass,
+                                     integration_test,
+                                     simulation_test)
 from reviewbot.utils.filesystem import tmpfiles
 from reviewbot.utils.process import execute
 
 
-class BasePycodestyleToolTests(kgb.SpyAgency, TestCase):
-    """Base class for PyCodestyleTool unit tests."""
+@six.add_metaclass(ToolTestCaseMetaclass)
+class BasePycodestyleToolTests(BaseToolTestCase):
+    """Unit tests for reviewbot.tools.pycodestyle.PycodestyleTool."""
 
-    pycodestyle_path = None
+    tool_class = PycodestyleTool
+    tool_exe_config_key = 'pycodestyle'
+    tool_exe_path = '/path/to/pycodestyle'
 
-    def check_execute(self):
-        """Common tests for execute."""
-        review, review_file = self._run_execute(
+    @integration_test()
+    @simulation_test(output_payload=[
+        "E722:3:1:do not use bare 'except'",
+        "W601:6:5:.has_key() is deprecated, use 'in'",
+    ])
+    def test_execute(self):
+        """Testing PycodestyleTool.execute"""
+        review, review_file = self.run_tool_execute(
+            filename='test.py',
             file_contents=(
                 b'try:\n'
                 b'    func()\n'
@@ -66,16 +76,21 @@ class BasePycodestyleToolTests(kgb.SpyAgency, TestCase):
         self.assertSpyCalledWith(
             execute,
             [
-                self.pycodestyle_path,
+                self.tool_exe_path,
                 '--max-line-length=79',
                 '--format=%(code)s:%(row)d:%(col)d:%(text)s',
                 tmpfiles[-1],
             ],
             ignore_errors=True)
 
-    def check_execute_with_ignore(self):
-        """Common tests for execute with ignore."""
-        review, review_file = self._run_execute(
+    @integration_test()
+    @simulation_test(output_payload=[
+        "W601:6:5:.has_key() is deprecated, use 'in'",
+    ])
+    def test_execute_with_ignore(self):
+        """Testing PycodestyleTool.execute with ignore"""
+        review, review_file = self.run_tool_execute(
+            filename='test.py',
             file_contents=(
                 b'try:\n'
                 b'    func()\n'
@@ -109,7 +124,7 @@ class BasePycodestyleToolTests(kgb.SpyAgency, TestCase):
         self.assertSpyCalledWith(
             execute,
             [
-                self.pycodestyle_path,
+                self.tool_exe_path,
                 '--max-line-length=79',
                 '--format=%(code)s:%(row)d:%(col)d:%(text)s',
                 '--ignore=W123,E722',
@@ -117,90 +132,14 @@ class BasePycodestyleToolTests(kgb.SpyAgency, TestCase):
             ],
             ignore_errors=True)
 
-    def _run_execute(self, file_contents, tool_settings={}):
-        """Set up and run a execute test.
+    def setup_simulation_test(self, output_payload):
+        """Set up the simulation test for pycodestyle.
 
-        This will create the review objects, configure the path to
-        pycodestyle, and run the test.
+        This will spy on :py:func:`~reviewbot.utils.process.execute`, making
+        it return the provided payload.
 
         Args:
-            settings (dict):
-                The settings to pass to
-                :py:meth:`~reviewbot.tools.pycodestyle.PycodestyleTool
-                .execute`.
-
-        Returns:
-            tuple:
-            A tuple containing the review and the file.
+            output_payload (dict):
+                The outputted payload.
         """
-        review = self.create_review()
-        review_file = self.create_review_file(
-            review,
-            source_file='test.py',
-            dest_file='test.py',
-            diff_data=self.create_diff_data(chunks=[{
-                'change': 'insert',
-                'lines': file_contents.splitlines(),
-                'new_linenum': 1,
-            }]),
-            patched_content=file_contents)
-
-        new_config = {
-            'exe_paths': {
-                'pycodestyle': self.pycodestyle_path,
-            },
-        }
-
-        with self.override_config(new_config):
-            tool = PycodestyleTool(settings=tool_settings)
-            tool.execute(review)
-
-        return review, review_file
-
-
-class PycodestyleToolTests(BasePycodestyleToolTests):
-    """Unit tests for reviewbot.tools.pycodestyle.PycodestyleTool."""
-
-    pycodestyle_path = '/path/to/pycodestyle'
-
-    def test_execute(self):
-        """Testing PycodestyleTool.execute"""
-        self.spy_on(execute, op=kgb.SpyOpReturn([
-            "E722:3:1:do not use bare 'except'",
-            "W601:6:5:.has_key() is deprecated, use 'in'",
-        ]))
-
-        self.check_execute()
-
-    def test_execute_with_ignore(self):
-        """Testing PycodestyleTool.execute with ignore"""
-        self.spy_on(execute, op=kgb.SpyOpReturn([
-            "W601:6:5:.has_key() is deprecated, use 'in'",
-        ]))
-
-        self.check_execute_with_ignore()
-
-
-class PycodestyleToolIntegrationTests(BasePycodestyleToolTests):
-    """Integration tests for reviewbot.tools.pycodestyle.PycodestyleTool."""
-
-    preserve_path_env = True
-
-    def setUp(self):
-        super(PycodestyleToolIntegrationTests, self).setUp()
-
-        if not PycodestyleTool().check_dependencies():
-            raise SkipTest('pycodestyle dependencies not available')
-
-        self.pycodestyle_path = config['exe_paths']['pycodestyle']
-
-        self.spy_on(execute)
-
-    def test_execute(self):
-        """Testing PycodestyleTool.execute with pycodestyle binary"""
-        self.check_execute()
-
-    def test_execute_with_ignore(self):
-        """Testing PycodestyleTool.execute with pycodestyle binary and ignore
-        """
-        self.check_execute_with_ignore()
+        self.spy_on(execute, op=kgb.SpyOpReturn(output_payload))

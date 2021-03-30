@@ -4,25 +4,46 @@ from __future__ import unicode_literals
 
 import json
 import os
-from unittest import SkipTest
 
 import kgb
+import six
 
-import reviewbot
-from reviewbot.testing import TestCase
 from reviewbot.tools.jshint import JSHintTool
+from reviewbot.tools.testing import (BaseToolTestCase,
+                                     ToolTestCaseMetaclass,
+                                     integration_test,
+                                     simulation_test)
 from reviewbot.utils.filesystem import tmpfiles
 from reviewbot.utils.process import execute
 
 
-class BaseJSHintToolTests(kgb.SpyAgency, TestCase):
-    """Base class for reviewbot.tools.jshint.JSHintTool tests."""
+@six.add_metaclass(ToolTestCaseMetaclass)
+class JSHintToolTests(BaseToolTestCase):
+    """Unit tests for reviewbot.tools.jshint.JSHintTool."""
 
-    jshint_path = None
+    tool_class = JSHintTool
+    tool_exe_config_key = 'jshint'
+    tool_exe_path = '/path/to/jshint'
 
-    def check_execute(self):
-        """Common tests for execute."""
-        review, review_file = self._run_execute(
+    @integration_test()
+    @simulation_test(output_payload=[
+        {
+            'code': 'W033',
+            'column': 6,
+            'line': 1,
+            'msg': 'Missing semicolon.',
+        },
+        {
+            'code': 'W107',
+            'column': 41,
+            'line': 3,
+            'msg': 'Script URL.',
+        },
+    ])
+    def test_execute(self):
+        """Testing JSHintTool.execute"""
+        review, review_file = self.run_tool_execute(
+            filename='test.js',
             file_contents=(
                 b'var a\n'
                 b'\n'
@@ -65,16 +86,26 @@ class BaseJSHintToolTests(kgb.SpyAgency, TestCase):
         self.assertSpyCalledWith(
             execute,
             [
-                self.jshint_path,
+                self.tool_exe_path,
                 '--extract=False',
                 '--reporter=%s' % JSHintTool.REPORTER_PATH,
                 tmpfiles[-1],
             ],
             ignore_errors=True)
 
-    def check_execute_with_config(self):
-        """Common tests for execute with a config setting."""
-        review, review_file = self._run_execute(
+    @integration_test()
+    @simulation_test(output_payload=[
+        {
+            'code': 'W107',
+            'column': 41,
+            'line': 3,
+            'msg': 'Script URL.',
+        },
+    ])
+    def test_execute_with_config(self):
+        """Testing JSHintTool.execute with config setting"""
+        review, review_file = self.run_tool_execute(
+            filename='test.js',
             file_contents=(
                 b'var a\n'
                 b'\n'
@@ -110,7 +141,7 @@ class BaseJSHintToolTests(kgb.SpyAgency, TestCase):
         self.assertSpyCalledWith(
             execute,
             [
-                self.jshint_path,
+                self.tool_exe_path,
                 '--extract=False',
                 '--reporter=%s' % JSHintTool.REPORTER_PATH,
                 '--config=%s' % config_path,
@@ -118,103 +149,14 @@ class BaseJSHintToolTests(kgb.SpyAgency, TestCase):
             ],
             ignore_errors=True)
 
-    def _run_execute(self, file_contents, tool_settings={}):
-        """Set up and run a execute test.
+    def setup_simulation_test(self, output_payload):
+        """Set up the simulation test for JSHint.
 
-        This will create the review objects, configure the path to
-        jshint, and run the test.
+        This will spy on :py:func:`~reviewbot.utils.process.execute`, making
+        it return the provided payload.
 
         Args:
-            settings (dict):
-                The settings to pass to
-                :py:meth:`~reviewbot.tools.jshint.JSHintTool.execute`.
-
-        Returns:
-            tuple:
-            A tuple containing the review and the file.
+            output_payload (dict):
+                The outputted payload.
         """
-        review = self.create_review()
-        review_file = self.create_review_file(
-            review,
-            source_file='test.js',
-            dest_file='test.js',
-            diff_data=self.create_diff_data(chunks=[{
-                'change': 'insert',
-                'lines': file_contents.splitlines(),
-                'new_linenum': 1,
-            }]),
-            patched_content=file_contents)
-
-        new_config = {
-            'exe_paths': {
-                'jshint': self.jshint_path,
-            },
-        }
-
-        with self.override_config(new_config):
-            tool = JSHintTool(settings=tool_settings)
-            tool.execute(review)
-
-        return review, review_file
-
-
-class JSHintToolTests(BaseJSHintToolTests):
-    """Unit tests for reviewbot.tools.jshint.JSHintTool."""
-
-    def test_execute(self):
-        """Testing JSHintTool.execute"""
-        self.spy_on(execute, op=kgb.SpyOpReturn(json.dumps([
-            {
-                'code': 'W033',
-                'column': 6,
-                'line': 1,
-                'msg': 'Missing semicolon.',
-            },
-            {
-                'code': 'W107',
-                'column': 41,
-                'line': 3,
-                'msg': 'Script URL.',
-            },
-        ])))
-
-        self.check_execute()
-
-    def test_execute_with_config(self):
-        """Testing JSHintTool.execute with config setting"""
-        self.spy_on(execute, op=kgb.SpyOpReturn(json.dumps([
-            {
-                'code': 'W107',
-                'column': 41,
-                'line': 3,
-                'msg': 'Script URL.',
-            },
-        ])))
-
-        self.check_execute_with_config()
-
-
-class JSHintToolIntegrationTests(BaseJSHintToolTests):
-    """Integration tests for reviewbot.tools.jshint.JSHintTool."""
-
-    preserve_path_env = True
-
-    def setUp(self):
-        super(JSHintToolIntegrationTests, self).setUp()
-
-        self.jshint_path = os.path.abspath(
-            os.path.join(reviewbot.__file__, '..', '..', 'node_modules',
-                         '.bin', 'jshint'))
-
-        if not os.path.exists(self.jshint_path):
-            raise SkipTest('jshint dependencies not available')
-
-        self.spy_on(execute)
-
-    def test_execute(self):
-        """Testing JSHintTool.execute with jshint binary"""
-        self.check_execute()
-
-    def test_execute_with_config(self):
-        """Testing JSHintTool.execute with jshint binary and config setting"""
-        self.check_execute_with_config()
+        self.spy_on(execute, op=kgb.SpyOpReturn(json.dumps(output_payload)))
