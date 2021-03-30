@@ -43,8 +43,8 @@ def execute(command,
             output or just ignored.
 
         return_errors (bool, optional)
-            Whether to return the content of the stderr stream. This argument
-            is mutually exclusive with the ``with_errors`` argument.
+            Whether to return the content of the stderr stream. If set, this
+            argument takes precedence over the ``with_errors`` argument.
 
         none_on_ignored_error (bool, optional):
             Whether to return ``None`` if there was an ignored error (instead
@@ -74,7 +74,7 @@ def execute(command,
     env['LC_ALL'] = 'en_US.UTF-8'
     env['LANGUAGE'] = 'en_US.UTF-8'
 
-    if with_errors:
+    if with_errors and not return_errors:
         errors_output = subprocess.STDOUT
     else:
         errors_output = subprocess.PIPE

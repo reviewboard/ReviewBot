@@ -1,12 +1,15 @@
+"""Review Bot tool to run pyflakes."""
+
 from __future__ import unicode_literals
 
 import re
 
-from reviewbot.tools import Tool
-from reviewbot.utils.process import execute, is_exe_in_path
+from reviewbot.config import config
+from reviewbot.tools.base import BaseTool
+from reviewbot.utils.process import execute
 
 
-class PyflakesTool(Tool):
+class PyflakesTool(BaseTool):
     """Review Bot tool to run pyflakes."""
 
     name = 'Pyflakes'
@@ -14,40 +17,44 @@ class PyflakesTool(Tool):
     description = 'Checks Python code for errors using Pyflakes.'
     timeout = 30
 
-    LINE_RE = re.compile(
-        r'^(?P<filename>[^:]+)(:(?P<linenum>\d+)(:\d+)?)?: (?P<msg>.*)')
+    exe_dependencies = ['pyflakes']
+    file_patterns = ['*.py']
 
-    def check_dependencies(self):
-        """Verify the tool's dependencies are installed.
+    LINE_RE = re.compile(
+        r'^(?P<filename>[^:]+)(:(?P<linenum>\d+)(:(?P<column>\d+))?)?:? '
+        r'(?P<msg>.*)'
+    )
+
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments.
 
         Returns:
-            bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not listen for this Tool's queue,
-            and a warning will be logged.
+            list of unicode:
+            The base command line.
         """
-        return is_exe_in_path('pyflakes')
+        return [config['exe_paths']['pyflakes']]
 
-    def handle_file(self, f, settings={}):
+    def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.
 
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            settings (dict, unused):
-                Tool-specific settings.
+            path (unicode):
+                The local path to the patched file to review.
+
+            base_command (list of unicode):
+                The base command used to run pyflakes.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
         """
-        if not f.dest_file.endswith('.py'):
-            # Ignore the file.
-            return
-
-        path = f.get_patched_file_path()
-
-        if not path:
-            return
-
-        output, errors = execute(['pyflakes', path],
+        output, errors = execute(base_command + [path],
                                  split_lines=True,
                                  ignore_errors=True,
                                  return_errors=True)
@@ -56,7 +63,7 @@ class PyflakesTool(Tool):
         #
         # 1. A lint warning about code, which looks like:
         #
-        #    filename:linenum:offset: msg
+        #    filename:linenum:offset msg
         #
         # 2. An unexpected error:
         #
@@ -82,13 +89,16 @@ class PyflakesTool(Tool):
             if m:
                 try:
                     linenum = int(m.group('linenum'))
+                    column = int(m.group('column'))
                 except ValueError:
                     # This isn't actually an info line. No idea what it is.
                     # Skip it.
                     continue
 
                 # Report on the lint message.
-                f.comment(m.group('msg'), linenum)
+                f.comment(m.group('msg'),
+                          first_line=linenum,
+                          start_column=column)
 
         i = 0
 
@@ -108,12 +118,15 @@ class PyflakesTool(Tool):
                     # This should be a syntax error.
                     try:
                         linenum = int(linenum)
+                        column = int(m.group('column'))
                     except ValueError:
-                        # This isn't actually an info line. This is unexpeted,
-                        # but skip it.
+                        # This isn't actually an info line. This is
+                        # unexpected, but skip it.
                         continue
 
-                    f.comment(msg, linenum)
+                    f.comment(msg,
+                              first_line=linenum,
+                              start_column=column)
 
                     # Skip to the code line.
                     i += 1
