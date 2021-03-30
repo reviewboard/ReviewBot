@@ -2,17 +2,27 @@
 
 from __future__ import unicode_literals
 
-import os
+import json
 
 import kgb
+import six
 
-from reviewbot.testing import TestCase
 from reviewbot.tools.pmd import PMDTool
+from reviewbot.tools.testing import (BaseToolTestCase,
+                                     ToolTestCaseMetaclass,
+                                     integration_test,
+                                     simulation_test)
+from reviewbot.utils.filesystem import tmpfiles
 from reviewbot.utils.process import execute, is_exe_in_path
 
 
-class PMDToolTests(kgb.SpyAgency, TestCase):
+@six.add_metaclass(ToolTestCaseMetaclass)
+class PMDToolTests(BaseToolTestCase):
     """Unit tests for reviewbot.tools.pmd.PMDTool."""
+
+    tool_class = PMDTool
+    tool_exe_config_key = 'pmd'
+    tool_exe_path = '/path/to/pmd'
 
     def test_check_dependencies_with_no_config(self):
         """Testing PMDTool.check_dependencies with no configured pmd_path"""
@@ -54,229 +64,498 @@ class PMDToolTests(kgb.SpyAgency, TestCase):
             self.assertTrue(tool.check_dependencies())
             self.assertSpyCalledWith(is_exe_in_path, '/path/to/pmd')
 
-    def test_handle_file_with_ruleset_names(self):
-        """Testing PMDTool.handle_file with ruleset names"""
-        @self.spy_for(execute)
-        def _execute(cmdline, **kwargs):
-            self.assertEqual(len(cmdline), 10)
-            self.assertEqual(
-                cmdline[:7],
-                [
-                    '/path/to/pmd',
-                    'pmd',
-                    '-R', 'ruleset1,ruleset2',
-                    '-f', 'csv',
-                    '-d',
-                ])
-            self.assertEqual(cmdline[8], '-r')
-
-            patch_filename = cmdline[7]
-            output_filename = cmdline[9]
-
-            self.assertTrue(os.path.exists(patch_filename))
-            self.assertTrue(os.path.exists(output_filename))
-
-            with open(output_filename, 'w') as fp:
-                fp.write(
-                    '"Problem","Package","File","Priority","Line",'
-                    '"Description","Rule set","Rule",\n'
-                )
-                fp.write(
-                    '"1","some.package","%s","1","12","Something is wrong '
-                    'here","ruleset1","rule1"\n'
-                    % patch_filename
-                )
-                fp.write(
-                    '"1","some.package","%s","1","48","And another thing",'
-                    '"ruleset2","rule2"\n'
-                    % patch_filename
-                )
-
-        review, review_file = self._run_handle_file(settings={
-            'file_ext': '',
-            'rulesets': 'ruleset1,ruleset2',
-        })
+    @integration_test()
+    @simulation_test(output_payload={
+        'formatVersion': 0,
+        'pmdVersion': '6.32.0',
+        'timestamp': '2021-03-26T03:18:12.692-07:00',
+        'files': [
+            {
+                'filename': '/path/to/test.java',
+                'violations': [
+                    {
+                        'begincolumn': 8,
+                        'beginline': 1,
+                        'description': 'Avoid short class names like Cls',
+                        'endcolumn': 1,
+                        'endline': 7,
+                        'externalInfoUrl': (
+                            'https://pmd.github.io/pmd-6.32.0/'
+                            'pmd_rules_java_codestyle.html'
+                            '#shortclassname'
+                        ),
+                        'priority': 4,
+                        'rule': 'ShortClassName',
+                        'ruleset': 'Code Style',
+                    },
+                    {
+                        'begincolumn': 13,
+                        'beginline': 4,
+                        'description': 'This statement should have braces',
+                        'endcolumn': 21,
+                        'endline': 4,
+                        'externalInfoUrl': (
+                            'https://pmd.github.io/pmd-6.32.0/'
+                            'pmd_rules_java_codestyle.html'
+                            '#controlstatementbraces'
+                        ),
+                        'priority': 4,
+                        'rule': 'ShortClassName',
+                        'ruleset': 'Code Style',
+                    },
+                ],
+            },
+        ],
+    })
+    def test_execute_with_ruleset_names(self):
+        """Testing PMDTool.execute with ruleset names"""
+        review, review_file = self.run_tool_execute(
+            filename='test.java',
+            file_contents=(
+                b'public class Cls {\n'
+                b'    public int a(int b) {\n'
+                b'        if (b == true)\n'
+                b'            return 1;\n'
+                b'        return 0;\n'
+                b'    }\n'
+                b'}\n'
+            ),
+            tool_settings={
+                'file_ext': '',
+                'rulesets': (
+                    'category/java/codestyle.xml/ShortClassName,'
+                    'category/java/codestyle.xml/ControlStatementBraces'
+                ),
+            })
 
         self.assertEqual(review.comments, [
             {
                 'filediff_id': review_file.id,
-                'first_line': 12,
-                'num_lines': 1,
-                'text': 'Something is wrong here',
+                'first_line': 1,
+                'num_lines': 7,
+                'text': (
+                    'Avoid short class names like Cls\n'
+                    '\n'
+                    'Column: 8'
+                ),
                 'issue_opened': True,
                 'rich_text': False,
             },
             {
                 'filediff_id': review_file.id,
-                'first_line': 41,
+                'first_line': 4,
                 'num_lines': 1,
-                'text': 'And another thing',
+                'text': (
+                    'This statement should have braces\n'
+                    '\n'
+                    'Column: 13'
+                ),
                 'issue_opened': True,
                 'rich_text': False,
             },
         ])
         self.assertEqual(review.general_comments, [])
 
-    def test_handle_file_with_ruleset_xml(self):
-        """Testing PMDTool.handle_file with ruleset configuration XML"""
-        @self.spy_for(execute)
-        def _execute(cmdline, **kwargs):
-            self.assertEqual(len(cmdline), 10)
-            self.assertEqual(
-                cmdline[:3],
-                [
-                    '/path/to/pmd',
-                    'pmd',
-                    '-R',
-                ])
-            self.assertEqual(
-                cmdline[4:7],
-                [
-                    '-f', 'csv',
-                    '-d',
-                ])
-            self.assertEqual(cmdline[8], '-r')
+        self.assertSpyCalledWith(
+            execute,
+            [
+                self.tool_exe_path,
+                'pmd',
+                '-no-cache',
+                '-f', 'json',
+                '-R', ('category/java/codestyle.xml/ShortClassName,'
+                       'category/java/codestyle.xml/ControlStatementBraces'),
+                '-d', tmpfiles[-2],
+                '-r', tmpfiles[-1],
+            ],
+            ignore_errors=True)
 
-            ruleset_filename = cmdline[3]
-            patch_filename = cmdline[7]
-            output_filename = cmdline[9]
-
-            self.assertTrue(os.path.exists(patch_filename))
-            self.assertTrue(os.path.exists(ruleset_filename))
-            self.assertTrue(os.path.exists(output_filename))
-
-            with open(ruleset_filename, 'r') as fp:
-                self.assertEqual(fp.read(), ruleset_xml)
-
-            with open(output_filename, 'w') as fp:
-                fp.write(
-                    '"Problem","Package","File","Priority","Line",'
-                    '"Description","Rule set","Rule",\n'
-                )
-                fp.write(
-                    '"1","some.package","%s","1","12","Something is wrong '
-                    'here","ruleset1","rule1"\n'
-                    % patch_filename
-                )
-                fp.write(
-                    '"1","some.package","%s","1","48","And another thing",'
-                    '"ruleset2","rule2"\n'
-                    % patch_filename
-                )
-
-        # Note that this is not a valid ruleset XML, but we don't need it
-        # to be for the test.
+    @integration_test()
+    @simulation_test(output_payload={
+        'formatVersion': 0,
+        'pmdVersion': '6.32.0',
+        'timestamp': '2021-03-26T03:18:12.692-07:00',
+        'files': [
+            {
+                'filename': '/path/to/test.java',
+                'violations': [
+                    {
+                        'begincolumn': 8,
+                        'beginline': 1,
+                        'description': 'Avoid short class names like Cls',
+                        'endcolumn': 1,
+                        'endline': 7,
+                        'externalInfoUrl': (
+                            'https://pmd.github.io/pmd-6.32.0/'
+                            'pmd_rules_java_codestyle.html'
+                            '#shortclassname'
+                        ),
+                        'priority': 4,
+                        'rule': 'ShortClassName',
+                        'ruleset': 'Code Style',
+                    },
+                ],
+            },
+        ],
+    })
+    def test_execute_with_ruleset_xml(self):
+        """Testing PMDTool.execute with ruleset configuration XML"""
         ruleset_xml = (
             '<?xml version="1.0"?>\n'
-            '<ruleset name="My Ruleset" />\n'
+            '<ruleset name="My Ruleset"\n'
+            '         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"\n'
+            '         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n'
+            '         xsi:schemaLocation="'
+            'http://pmd.sourceforge.net/ruleset/2.0.0 '
+            'http://pmd.sourceforge.net/ruleset_2_0_0.xsd">\n'
+            ' <description>This is a test ruleset</description>\n'
+            ' <rule ref="category/java/codestyle.xml/ShortClassName"/>\n'
+            '</ruleset>'
         )
 
-        review, review_file = self._run_handle_file(settings={
-            'file_ext': '',
-            'rulesets': ruleset_xml,
-        })
+        review, review_file = self.run_tool_execute(
+            filename='test.java',
+            file_contents=(
+                b'public class Cls {\n'
+                b'    public int a(int b) {\n'
+                b'        if (b == true)\n'
+                b'            return 1;\n'
+                b'        return 0;\n'
+                b'    }\n'
+                b'}\n'
+            ),
+            tool_settings={
+                'file_ext': '',
+                'rulesets': ruleset_xml,
+            })
 
         self.assertEqual(review.comments, [
             {
                 'filediff_id': review_file.id,
-                'first_line': 12,
-                'num_lines': 1,
-                'text': 'Something is wrong here',
-                'issue_opened': True,
-                'rich_text': False,
-            },
-            {
-                'filediff_id': review_file.id,
-                'first_line': 41,
-                'num_lines': 1,
-                'text': 'And another thing',
+                'first_line': 1,
+                'num_lines': 7,
+                'text': (
+                    'Avoid short class names like Cls\n'
+                    '\n'
+                    'Column: 8'
+                ),
                 'issue_opened': True,
                 'rich_text': False,
             },
         ])
         self.assertEqual(review.general_comments, [])
 
-    def test_handle_file_with_file_ext_match(self):
-        """Testing PMDTool.handle_file when file_ext matches"""
-        self.spy_on(execute, call_original=False)
+        self.assertSpyCalledWith(
+            execute,
+            [
+                self.tool_exe_path,
+                'pmd',
+                '-no-cache',
+                '-f', 'json',
+                '-R', tmpfiles[-3],
+                '-d', tmpfiles[-2],
+                '-r', tmpfiles[-1],
+            ],
+            ignore_errors=True)
 
-        self._run_handle_file(settings={
-            'file_ext': 'c,py',
-            'rulesets': 'ruleset1',
-        })
+    @integration_test()
+    @simulation_test(stderr=(
+        'SEVERE: No rules found. Maybe you misspelled a rule name? '
+        '(<check ruleset configuration>)'
+    ))
+    def test_execute_with_ruleset_xml_bad(self):
+        """Testing PMDTool.execute with ruleset configuration XML with
+        validation problems
+        """
+        ruleset_xml = (
+            '<?xml version="1.0"?>\n'
+            '<bad-ruleset name="My Ruleset"\n'
+            '         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"\n'
+            '         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n'
+            '         xsi:schemaLocation="'
+            'http://pmd.sourceforge.net/ruleset/2.0.0 '
+            'http://pmd.sourceforge.net/ruleset_2_0_0.xsd">\n'
+            ' <description>My ruleset</description>\n'
+            '</bad-ruleset>'
+        )
 
-        self.assertSpyCalled(execute)
+        review, review_file = self.run_tool_execute(
+            filename='test.java',
+            file_contents=(
+                b'public class Cls {\n'
+                b'    public int a(int b) {\n'
+                b'        if (b == true)\n'
+                b'            return 1;\n'
+                b'        return 0;\n'
+                b'    }\n'
+                b'}\n'
+            ),
+            tool_settings={
+                'file_ext': '',
+                'rulesets': ruleset_xml,
+            })
 
-    def test_handle_file_with_file_ext_match_variants(self):
-        """Testing PMDTool.handle_file when file_ext matches with variations
+        self.assertEqual(review.comments, [
+            {
+                'filediff_id': review_file.id,
+                'first_line': 1,
+                'num_lines': 1,
+                'text': (
+                    'PMD was unable to process this file:\n'
+                    '\n'
+                    '```\n'
+                    'SEVERE: No rules found. Maybe you misspelled a rule '
+                    'name? (<check ruleset configuration>)\n'
+                    '```'
+                ),
+                'issue_opened': True,
+                'rich_text': False,
+            },
+        ])
+        self.assertEqual(review.general_comments, [])
+
+        self.assertSpyCalledWith(
+            execute,
+            [
+                self.tool_exe_path,
+                'pmd',
+                '-no-cache',
+                '-f', 'json',
+                '-R', tmpfiles[-3],
+                '-d', tmpfiles[-2],
+                '-r', tmpfiles[-1],
+            ],
+            ignore_errors=True)
+
+    @integration_test()
+    @simulation_test(output_payload={
+        'formatVersion': 0,
+        'pmdVersion': '6.32.0',
+        'timestamp': '2021-03-26T03:18:12.692-07:00',
+        'files': [
+            {
+                'filename': '/path/to/test.java',
+                'violations': [],
+            },
+        ],
+    })
+    def test_execute_with_no_errors(self):
+        """Testing PMDTool.execute with no errors"""
+        review, review_file = self.run_tool_execute(
+            filename='test.java',
+            file_contents=(
+                b'public class MyClass {\n'
+                b'    public void foo() {\n'
+                b'    }\n'
+                b'}\n'
+            ),
+            tool_settings={
+                'file_ext': '',
+                'rulesets': 'category/java/codestyle.xml/ShortClassName',
+            })
+
+        self.assertEqual(review.comments, [])
+        self.assertEqual(review.general_comments, [])
+
+        self.assertSpyCalledWith(
+            execute,
+            [
+                self.tool_exe_path,
+                'pmd',
+                '-no-cache',
+                '-f', 'json',
+                '-R', 'category/java/codestyle.xml/ShortClassName',
+                '-d', tmpfiles[-2],
+                '-r', tmpfiles[-1],
+            ],
+            ignore_errors=True)
+
+    @integration_test()
+    @simulation_test(output_payload={
+        'formatVersion': 0,
+        'pmdVersion': '6.32.0',
+        'timestamp': '2021-03-26T03:18:12.692-07:00',
+        'files': [],
+        'processingErrors': [
+            {
+                'filename': '/path/to/test.java',
+                'message': 'PMDException: Error while parsing test.java'
+            },
+        ],
+    })
+    def test_execute_with_syntax_errors(self):
+        """Testing PMDTool.execute with syntax errors"""
+        review, review_file = self.run_tool_execute(
+            filename='test.java',
+            file_contents=(
+                b'public Bagel!'
+            ),
+            tool_settings={
+                'file_ext': '',
+                'rulesets': 'category/java/codestyle.xml/ShortClassName',
+            })
+
+        self.assertEqual(review.comments, [
+            {
+                'filediff_id': review_file.id,
+                'first_line': 1,
+                'num_lines': 1,
+                'text': (
+                    'PMD was unable to process this file:\n'
+                    '\n'
+                    '```\n'
+                    'PMDException: Error while parsing test.java\n'
+                    '```\n'
+                    '\n'
+                    'Check the file locally for more information.'
+                ),
+                'issue_opened': True,
+                'rich_text': False,
+            },
+        ])
+        self.assertEqual(review.general_comments, [])
+
+        self.assertSpyCalledWith(
+            execute,
+            [
+                self.tool_exe_path,
+                'pmd',
+                '-no-cache',
+                '-f', 'json',
+                '-R', 'category/java/codestyle.xml/ShortClassName',
+                '-d', tmpfiles[-2],
+                '-r', tmpfiles[-1],
+            ],
+            ignore_errors=True)
+
+    @integration_test()
+    @simulation_test(output_payload={
+        'formatVersion': 0,
+        'pmdVersion': '6.32.0',
+        'timestamp': '2021-03-26T03:18:12.692-07:00',
+        'files': [
+            {
+                'filename': '/path/to/test.java',
+                'violations': [],
+            },
+        ],
+    })
+    def test_execute_with_file_ext_match(self):
+        """Testing PMDTool.execute when file_ext matches"""
+        review, review_file = self.run_tool_execute(
+            filename='test.java',
+            file_contents=(
+                b'public class MyClass {\n'
+                b'    public void foo() {\n'
+                b'    }\n'
+                b'}\n'
+            ),
+            tool_settings={
+                'file_ext': 'c,py,java',
+                'rulesets': 'category/java/codestyle.xml/ShortClassName',
+            })
+
+        self.assertEqual(review.comments, [])
+        self.assertEqual(review.general_comments, [])
+
+        self.assertSpyCalledWith(
+            execute,
+            [
+                self.tool_exe_path,
+                'pmd',
+                '-no-cache',
+                '-f', 'json',
+                '-R', 'category/java/codestyle.xml/ShortClassName',
+                '-d', tmpfiles[-2],
+                '-r', tmpfiles[-1],
+            ],
+            ignore_errors=True)
+
+    @integration_test()
+    @simulation_test(output_payload={
+        'formatVersion': 0,
+        'pmdVersion': '6.32.0',
+        'timestamp': '2021-03-26T03:18:12.692-07:00',
+        'files': [
+            {
+                'filename': '/path/to/test.java',
+                'violations': [],
+            },
+        ],
+    })
+    def test_execute_with_file_ext_match_variants(self):
+        """Testing PMDTool.execute when file_ext matches with variations
         in file extension configuration
         """
-        self.spy_on(execute, call_original=False)
+        review, review_file = self.run_tool_execute(
+            filename='test.java',
+            file_contents=(
+                b'public class MyClass {\n'
+                b'    public void foo() {\n'
+                b'    }\n'
+                b'}\n'
+            ),
+            tool_settings={
+                'file_ext': 'c,, .py,  .java  ',
+                'rulesets': 'category/java/codestyle.xml/ShortClassName',
+            })
 
-        self._run_handle_file(settings={
-            'file_ext': 'c,, .py',
-            'rulesets': 'ruleset1',
-        })
+        self.assertEqual(review.comments, [])
+        self.assertEqual(review.general_comments, [])
 
-        self.assertSpyCalled(execute)
+        self.assertSpyCalledWith(
+            execute,
+            [
+                self.tool_exe_path,
+                'pmd',
+                '-no-cache',
+                '-f', 'json',
+                '-R', 'category/java/codestyle.xml/ShortClassName',
+                '-d', tmpfiles[-2],
+                '-r', tmpfiles[-1],
+            ],
+            ignore_errors=True)
 
-    def test_handle_file_without_file_ext_match(self):
-        """Testing PMDTool.handle_file when file_ext doesn't match"""
-        self.spy_on(execute, call_original=False)
+    @integration_test()
+    @simulation_test()
+    def test_execute_without_file_ext_match(self):
+        """Testing PMDTool.execute when file_ext doesn't match"""
+        review, review_file = self.run_tool_execute(
+            filename='test.java',
+            file_contents=(
+                b'public class MyClass {\n'
+                b'    public void foo() {\n'
+                b'    }\n'
+                b'}\n'
+            ),
+            tool_settings={
+                'file_ext': 'txt,pyxyz',
+                'rulesets': 'category/java/codestyle.xml/ShortClassName',
+            })
 
-        self._run_handle_file(settings={
-            'file_ext': 'txt,pyxyz',
-            'rulesets': 'ruleset1',
-        })
+        self.assertEqual(review.comments, [])
+        self.assertEqual(review.general_comments, [])
 
         self.assertSpyNotCalled(execute)
 
-    def _run_handle_file(self, settings):
-        """Set up and run a handle_file test.
+    def setup_simulation_test(self, output_payload=None, stderr=''):
+        """Set up the simulation test for PMD.
 
-        This will create the review objects, configure the path to PMD, and
-        run the test.
+        This will spy on :py:func:`~reviewbot.utils.process.execute`, making
+        it return the provided payload.
 
         Args:
-            settings (dict):
-                The settings to pass to
-                :py:meth:`~reviewbot.tools.pmd.PMDTool.handle_file`.
+            output_payload (dict):
+                The output payload to serialize to JSON. If not provided, a
+                file will not be written.
 
-        Returns:
-            tuple:
-            A tuple containing the review and the file.
+            stderr (unicode, optional):
+                The error output to simulate from PMD.
         """
-        review = self.create_review()
-        review_file = self.create_review_file(
-            review,
-            source_file='test.py',
-            dest_file='test.py',
-            diff_data=self.create_diff_data(chunks=[
-                {
-                    'change': 'insert',
-                    'lines': ['import foo'],
-                    'new_linenum': 12,
-                    'old_linenum': 11,
-                },
-                {
-                    'change': 'replace',
-                    'lines': [
-                        ('except Exception:',
-                         'except Exception as e:'),
-                    ],
-                    'new_linenum': 48,
-                    'old_linenum': 40,
-                },
-            ]))
+        @self.spy_for(execute)
+        def _execute(cmdline, *args, **kwargs):
+            if output_payload is not None:
+                with open(tmpfiles[-1], 'w') as fp:
+                    json.dump(output_payload, fp)
 
-        new_config = {
-            'exe_paths': {
-                'pmd': '/path/to/pmd',
-            }
-        }
-
-        with self.override_config(new_config):
-            tool = PMDTool(settings=settings)
-            tool.execute(review)
-
-        return review, review_file
+            return ('stdout junk', stderr)
