@@ -22,6 +22,10 @@ sys.path.insert(0, os.path.abspath('_ext'))
 sys.path.insert(0, os.path.abspath(os.path.join(__file__, '..', '..', '..',
                                                 'extension')))
 
+parent_dir = os.path.abspath(os.path.join(__file__, '..', '..', '..'))
+sys.path.insert(0, os.path.join(parent_dir, 'bot'))
+sys.path.insert(0, os.path.join(parent_dir, 'extension'))
+
 import reviewbotext
 
 # -- General configuration ------------------------------------------------
