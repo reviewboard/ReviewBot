@@ -48,10 +48,13 @@ setup(
         ],
     },
     install_requires=[
-        'appdirs',
+        'appdirs>=1.4.4',
         'celery>=3.1.25,<4.0; python_version=="2.7"',
         'celery>=4.4,<5.0; python_version>="3.6"',
         'RBTools>=1.0',
+
+        # We unconditionally include these plugins to ensure they're present.
+        'flake8-json>=21.1',
     ],
     extras_require={
         'all': [

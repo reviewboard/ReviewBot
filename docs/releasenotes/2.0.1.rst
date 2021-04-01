@@ -1,0 +1,26 @@
+.. default-intersphinx:: reviewbot2.0
+
+
+==============================
+Review Bot 2.0.1 Release Notes
+==============================
+
+**Release date**: March 31, 2021
+
+
+Bug Fixes
+=========
+
+* Fixed compatibility with Celery on Python 3.x for Review Board 4.0.
+
+  We now depend on Celery 4.x on Python 3, to address some compatibility
+  issues. The Python 2.7 builds still use Celery 3.x.
+
+* Fixed compatibility issues when configuring tools on Review Board 4.0.
+
+
+Contributors
+============
+
+* Christian Hammond
+* David Trowbridge

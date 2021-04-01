@@ -48,8 +48,10 @@ class CheckstyleTool(Tool):
             returns False, the worker will not listen for this Tool's queue,
             and a warning will be logged.
         """
-        checkstyle_path = config['checkstyle_path']
-        return (checkstyle_path and is_exe_in_path(checkstyle_path) and
+        checkstyle_path = config.get('checkstyle_path')
+
+        return (checkstyle_path and
+                is_exe_in_path(checkstyle_path) and
                 is_exe_in_path('java'))
 
     def handle_file(self, f, settings):

@@ -1,134 +1,112 @@
+"""Base support for code checking tools."""
+
 from __future__ import unicode_literals
 
-import logging
-import os
-
-from reviewbot.utils.filesystem import chdir, ensure_dirs_exist
+from reviewbot.deprecation import RemovedInReviewBot40Warning
+from reviewbot.tools.base import BaseTool, FullRepositoryToolMixin
 
 
-class Tool(object):
-    """The base class all Review Bot tools should inherit from.
+class Tool(BaseTool):
+    """Legacy base class for tools.
 
-    This class provides base functionality specific to tools which
-    process each file separately. If a tool would like to perform a
-    different style of analysis, it may override the 'handle_files'
-    method.
+    Deprecated:
+        3.0:
+        Subclasses should instead inherit from
+        :py:class:`reviewbot.tools.base.tool.BaseTool` (or a more specific
+        subclass).
+
+        This will be removed in Review Bot 4.0.
     """
 
-    name = ''
-    description = ''
-    version = '1'
-    options = []
-    working_directory_required = False
+    #: Internal state for marking this as a legacy tool.
+    #:
+    #: Do not change this. It is necessary for legacy tools to continue to
+    #: work in Review Bot 3.0.
+    #:
+    #: Version Added:
+    #:     3.0
+    #:
+    #: Type:
+    #:     bool
+    legacy_tool = True
 
-    #: Timeout for tool execution, in seconds.
-    timeout = None
+    def __new__(cls, *args, **kwargs):
+        """Create an instance of the tool.
 
-    def __init__(self):
-        """Initialize the tool."""
-        self.output = None
+        This will emit a deprecation warning, warning of impending removal
+        and the changes that will be needed.
 
-    def check_dependencies(self):
-        """Verify the tool's dependencies are installed.
+        Args:
+            *args (tuple):
+                Positional arguments to pass to the constructor.
 
-        Subclasses should implement this to check for scripts or external
-        programs the tool assumes exist on the path.
+            **kwargs (dict):
+                Keyword arguments to pass to the constructor.
 
         Returns:
-            bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not listen for this Tool's queue,
-            and a warning will be logged.
+            Tool:
+            A new instance of the tool.
         """
-        return True
+        RemovedInReviewBot40Warning.warn(
+            '%s must subclass reviewbot.tools.base.BaseTool. All '
+            'overridden methods, including __init__() and handle_file(), '
+            'must take a **kwargs argument, and self.settings should be '
+            'accessed for tool-specific settings. Legacy support will be '
+            'removed in Review Bot 4.0.'
+            % cls.__name__)
 
-    def execute(self, review, settings={}, repository=None,
-                base_commit_id=None):
-        """Perform a review using the tool.
+        return super(Tool, cls).__new__(cls)
+
+
+class RepositoryTool(FullRepositoryToolMixin, BaseTool):
+    """Legacy base class for tools that need access to the entire repository.
+
+    Deprecated:
+        3.0:
+        Subclasses should instead inherit from
+        :py:class:`reviewbot.tools.base.tool.BaseTool` (or a more specific
+        subclass) and mix in
+        :py:class:`reviewbot.tools.base.mixins.FullRepositoryToolMixin`.
+
+        This will be removed in Review Bot 4.0.
+    """
+
+    #: Internal state for marking this as a legacy tool.
+    #:
+    #: Do not change this. It is necessary for legacy tools to continue to
+    #: work in Review Bot 3.0.
+    #:
+    #: Version Added:
+    #:     3.0
+    #:
+    #: Type:
+    #:     bool
+    legacy_tool = True
+
+    def __new__(cls, *args, **kwargs):
+        """Create an instance of the tool.
+
+        This will emit a deprecation warning, warning of impending removal
+        and the changes that will be needed.
 
         Args:
-            review (reviewbot.processing.review.Review):
-                The review object.
+            *args (tuple):
+                Positional arguments to pass to the constructor.
 
-            settings (dict):
-                Tool-specific settings.
+            **kwargs (dict):
+                Keyword arguments to pass to the constructor.
 
-            repository (reviewbot.repositories.Repository):
-                The repository.
-
-            base_commit_id (unicode):
-                The ID of the commit that the patch should be applied to.
+        Returns:
+            Tool:
+            A new instance of the tool.
         """
-        self.handle_files(review.files, settings)
+        RemovedInReviewBot40Warning.warn(
+            '%s must subclass reviewbot.tools.base.BaseTool, and mix in '
+            'reviewbot.tools.base.mixins.FullRepositoryToolMixin. All '
+            'overridden methods, including __init__() and handle_file(), '
+            'must take a **kwargs argument, and self.settings should be '
+            'accessed for tool-specific settings. Legacy support will be '
+            'removed in Review Bot 4.0.'
+            % cls.__name__)
 
-    def handle_files(self, files, settings):
-        """Perform a review of all files.
-
-        This may be overridden by subclasses for tools that process all files
-        at once.
-
-        Args:
-            files (list of reviewbot.processing.review.File):
-                The files to process.
-
-            settings (dict):
-                Tool-specific settings.
-        """
-        for f in files:
-            self.handle_file(f, settings)
-
-    def handle_file(self, f, settings):
-        """Perform a review of a single file.
-
-        This method may be overridden by subclasses to process an individual
-        file.
-
-        Args:
-            f (reviewbot.processing.review.File):
-                The file to process.
-
-            settings (dict):
-                Tool-specific settings.
-        """
-        pass
-
-
-class RepositoryTool(Tool):
-    """Tool base class for tools that need access to the entire repository."""
-
-    working_directory_required = True
-
-    def execute(self, review, settings={}, repository=None,
-                base_commit_id=None):
-        """Perform a review using the tool.
-
-        Args:
-            review (reviewbot.processing.review.Review):
-                The review object.
-
-            settings (dict):
-                Tool-specific settings.
-
-            repository (reviewbot.repositories.Repository):
-                The repository.
-
-            base_commit_id (unicode):
-                The ID of the commit that the patch should be applied to.
-        """
-        repository.sync()
-        working_dir = repository.checkout(base_commit_id)
-
-        # Patch all the files first.
-        with chdir(working_dir):
-            for f in review.files:
-                logging.info('Patching %s', f.dest_file)
-
-                ensure_dirs_exist(os.path.abspath(f.dest_file))
-
-                with open(f.dest_file, 'wb') as fp:
-                    fp.write(f.patched_file_contents)
-
-                f.patched_file_path = f.dest_file
-
-            # Now run the tool for everything.
-            self.handle_files(review.files, settings)
+        return super(RepositoryTool, cls).__new__(cls)

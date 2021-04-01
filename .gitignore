@@ -5,6 +5,7 @@
 
 # Files
 reviewbot-cookies.txt
+.coverage
 .DS_Store
 
 # Directories

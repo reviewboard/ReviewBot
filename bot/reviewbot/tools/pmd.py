@@ -1,22 +1,31 @@
 from __future__ import unicode_literals
 
-import csv
-import logging
-from os.path import splitext
+import json
+import os
+
+from celery.utils.log import get_task_logger
 
 from reviewbot.config import config
-from reviewbot.tools import Tool
+from reviewbot.tools.base import BaseTool, FilePatternsFromSettingMixin
 from reviewbot.utils.filesystem import make_tempfile
-from reviewbot.utils.process import execute, is_exe_in_path
+from reviewbot.utils.process import execute
 
 
-class PMDTool(Tool):
+logger = get_task_logger(__name__)
+
+
+class PMDTool(FilePatternsFromSettingMixin, BaseTool):
     """Review Bot tool to run PMD."""
 
     name = 'PMD'
     version = '1.0'
     description = 'Checks code for errors using the PMD source code checker.'
     timeout = 90
+
+    exe_dependencies = ['pmd']
+
+    file_extensions_setting = 'file_ext'
+
     options = [
         {
             'name': 'rulesets',
@@ -25,7 +34,8 @@ class PMDTool(Tool):
             'field_options': {
                 'label': 'Rulesets',
                 'help_text': 'A comma-separated list of rulesets to apply or '
-                             'an XML configuration starting with "<?xml"',
+                             'a ruleset XML configuration, starting with '
+                             '"<?xml"',
                 'required': True,
             },
             'widget': {
@@ -43,71 +53,154 @@ class PMDTool(Tool):
             'field_options': {
                 'label': 'Scan files',
                 'help_text': 'Comma-separated list of file extensions '
-                             'to scan. Leave it empty to check any file.',
+                             'to scan. Leave it empty to check all files.',
                 'required': False,
             },
         },
     ]
 
-    def check_dependencies(self):
-        """Verify the tool's dependencies are installed.
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        This creates a command line for running PMD that specifies the
+        correct output format and the rulesets (generating a temporary
+        ruleset configuration file, if needed).
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments.
 
         Returns:
-            bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not listen for this Tool's queue,
-            and a warning will be logged.
+            list of unicode:
+            The base command line.
         """
-        pmd_path = config['pmd_path']
-        return pmd_path and is_exe_in_path(pmd_path)
+        rulesets = self.settings['rulesets']
 
-    def handle_file(self, f, settings):
+        if rulesets.startswith('<?xml'):
+            rulesets = make_tempfile(rulesets.encode('utf-8'))
+
+        return [
+            config['exe_paths']['pmd'],
+            'pmd',
+            '-no-cache',
+            '-f', 'json',
+            '-R', rulesets,
+        ]
+
+    def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.
 
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            settings (dict):
-                Tool-specific settings.
+            path (unicode):
+                The local path to the patched file to review.
+
+            base_command (list of unicode, optional):
+                The common base command line used for reviewing a file.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
         """
-        file_ext = settings['file_ext'].strip()
+        report_file = make_tempfile()
 
-        if file_ext:
-            ext = splitext(f.dest_file)[1][1:]
+        output, errors = execute(
+            base_command + [
+                '-d', path,
+                '-r', report_file,
+            ],
+            ignore_errors=True,
+            return_errors=True)
 
-            if not ext.lower() in file_ext.split(','):
-                # Ignore the file.
-                return
+        # Load the report. If we fail to load it for any reason (it's empty
+        # or missing), we'll be reporting the stderr output.
+        try:
+            with open(report_file, 'r') as fp:
+                report = json.loads(fp.read())
+        except Exception:
+            report = None
 
-        path = f.get_patched_file_path()
+        if not report:
+            # Something went wrong, so let's tell the user about it.
+            # First, though, filter out the errors and sanitize them.
+            rulesets_file = base_command[-1]
 
-        if not path:
+            errors = '\n'.join(
+                _error
+                .replace(os.path.realpath(path), f.source_file)
+                .replace(rulesets_file,
+                         '<check ruleset configuration>')
+                .replace(report_file,
+                         '<generated report>')
+                for _error in errors.splitlines()
+                if _error.startswith(('ERROR:', 'SEVERE:'))
+            )
+
+            f.comment('PMD was unable to process this file:\n'
+                      '\n'
+                      '```\n'
+                      '%s\n'
+                      '```'
+                      % errors.strip(),
+                      first_line=None)
             return
 
-        rulesets = settings['rulesets']
+        # Check for any processing errors found in the report. If we find
+        # any, we'll want to provide some information as a comment.
+        processing_errors = report.get('processingErrors')
 
-        if rulesets.startswith('<?xml'):
-            rulesets = make_tempfile(rulesets)
+        if processing_errors:
+            norm_path = os.path.realpath(path)
 
-        outfile = make_tempfile()
+            for error_info in processing_errors:
+                # We'll show the general error message, but not the detailed
+                # error message (which is likely to contain a long stack
+                # trace with minimal useful information).
+                #
+                # Sanitize the path, so we're not showing temp files in the
+                # error.
+                error = (
+                    error_info['message']
+                    .replace(norm_path, f.source_file)
+                    .strip()
+                )
 
-        execute(
-            [
-                config['pmd_path'],
-                'pmd',
-                '-d', path,
-                '-R', rulesets,
-                '-f', 'csv',
-                '-r', outfile
-            ],
-            ignore_errors=True)
+                f.comment('PMD was unable to process this file:\n'
+                          '\n'
+                          '```\n'
+                          '%s\n'
+                          '```\n'
+                          '\n'
+                          'Check the file locally for more information.'
+                          % error,
+                          first_line=None)
 
-        with open(outfile) as result:
-            reader = csv.DictReader(result)
+            return
 
-            for row in reader:
-                try:
-                    f.comment(row['Description'], int(row['Line']))
-                except Exception as e:
-                    logging.error('Cannot parse line "%s": %s', row, e)
+        # Make sure there's only a single file. If not, something went wrong,
+        # but there isn't really anything the user can do about it. The
+        # administrator will need to look into it.
+        files = report.get('files', [])
+
+        if len(files) != 1:
+            logger.error('Expected 1 file in PMD output. Got %s: %r',
+                         len(files), files)
+            return
+
+        # Report all errors found by PMD.
+        for violation in files[0].get('violations', []):
+            try:
+                description = violation['description']
+                first_line = violation['beginline']
+                num_lines = violation['endline'] - first_line + 1
+                start_column = violation['begincolumn']
+            except Exception as e:
+                logger.error('Error parsing PMD violations: %s: %r',
+                             e, violation)
+                continue
+
+            f.comment(text=description,
+                      first_line=first_line,
+                      num_lines=num_lines,
+                      start_column=start_column)

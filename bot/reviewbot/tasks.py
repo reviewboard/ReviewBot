@@ -1,24 +1,16 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
-import pkg_resources
 
 from celery.utils.log import get_task_logger
 from celery.worker.control import Panel
 from reviewbot.celery import celery
-from rbtools.api.client import RBClient
 
 from reviewbot.processing.review import Review
 from reviewbot.repositories import repositories
+from reviewbot.tools.base.registry import get_tool_class, get_tool_classes
+from reviewbot.utils.api import get_api_root
 from reviewbot.utils.filesystem import cleanup_tempfiles
-
-
-# TODO: Make the cookie file configurable.
-COOKIE_FILE = 'reviewbot-cookies.txt'
-
-
-# TODO: Include version information in the agent.
-AGENT = 'ReviewBot'
 
 
 # Status Update states
@@ -102,33 +94,19 @@ def RunTool(server_url='',
 
         try:
             logger.info('Initializing RB API %s', log_detail)
-            api_client = RBClient(server_url,
-                                  cookie_file=COOKIE_FILE,
-                                  agent=AGENT,
-                                  session=session)
-            api_root = api_client.get_root()
+            api_root = get_api_root(url=server_url,
+                                    session=session)
         except Exception as e:
             logger.error('Could not contact Review Board server: %s %s',
                          e, log_detail)
             return False
 
         logger.info('Loading requested tool "%s" %s', tool_name, log_detail)
-        tools = [
-            entrypoint.load()
-            for entrypoint in pkg_resources.iter_entry_points(
-                group='reviewbot.tools', name=tool_name)
-        ]
+        tool_cls = get_tool_class(tool_name)
 
-        if len(tools) == 0:
+        if tool_cls is None:
             logger.error('Tool "%s" not found %s', tool_name, log_detail)
             return False
-        elif len(tools) > 1:
-            logger.error('Tool "%s" is ambiguous (found %s) %s',
-                         tool_name, ', '.join(tool.name for tool in tools),
-                         log_detail)
-            return False
-        else:
-            tool = tools[0]
 
         repository = None
 
@@ -142,7 +120,7 @@ def RunTool(server_url='',
                              e, log_detail)
             return False
 
-        if tool.working_directory_required:
+        if tool_cls.working_directory_required:
             if not base_commit_id:
                 logger.error('Working directory is required but the diffset '
                              'has no base_commit_id %s', log_detail)
@@ -161,8 +139,10 @@ def RunTool(server_url='',
 
         try:
             logger.info('Initializing review %s', log_detail)
-            review = Review(api_root, review_request_id, diff_revision,
-                            review_settings)
+            review = Review(api_root=api_root,
+                            review_request_id=review_request_id,
+                            diff_revision=diff_revision,
+                            settings=review_settings)
             status_update.update(description='running...')
         except Exception as e:
             logger.exception('Failed to initialize review: %s %s', e, log_detail)
@@ -171,18 +151,21 @@ def RunTool(server_url='',
 
         try:
             logger.info('Initializing tool "%s %s" %s',
-                        tool.name, tool.version, log_detail)
-            t = tool()
+                        tool_cls.name, tool_cls.version, log_detail)
+            tool = tool_cls(settings=tool_options)
         except Exception as e:
             logger.exception('Error initializing tool "%s": %s %s',
-                             tool.name, e, log_detail)
+                             tool_cls.name, e, log_detail)
             status_update.update(state=ERROR, description='internal error.')
             return False
 
         try:
+            # TODO: In Review Bot 4.0, remove the settings argument.
             logger.info('Executing tool "%s" %s', tool.name, log_detail)
-            t.execute(review, settings=tool_options, repository=repository,
-                      base_commit_id=base_commit_id)
+            tool.execute(review,
+                         settings=tool_options,
+                         repository=repository,
+                         base_commit_id=base_commit_id)
             logger.info('Tool "%s" completed successfully %s',
                         tool.name, log_detail)
         except Exception as e:
@@ -191,11 +174,12 @@ def RunTool(server_url='',
             status_update.update(state=ERROR, description='internal error.')
             return False
 
-        if t.output:
+        if tool.output:
             file_attachments = \
                 api_root.get_user_file_attachments(username=username)
             attachment = \
-                file_attachments.upload_attachment('tool-output', t.output)
+                file_attachments.upload_attachment(filename='tool-output',
+                                                   content=tool.output)
 
             status_update.update(url=attachment.absolute_url,
                                  url_text='Tool console output')
@@ -246,36 +230,37 @@ def update_tools_list(panel, payload):
     logger.info('Iterating Tools')
     tools = []
 
-    for ep in pkg_resources.iter_entry_points(group='reviewbot.tools'):
-        entry_point = ep.name
-        tool_class = ep.load()
+    for tool_class in get_tool_classes():
+        tool_id = tool_class.tool_id
         tool = tool_class()
-        logger.info('Tool: %s' % entry_point)
+        logger.info('Tool: %s', tool_id)
 
         if tool.check_dependencies():
+            # NOTE: We return the tool ID as the "entry_point". This sounds
+            #       wrong, but it's correct. "entry_point" referes to the
+            #       entrypoint name, aka tool ID. We'll probably want to
+            #       revisit this naming down the road.
             tools.append({
                 'name': tool_class.name,
-                'entry_point': entry_point,
+                'entry_point': tool_id,
                 'version': tool_class.version,
                 'description': tool_class.description,
-                'tool_options': json.dumps(tool_class.options),
+                'tool_options': json.dumps(tool_class.options,
+                                           sort_keys=True),
                 'timeout': tool_class.timeout,
                 'working_directory_required':
                     tool_class.working_directory_required,
             })
         else:
-            logger.warning('%s dependency check failed.', ep.name)
+            logger.warning('%s dependency check failed.',
+                           tool_id)
 
     logger.info('Done iterating Tools')
     hostname = panel.hostname
 
     try:
-        api_client = RBClient(
-            payload['url'],
-            cookie_file=COOKIE_FILE,
-            agent=AGENT,
-            session=payload['session'])
-        api_root = api_client.get_root()
+        api_root = get_api_root(url=payload['url'],
+                                session=payload['session'])
     except Exception as e:
         logger.exception('Could not reach RB server: %s', e)
 

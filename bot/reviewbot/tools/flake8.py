@@ -2,17 +2,32 @@
 
 from __future__ import unicode_literals
 
-from reviewbot.tools import Tool
-from reviewbot.utils.process import execute, is_exe_in_path
+import json
+
+import six
+from celery.utils.log import get_task_logger
+
+from reviewbot.config import config
+from reviewbot.tools.base import BaseTool
+from reviewbot.tools.utils.codeclimate import \
+    add_comment_from_codeclimate_issue
+from reviewbot.utils.process import execute
 
 
-class Flake8Tool(Tool):
+logger = get_task_logger(__name__)
+
+
+class Flake8Tool(BaseTool):
     """Review Bot tool to run flake8."""
 
     name = 'flake8'
     version = '1.0'
     description = 'Checks Python code for style and programming errors.'
     timeout = 30
+
+    exe_dependencies = ['flake8']
+    file_patterns = ['*.py']
+
     options = [
         {
             'name': 'max_line_length',
@@ -38,52 +53,60 @@ class Flake8Tool(Tool):
         },
     ]
 
-    def check_dependencies(self):
-        """Verify that the tool's dependencies are installed.
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments.
 
         Returns:
-            bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not be listed for this Tool's queue,
-            and a warning will be logged.
+            list of unicode:
+            The base command line.
         """
-        return is_exe_in_path('flake8')
+        settings = self.settings
+        ignore = settings.get('ignore')
 
-    def handle_file(self, f, settings):
+        cmdline = [
+            config['exe_paths']['flake8'],
+            '--exit-zero',
+            '--format=codeclimate',
+            '--max-line-length=%s' % settings['max_line_length'],
+        ]
+
+        if ignore:
+            cmdline.append('--ignore=%s' % ignore)
+
+        return cmdline
+
+    def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.
 
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            settings (dict):
-                Tool-specific settings.
+            path (unicode):
+                The local path to the patched file to review.
+
+            base_command (list of unicode):
+                The base command used to run flake8.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
         """
-        if not f.dest_file.lower().endswith('.py'):
-            # Ignore the file.
+        output = execute(base_command + [path])
+
+        try:
+            payload = json.loads(output)
+        except Exception as e:
+            logger.error('Unable to parse JSON data from flake8: %s: %r',
+                         e, output)
             return
 
-        path = f.get_patched_file_path()
+        assert len(payload) == 1
+        issues = next(six.itervalues(payload))
 
-        if not path:
-            return
-
-        output = execute(
-            [
-                'flake8',
-                '--exit-zero',
-                '--max-line-length=%s' % settings['max_line_length'],
-                '--ignore=%s' % settings['ignore'],
-                path,
-            ],
-            split_lines=True)
-
-        for line in output:
-            try:
-                # Strip off the filename, since it might have colons in it.
-                line = line[len(path) + 1:]
-
-                line_num, column, message = line.split(':', 2)
-                f.comment(message.strip(), int(line_num))
-            except Exception:
-                pass
+        for issue in issues:
+            add_comment_from_codeclimate_issue(issue_payload=issue,
+                                               review_file=f)

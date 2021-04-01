@@ -1,16 +1,20 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
-import pkg_resources
+import os
+import sys
 
 from celery import Celery, VERSION as CELERY_VERSION
+from celery.signals import celeryd_after_setup
 from kombu import Exchange, Queue
 
-from reviewbot.config import init as init_config
+from reviewbot.config import config, load_config
 from reviewbot.repositories import repositories, init_repositories
+from reviewbot.tools.base.registry import (get_tool_classes,
+                                           load_tool_classes)
 
 
-celery = None
+celery = Celery('reviewbot.celery', include=['reviewbot.tasks'])
 
 
 def create_queues():
@@ -25,12 +29,12 @@ def create_queues():
         Queue('celery', default_exchange, routing_key='celery'),
     ]
 
-    # Detect the installed tools and select the corresponding
-    # queues to consume from.
-    for ep in pkg_resources.iter_entry_points(group='reviewbot.tools'):
-        tool_class = ep.load()
+    # Detect the installed tools and select the corresponding queues to
+    # consume from.
+    for tool_class in get_tool_classes():
+        tool_id = tool_class.tool_id
         tool = tool_class()
-        queue_name = '%s.%s' % (ep.name, tool_class.version)
+        queue_name = '%s.%s' % (tool_id, tool_class.version)
 
         if tool.check_dependencies():
             if tool.working_directory_required:
@@ -50,26 +54,97 @@ def create_queues():
                     Exchange(queue_name, type='direct'),
                     routing_key=queue_name))
         else:
-            logging.warning('%s dependency check failed.', ep.name)
+            logging.warning('%s dependency check failed.', tool_id)
 
     return queues
 
 
-def main():
-    global celery
+def setup_cookies():
+    """Set up cookie storage for API communication.
 
-    init_config()
+    This will ensure that the cookie directory exists and that the cookie
+    file can be written to.
+
+    Raises:
+        IOError:
+            The cookie directories could not be created or there's a
+            permission error with cookie storage. The specific error will
+            be in the exception message.
+    """
+    cookie_dir = config['cookie_dir']
+    cookie_path = config['cookie_path']
+
+    logging.debug('Checking cookie storage at %s', cookie_path)
+
+    # Create the cookie storage directory, if it doesn't exist.
+    if not os.path.exists(cookie_dir):
+        try:
+            os.makedirs(cookie_dir, 0o755)
+        except OSError as e:
+            raise IOError('Unable to create cookies directory "%s": %s'
+                          % (cookie_dir, e))
+
+    can_write_cookies = True
+
+    if os.path.exists(cookie_path):
+        # See if we have write access to the file.
+        can_write_cookies = os.access(cookie_path, os.W_OK)
+    else:
+        # Try writing to the file. We'll append, just in case there's another
+        # process that managed to write just before this (super unlikely).
+        try:
+            with open(cookie_path, 'a'):
+                pass
+
+            os.chmod(cookie_path, 0o600)
+        except (IOError, OSError):
+            can_write_cookies = False
+
+    if not can_write_cookies:
+        raise IOError('Unable to write to cookie file "%s". Please make '
+                      'sure Review Bot has the proper permissions.'
+                      % cookie_path)
+
+    logging.debug('Cookies can be stored at %s', cookie_path)
+
+
+@celeryd_after_setup.connect
+def setup_reviewbot(instance, conf, **kwargs):
+    """Set up Review Bot and Celery.
+
+    This will load the Review Bot configuration, store any repository state,
+    and set up the queues for the enabled tools.
+
+    Args:
+        instance (celery.app.base.Celery):
+            The Celery instance.
+
+        conf (celery.app.utils.Settings):
+            The Celery configuration.
+
+        **kwargs (dict, unused):
+            Additional keyword arguments passed to the signal.
+    """
+    load_config()
+
+    try:
+        setup_cookies()
+    except IOError as e:
+        logging.error(e)
+        sys.exit(1)
+
+    load_tool_classes()
     init_repositories()
 
-    celery = Celery('reviewbot.celery', include=['reviewbot.tasks'])
-
     if CELERY_VERSION >= (4, 0):
-        celery.conf.accept_content = ['json']
-        celery.conf.task_queues = create_queues()
+        conf.accept_content = ['json']
     else:
-        celery.conf.CELERY_ACCEPT_CONTENT = ['json']
-        celery.conf.CELERY_QUEUES = create_queues()
+        conf.CELERY_ACCEPT_CONTENT = ['json']
 
+    instance.app.amqp.queues = create_queues()
+
+
+def main():
     celery.start()
 
 
