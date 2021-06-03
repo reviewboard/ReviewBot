@@ -595,10 +595,10 @@ class TestCase(unittest.TestCase):
                         [
                             line_i + j,
                             next_old_linenum + j,
-                            '',
+                            '==',
                             [],
                             next_new_linenum + j,
-                            '',
+                            '==',
                             [],
                             False,
                         ]

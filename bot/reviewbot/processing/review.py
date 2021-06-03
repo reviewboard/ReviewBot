@@ -1,7 +1,8 @@
-from __future__ import unicode_literals
+from __future__ import division, unicode_literals
 
 import json
-import os.path
+import os
+from itertools import islice
 
 from rbtools.api.errors import APIError
 
@@ -105,6 +106,44 @@ class File(object):
             return make_tempfile(contents, self.file_extension)
         else:
             return None
+
+    def get_lines(self, first_line, num_lines=1, original=False):
+        """Return the lines from the file in the given range.
+
+        This can be used to extract lines from the original or modified file,
+        as represented in the diff data. Some tool implementations can use this
+        to provide more informative results (e.g., by providing suggested fixes
+        to lines based on diffed/delta information coming from the program
+        backing the tool).
+
+        Args:
+            first_line (int):
+                The first line in the range.
+
+            num_lines (int, optional):
+                The maximum number of lines to return.
+
+            original (bool, optional):
+                Whether to return lines from the original (unmodified) file.
+
+        Returns:
+            list of unicode:
+            The list of lines, up to the maximum requested. This will be
+            empty if the lines could not be found.
+        """
+        if original:
+            code_index = 2
+        else:
+            code_index = 5
+
+        return list(islice(
+            (
+                # result[1] is the row information.
+                result[1][code_index]
+                for result in self._iter_lines(first_line=first_line,
+                                               original=original)
+            ),
+            num_lines))
 
     def comment(self, text, first_line, num_lines=1, start_column=None,
                 error_code=None, issue=None, rich_text=False, original=False,
@@ -219,21 +258,29 @@ class File(object):
 
         Returns:
             int:
-            The filediff row number.
+            The filediff row number, or ``None`` if the line number could
+            not be found.
         """
-        # TODO: Convert to a faster search algorithm.
-        line_num_index = 4
+        results = self._iter_lines(original=original, first_line=line_num)
 
-        if original:
-            line_num_index = 1
-
-        for chunk in self.diff_data.chunks:
-            for row in chunk.lines:
-                if row[line_num_index] == line_num:
-                    return row[0]
+        try:
+            # Return the first value (virtual line number) from the 3rd
+            # entry in the tuple result (the row information).
+            return next(results)[1][0]
+        except StopIteration:
+            return None
 
     def _is_modified(self, line_num, num_lines, original=False):
         """Return whether the given region is modified in the diff.
+
+        A region is considered modified if any of the lines within are
+        modified.
+
+        Version Changed:
+            3.0:
+            Prior versions required the entire range to be within modified
+            chunks. Now it only requires at least one of the lines to be
+            modified.
 
         Args:
             line_num (int):
@@ -250,6 +297,35 @@ class File(object):
             bool:
             True if the region corresponds to modified code.
         """
+        for chunk, row, row_line_num in self._iter_lines(first_line=line_num,
+                                                         original=original):
+            if (chunk['change'] != 'equal' and
+                line_num <= row_line_num < line_num + num_lines):
+                return True
+
+        return False
+
+    def _iter_lines(self, first_line=None, original=False):
+        """Iterate through lines in the diff data.
+
+        This is a convenience function for iterating through chunks in the
+        diff data. This can begin iteration at a specific line number.
+
+        Args:
+            first_line (int, optional):
+                A line number to begin iterating from.
+
+            original (bool, optional):
+                Whether to look for lines in the original (unmodified) file.
+
+        Yields:
+            tuple:
+            A 3-tuple containing:
+
+            1. The chunk dictionary.
+            2. The list of information for the current row.
+            3. The line number of the row.
+        """
         # The index in a diff line of a chunk that the relevant (original vs.
         # patched) line number is stored at.
         if original:
@@ -257,14 +333,108 @@ class File(object):
         else:
             line_num_index = 4
 
-        for chunk in self.diff_data.changed_chunk_indexes:
-            chunk = self.diff_data.chunks[chunk]
+        chunks = self.diff_data.chunks
 
-            for row in chunk.lines:
-                if line_num <= row[line_num_index] < line_num + num_lines:
-                    return True
+        if first_line is not None:
+            # First, we need to find the chunk with the line number. For
+            # this, we'll do a simple binary search of the chunks.
+            first_chunk, first_chunk_i, first_row, first_row_i = \
+                self._find_line_num_info(chunks=chunks,
+                                         expected_line_num=first_line,
+                                         line_num_index=line_num_index)
 
-        return False
+            if first_row is None:
+                # We didn't find the line, so bail.
+                return
+
+            # We found a result. Sanity-check it and then start
+            # iterating.
+            assert first_row[line_num_index] == first_line
+
+            # First, iterate through the remainder of the chunk where
+            # the row was found, starting at that row.
+            for row in first_chunk.lines[first_row_i:]:
+                yield first_chunk, row, row[line_num_index]
+
+            # Now we'll prepare the remainder of the chunks for iteration.
+            chunks = chunks[first_chunk_i + 1:]
+
+        for chunk in chunks:
+            for row in chunk['lines']:
+                row_line_num = row[line_num_index]
+
+                if row_line_num:
+                    yield chunk, row, row_line_num
+
+    def _find_line_num_info(self, chunks, expected_line_num, line_num_index):
+        """Find the chunk and row for an expected line number.
+
+        This will perform a binary search through the provided chunks, looking
+        for a row that contains the expected line number. If found, the
+        information on the chunk and row will be returned, allowing for
+        further processing.
+
+        Args:
+            chunks (list of dict):
+                The list of chunks to binary search.
+
+            expected_line_num (int):
+                The line number to look for.
+
+            line_num_index (int):
+                The index into a row containing the row's line number.
+
+        Returns:
+            tuple:
+            A 4-tuple containing:
+
+            1. The chunk containing the line number.
+            2. The index of the chunk within the list of chunks.
+            3. The row containing the line number.
+            4. The index of the row within the chunk.
+
+            If the line number could not be found, these will all be ``None``.
+        """
+        found_chunk = None
+        found_chunk_i = None
+        found_row = None
+        found_row_i = None
+
+        chunks = [
+            (chunk_i, chunk)
+            for chunk_i, chunk in enumerate(chunks)
+            if chunk.lines[0][line_num_index] != ''
+        ]
+
+        low = 0
+        high = len(chunks) - 1
+
+        while low <= high:
+            mid = (low + high) // 2
+            chunk_i, chunk = chunks[mid]
+            chunk_lines = chunk.lines
+            chunk_linenum1 = chunk_lines[0][line_num_index]
+            chunk_linenum2 = chunk_lines[-1][line_num_index]
+
+            if chunk_linenum1 <= expected_line_num <= chunk_linenum2:
+                # We found the chunk containing the line number. Now
+                # we just need to grab the line within the chunk. That's
+                # easy, since we can just index into it.
+                found_chunk = chunk
+                found_chunk_i = chunk_i
+                found_row_i = expected_line_num - chunk_linenum1
+                found_row = chunk_lines[found_row_i]
+                break
+            elif chunk_linenum2 < expected_line_num:
+                # This chunk's lines precede the line we're looking for.
+                # Narrow the search space to everything after this chunk.
+                low = mid + 1
+            elif chunk_linenum1 > expected_line_num:
+                # This chunk's lines follow the line we're looking for.
+                # Narrow the search space to everything before this chunk.
+                high = mid - 1
+
+        return found_chunk, found_chunk_i, found_row, found_row_i
 
 
 class Review(object):
