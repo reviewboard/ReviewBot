@@ -2,17 +2,24 @@
 
 from __future__ import unicode_literals
 
-from reviewbot.tools import Tool
-from reviewbot.utils.process import execute, is_exe_in_path
+import re
+
+from reviewbot.config import config
+from reviewbot.tools.base import BaseTool
+from reviewbot.utils.process import execute
 
 
-class PydocstyleTool(Tool):
+class PydocstyleTool(BaseTool):
     """Review Bot tool to run pydocstyle."""
 
     name = 'pydocstyle'
     version = '1.0'
     description = 'Checks Python code for docstring conventions.'
     timeout = 30
+
+    exe_dependencies = ['pydocstyle']
+    file_patterns = ['*.py']
+
     options = [
         {
             'name': 'ignore',
@@ -32,48 +39,52 @@ class PydocstyleTool(Tool):
         },
     ]
 
-    def check_dependencies(self):
-        """Verify that the tool's dependencies are installed.
+    ERROR_RE = re.compile(
+        r'^(?P<filename>.*):(?P<linenum>\d+) .*:\n'
+        r'\s+(?P<error_code>D\d{3}): (?P<text>.*)\s*$',
+        re.M)
+
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments.
 
         Returns:
-            bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not be listed for this Tool's queue,
-            and a warning will be logged.
+            list of unicode:
+            The base command line.
         """
-        return is_exe_in_path('pydocstyle')
+        settings = self.settings
+        ignore = settings.get('ignore')
 
-    def handle_file(self, f, settings):
+        cmdline = [config['exe_paths']['pydocstyle']]
+
+        if ignore:
+            cmdline.append('--ignore=%s' % ignore)
+
+        return cmdline
+
+    def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.
 
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            settings (dict):
-                Tool-specific settings.
+            path (unicode):
+                The local path to the patched file to review.
+
+            base_command (list of unicode):
+                The base command used to run pyflakes.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
         """
-        if not f.dest_file.lower().endswith('.py'):
-            # Ignore the file.
-            return
+        output = execute(base_command + [path],
+                         ignore_errors=True)
 
-        path = f.get_patched_file_path()
-
-        if not path:
-            return
-
-        self.output = execute(
-            [
-                'pydocstyle',
-                '--ignore=%s' % settings['ignore'],
-                path,
-            ],
-            ignore_errors=True)
-
-        for line in filter(None, self.output.split(path + ':')):
-            try:
-                line_num, message = line.split(':', 1)
-                line_num = line_num.split()
-                f.comment(message.strip(), int(line_num[0]))
-            except Exception:
-                pass
+        for m in self.ERROR_RE.finditer(output):
+            f.comment(text=m.group('text'),
+                      first_line=int(m.group('linenum')),
+                      error_code=m.group('error_code'))
