@@ -25,7 +25,6 @@ setup(
             'reviewbot = reviewbot.celery:main'
         ],
         'reviewbot.tools': [
-            'buildbot = reviewbot.tools.buildbot:BuildBotTool',
             'cargotool = reviewbot.tools.cargotool:CargoTool',
             'checkstyle = reviewbot.tools.checkstyle:CheckstyleTool',
             'clang = reviewbot.tools.clang:ClangTool',
@@ -58,7 +57,6 @@ setup(
     ],
     extras_require={
         'all': [
-            'buildbot>=0.8.7',
             'cpplint>=0.0.3',
             'doc8>=0.8.0',
             'flake8>=3.3.0',

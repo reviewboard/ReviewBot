@@ -29,10 +29,6 @@ Supported Code Checking Tools
 Review Bot can perform automated code reviews using any of the following
 tools:
 
-* `BuildBot "try"
-  <https://www.reviewboard.org/docs/reviewbot/latest/tools/buildbot/>`_
-  - Builds the patch in a configured BuildBot environment
-
 * `Cargo Tool
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/cargotool/>`_
   - Checks Rust code for errors and suspicious constructs
