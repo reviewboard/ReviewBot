@@ -11,6 +11,7 @@ import os
 import re
 
 from reviewbot.utils.filesystem import chdir, ensure_dirs_exist
+from reviewbot.utils.text import split_comma_separated
 
 
 # Python 3.4+ includes glob.escape, but older versions do not. Optimistically,
@@ -68,8 +69,6 @@ class FilePatternsFromSettingMixin(object):
         """
         super(FilePatternsFromSettingMixin, self).__init__(**kwargs)
 
-        split_re = re.compile(r'\s*,+\s*')
-
         settings = self.settings
         file_patterns = None
 
@@ -77,16 +76,15 @@ class FilePatternsFromSettingMixin(object):
             value = settings.get(self.file_patterns_setting, '').strip()
 
             if value:
-                file_patterns = split_re.split(value)
+                file_patterns = split_comma_separated(value)
 
         if not file_patterns and self.file_extensions_setting:
             value = settings.get(self.file_extensions_setting, '').strip()
 
-            if value:
-                file_patterns = [
-                    '*.%s' % glob_escape((ext.strip().lstrip('.')))
-                    for ext in split_re.split(value)
-                ]
+            file_patterns = [
+                '*.%s' % glob_escape(ext.lstrip('.'))
+                for ext in split_comma_separated(value)
+            ]
 
         if file_patterns:
             if self.include_default_file_patterns and self.file_patterns:
