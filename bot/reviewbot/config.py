@@ -3,6 +3,7 @@ from __future__ import print_function, unicode_literals
 import logging
 import os
 from copy import deepcopy
+from glob import glob
 
 import six
 from appdirs import AppDirs
@@ -22,6 +23,7 @@ _appdirs = AppDirs(appname='reviewbot',
 DEFAULT_CONFIG = {
     'cookie_dir': _appdirs.user_cache_dir,
     'exe_paths': {},
+    'java_classpath': [],
     'reviewboard_servers': [],
     'repositories': [],
 }
@@ -136,6 +138,17 @@ def load_config():
     # customized.
     new_config['cookie_path'] = os.path.join(cookie_dir,
                                              'reviewbot-cookies.txt')
+
+    # Normalize the Java classpath.
+    new_java_classpath = []
+
+    for java_classpath in new_config['java_classpath']:
+        if os.path.isdir(java_classpath):
+            new_java_classpath += glob(os.path.join(java_classpath, '*.jar'))
+        else:
+            new_java_classpath.append(java_classpath)
+
+    new_config['java_classpath'] = new_java_classpath
 
     config.clear()
     config.update(new_config)

@@ -10,7 +10,9 @@ import logging
 import os
 import re
 
+from reviewbot.config import config
 from reviewbot.utils.filesystem import chdir, ensure_dirs_exist
+from reviewbot.utils.process import execute
 from reviewbot.utils.text import split_comma_separated
 
 
@@ -143,3 +145,78 @@ class FullRepositoryToolMixin(object):
 
             # Now run the tool for everything.
             super(FullRepositoryToolMixin, self).execute(review, **kwargs)
+
+
+class JavaToolMixin(object):
+    """Mixin for Java-based tools.
+
+    Version Added:
+        3.0
+    """
+
+    #: Main class to call to run the Java application.
+    #:
+    #: Type:
+    #:     unicode
+    java_main = None
+
+    exe_dependencies = ['java']
+
+    def check_dependencies(self):
+        """Verify the tool's dependencies are installed.
+
+        This will invoke the base class's dependency checking, ensuring that
+        :command:`java` is available, and will then attempt to run the
+        configured Java class (:py:attr:`java_main`), checking that it could
+        be found.
+
+        Returns:
+            bool:
+            True if all dependencies for the tool are satisfied. If this
+            returns False, the worker will not listen for this Tool's queue,
+            and a warning will be logged.
+        """
+        if not super(JavaToolMixin, self).check_dependencies():
+            return False
+
+        output = execute(self._build_java_command(),
+                         ignore_errors=True)
+
+        return 'Could not find or load main class' not in output
+
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments.
+
+        Returns:
+            list of unicode:
+            The base command line.
+        """
+        return self._build_java_command(**kwargs)
+
+    def _build_java_command(self):
+        """Return the base Java command for running the class.
+
+        This will build the class path and command line for running
+        :py:attr:`java_main`.
+
+        Returns:
+            list of unicode:
+            The base command line for running the Java class.
+        """
+        classpath = (
+            '%s:%s' % (':'.join(config.get('java_classpath', [])),
+                       (os.environ.get(str('CLASSPATH')) or ''))
+        ).strip(':')
+
+        cmdline = [config['exe_paths']['java']]
+
+        if classpath:
+            cmdline += ['-cp', classpath]
+
+        cmdline.append(self.java_main)
+
+        return cmdline
