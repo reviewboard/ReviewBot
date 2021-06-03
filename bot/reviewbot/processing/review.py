@@ -107,12 +107,14 @@ class File(object):
             return None
 
     def comment(self, text, first_line, num_lines=1, start_column=None,
-                error_code=None, issue=None, rich_text=False, original=False):
+                error_code=None, issue=None, rich_text=False, original=False,
+                text_extra=None, severity=None):
         """Make a comment on the file.
 
         Version Changed:
             3.0:
-            Added ``start_column`` and ``error_code`` arguments.
+            Added ``error_code``, ``severity``, ``start_column``, and
+            ``text_extra`` arguments.
 
         Args:
             text (unicode):
@@ -143,6 +145,15 @@ class File(object):
             original (bool, optional):
                 If True, the ``first_line`` argument corresponds to the line
                 number in the original file, instead of the patched file.
+
+            severity (unicode, optional):
+                A tool-specific, human-readable indication of the severity of
+                this comment.
+
+            text_extra (list of tuple, optional):
+                Additional data to append to the text in ``Key: Value`` form.
+                Each item is an ordered tuple of ``(Key, Value``). These will
+                be placed after the default items ("Column" and "Error code").
         """
         # Some tools report a first_line of 0 to mean a 'global comment' on a
         # particular file. For now, we handle this as a special case as
@@ -165,16 +176,25 @@ class File(object):
             if issue is None:
                 issue = self.review.settings['open_issues']
 
-            if start_column is not None or error_code:
-                extra = []
+            extra = []
 
-                if start_column:
-                    extra.append('Column: %s' % start_column)
+            if start_column:
+                extra.append(('Column', start_column))
 
-                if error_code:
-                    extra.append('Error code: %s' % error_code)
+            if severity:
+                extra.append(('Severity', severity))
 
-                text = '%s\n\n%s' % (text, '\n'.join(extra))
+            if error_code:
+                extra.append(('Error code', error_code))
+
+            if text_extra:
+                extra += text_extra
+
+            if extra:
+                text = '%s\n\n%s' % (text, '\n'.join(
+                    '%s: %s' % (key, value)
+                    for key, value in extra
+                ))
 
             data = {
                 'filediff_id': self.id,

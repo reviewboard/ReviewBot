@@ -237,12 +237,61 @@ class FileTests(TestCase):
             'rich_text': False,
         }])
 
-    def test_comment_with_start_column_and_error_code(self):
-        """Testing File.comment with start_column and error_code"""
+    def test_comment_with_severity(self):
+        """Testing File.comment with severity"""
         self.review_file.comment('This is a comment',
                                  first_line=12,
-                                 start_column=10,
-                                 error_code='W123')
+                                 severity='warning')
+
+        self.assertEqual(self.review.comments, [{
+            'filediff_id': 42,
+            'first_line': 12,
+            'issue_opened': True,
+            'num_lines': 1,
+            'text': (
+                'This is a comment\n'
+                '\n'
+                'Severity: warning'
+            ),
+            'rich_text': False,
+        }])
+
+    def test_comment_with_text_extra(self):
+        """Testing File.comment with text_extra"""
+        self.review_file.comment(
+            'This is a comment',
+            first_line=12,
+            text_extra=[
+                ('Header1', 'value1'),
+                ('Header2', 'value2'),
+            ])
+
+        self.assertEqual(self.review.comments, [{
+            'filediff_id': 42,
+            'first_line': 12,
+            'issue_opened': True,
+            'num_lines': 1,
+            'text': (
+                'This is a comment\n'
+                '\n'
+                'Header1: value1\n'
+                'Header2: value2'
+            ),
+            'rich_text': False,
+        }])
+
+    def test_comment_with_all_extra_info(self):
+        """Testing File.comment with all extra information appended to text"""
+        self.review_file.comment(
+            'This is a comment',
+            first_line=12,
+            start_column=10,
+            severity='style',
+            error_code='W123',
+            text_extra=[
+                ('Header1', 'value1'),
+                ('Header2', 'value2'),
+            ])
 
         self.assertEqual(self.review.comments, [{
             'filediff_id': 42,
@@ -253,7 +302,10 @@ class FileTests(TestCase):
                 'This is a comment\n'
                 '\n'
                 'Column: 10\n'
-                'Error code: W123'
+                'Severity: style\n'
+                'Error code: W123\n'
+                'Header1: value1\n'
+                'Header2: value2'
             ),
             'rich_text': False,
         }])
