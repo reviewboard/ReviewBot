@@ -21,11 +21,14 @@
 
 from __future__ import unicode_literals
 
-from reviewbot.tools import Tool
-from reviewbot.utils.process import execute, is_exe_in_path
+import re
+
+from reviewbot.config import config
+from reviewbot.tools.base import BaseTool
+from reviewbot.utils.process import execute
 
 
-class CPPCheckTool(Tool):
+class CPPCheckTool(BaseTool):
     """Review Bot tool to run cppcheck."""
 
     name = 'Cppcheck'
@@ -33,6 +36,14 @@ class CPPCheckTool(Tool):
     description = ('Checks code for errors using Cppcheck, a tool for static '
                    'C/C++ code analysis.')
     timeout = 30
+
+    exe_dependencies = ['cppcheck']
+    file_patterns = [
+        '*.c', '*.cc', '*.cpp', '.cxx', '*.c++',
+        '*.h', '*.hh', '*.hpp', '*.hxx', '*.h++',
+        '*.tpp', '*.txx',
+    ]
+
     options = [
         {
             'name': 'style_checks_enabled',
@@ -50,7 +61,7 @@ class CPPCheckTool(Tool):
             'field_type': 'django.forms.BooleanField',
             'default': False,
             'field_options': {
-                'label': 'Enable ALL error checks',
+                'label': 'Enable all error checks',
                 'help_text': ('Enable all the error checks. This is likely '
                               'to include many false positives.'),
                 'required': False,
@@ -73,97 +84,75 @@ class CPPCheckTool(Tool):
         },
     ]
 
-    def check_dependencies(self):
-        """Verify the tool's dependencies are installed.
+    ERROR_RE = re.compile(
+        r'^(?P<linenum>\d*)::(?P<column>\d+)::(?P<severity>[^:]+)::'
+        r'(?P<error_code>[^:]+)::\s*(?P<text>.+)\s*$',
+        re.M)
+
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments.
 
         Returns:
-            bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not listen for this Tool's queue,
-            and a warning will be logged.
+            list of unicode:
+            The base command line.
         """
-        return is_exe_in_path('cppcheck')
+        settings = self.settings
+        cmdline = [
+            config['exe_paths']['cppcheck'],
+            '-q',
+            '--template={line}::{column}::{severity}::{id}::{message}',
+        ]
 
-    def handle_file(self, f, settings):
+        # Figure out which checks should be enabled.
+        enabled_checks = []
+
+        if settings.get('all_checks_enabled'):
+            enabled_checks.append('all')
+        elif settings.get('style_checks_enabled'):
+            enabled_checks.append('style')
+
+        if enabled_checks:
+            cmdline.append('--enable=%s' % ','.join(enabled_checks))
+
+        # Force a specific C variant, if requested.
+        force_language = settings.get('force_language')
+
+        if force_language:
+            cmdline.append('--language=%s' % force_language)
+
+        return cmdline
+
+    def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.
 
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            settings (dict):
-                Tool-specific settings.
+            path (unicode):
+                The local path to the patched file to review.
+
+            base_command (list of unicode):
+                The base command used to run pyflakes.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
         """
-        if not (f.dest_file.lower().endswith('.cpp') or
-                f.dest_file.lower().endswith('.h') or
-                f.dest_file.lower().endswith('.c')):
-            # Ignore the file.
-            return
+        output = execute(base_command + [path],
+                         ignore_errors=True)
 
-        path = f.get_patched_file_path()
-        if not path:
-            return
+        for m in self.ERROR_RE.finditer(output):
+            try:
+                column = int(m.group('column'))
+            except ValueError:
+                column = None
 
-        enabled_checks = []
-
-        # Check the options we want to pass to cppcheck.
-        if settings['style_checks_enabled']:
-            enabled_checks.append('style')
-
-        if settings['all_checks_enabled']:
-            enabled_checks.append('all')
-
-        # Create string to pass to cppcheck
-        enable_settings = '%s' % ','.join(map(str, enabled_checks))
-
-        cppcheck_args = [
-            'cppcheck',
-            '--template=\"{file}::{line}::{severity}::{id}::{message}\"',
-            '--enable=%s' % enable_settings,
-        ]
-
-        lang = settings['force_language'].strip()
-
-        if lang:
-            cppcheck_args.append('--language=%s' % lang)
-
-        cppcheck_args.append(path)
-
-        # Run the script and capture the output.
-        output = execute(cppcheck_args, split_lines=True, ignore_errors=True)
-
-        # Now for each line extract the fields and add a comment to the file.
-        for line in output:
-            # filename.cpp,849,style,unusedFunction, \
-            #   The function 'bob' is never used
-            # filename.cpp,638,style,unusedFunction, \
-            #   The function 'peter' is never used
-            # filename.cpp,722,style,unusedFunction,
-            #   The function 'test' is never used
-            parsed = line.split('::')
-
-            # If we have a useful message
-            if len(parsed) == 5:
-                # Sometimes we dont gets a linenumber (just and empty string)
-                # Catch this case and set line number to 0.
-                if parsed[1]:
-                    linenumber = int(parsed[1])
-                else:
-                    linenumber = 0
-
-                # Now extract the other options.
-                category = parsed[2]
-                sub_category = parsed[3]
-                freetext = parsed[4][:-1]  # strip the " from the end
-
-                # If the message is that its an error then override the
-                # default settings and raise an Issue otherwise just
-                # add a comment.
-                if category == 'error':
-                    f.comment('%s.\n\nCategory: %s\nSub Category: %s' %
-                              (freetext, category, sub_category),
-                              linenumber, issue=True)
-                else:
-                    f.comment('%s.\n\nCategory: %s\nSub Category: %s' %
-                              (freetext, category, sub_category),
-                              linenumber, issue=False)
+            f.comment(text=m.group('text'),
+                      first_line=int(m.group('linenum') or 0),
+                      start_column=column,
+                      severity=m.group('severity'),
+                      error_code=m.group('error_code'))
