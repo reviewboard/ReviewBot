@@ -51,10 +51,14 @@ class ToolTestCaseMetaclass(type):
             type:
             The new class.
         """
-        assert d.get('tool_class'), '%s must set base_tool_class' % name
-        assert d.get('tool_exe_config_key'), \
-           '%s must set tool_exe_config_key' % name
-        assert d.get('tool_exe_path'), '%s must set tool_exe_path' % name
+        tool_class = d.get('tool_class')
+
+        assert tool_class, '%s must set base_tool_class' % name
+
+        if tool_class.exe_dependencies:
+            assert d.get('tool_exe_config_key'), \
+               '%s must set tool_exe_config_key' % name
+            assert d.get('tool_exe_path'), '%s must set tool_exe_path' % name
 
         for func_name, func in six.iteritems(d.copy()):
             if callable(func):
@@ -128,8 +132,9 @@ class ToolTestCaseMetaclass(type):
                     raise SkipTest('%s dependencies not available'
                                    % self.tool_class.name)
 
-                self.tool_exe_path = \
-                    config['exe_paths'][self.tool_exe_config_key]
+                if self.tool_exe_config_key:
+                    self.tool_exe_path = \
+                        config['exe_paths'][self.tool_exe_config_key]
 
                 self.spy_on(execute)
                 self.setup_integration_test(**func.integration_setup_kwargs)

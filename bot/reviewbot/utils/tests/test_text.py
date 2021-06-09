@@ -3,7 +3,21 @@
 from __future__ import unicode_literals
 
 from reviewbot.testing import TestCase
-from reviewbot.utils.text import split_comma_separated
+from reviewbot.utils.text import base62_encode, split_comma_separated
+
+
+class Base62EncodeTests(TestCase):
+    """Unit tests for reviewbot.utils.text.base2_encode."""
+
+    def test_with_pos_number(self):
+        """Testing base62_encode with > 0"""
+        self.assertEqual(base62_encode(12345), b'3D7')
+        self.assertEqual(base62_encode(1830197301), b'1zrJvJ')
+        self.assertEqual(base62_encode(1), b'1')
+
+    def test_with_zero(self):
+        """Testing base62_encode with 0"""
+        self.assertEqual(base62_encode(0), b'0')
 
 
 class SplitCommaSeparatedTests(TestCase):
