@@ -2,7 +2,6 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 
-from celery.utils.log import get_task_logger
 from celery.worker.control import Panel
 from reviewbot.celery import celery
 
@@ -11,6 +10,7 @@ from reviewbot.repositories import repositories
 from reviewbot.tools.base.registry import get_tool_class, get_tool_classes
 from reviewbot.utils.api import get_api_root
 from reviewbot.utils.filesystem import cleanup_tempfiles
+from reviewbot.utils.log import get_logger
 
 
 # Status Update states
@@ -20,7 +20,7 @@ DONE_FAILURE = 'done-failure'
 ERROR = 'error'
 
 
-logger = get_task_logger(__name__)
+logger = get_logger(__name__)
 
 
 @celery.task(ignore_result=True)
@@ -70,11 +70,11 @@ def RunTool(server_url='',
         base_commit_id (unicode):
             The ID of the commit that the patch should be applied to.
 
-        args (tuple):
+        *args (tuple):
             Any additional positional arguments (perhaps used by a newer
             version of the Review Bot extension).
 
-        kwargs (dict):
+        **kwargs (dict):
             Any additional keyword arguments (perhaps used by a newer version
             of the Review Bot extension).
 
@@ -90,10 +90,10 @@ def RunTool(server_url='',
         log_detail = ('(server=%s, review_request_id=%s, diff_revision=%s)'
                       % (server_url, review_request_id, diff_revision))
 
-        logger.info('Running tool "%s" %s', tool_name, log_detail)
+        logger.debug('Running tool "%s" %s', tool_name, log_detail)
 
         try:
-            logger.info('Initializing RB API %s', log_detail)
+            logger.debug('Initializing RB API %s', log_detail)
             api_root = get_api_root(url=server_url,
                                     session=session)
         except Exception as e:
@@ -101,7 +101,7 @@ def RunTool(server_url='',
                          e, log_detail)
             return False
 
-        logger.info('Loading requested tool "%s" %s', tool_name, log_detail)
+        logger.debug('Loading requested tool "%s" %s', tool_name, log_detail)
         tool_cls = get_tool_class(tool_name)
 
         if tool_cls is None:
@@ -111,7 +111,7 @@ def RunTool(server_url='',
         repository = None
 
         try:
-            logger.info('Creating status update %s', log_detail)
+            logger.debug('Creating status update %s', log_detail)
             status_update = api_root.get_status_update(
                 review_request_id=review_request_id,
                 status_update_id=status_update_id)
@@ -138,7 +138,7 @@ def RunTool(server_url='',
                 return False
 
         try:
-            logger.info('Initializing review %s', log_detail)
+            logger.debug('Initializing review %s', log_detail)
             review = Review(api_root=api_root,
                             review_request_id=review_request_id,
                             diff_revision=diff_revision,
@@ -150,9 +150,10 @@ def RunTool(server_url='',
             return False
 
         try:
-            logger.info('Initializing tool "%s %s" %s',
-                        tool_cls.name, tool_cls.version, log_detail)
-            tool = tool_cls(settings=tool_options)
+            logger.debug('Initializing tool "%s %s" %s',
+                         tool_cls.name, tool_cls.version, log_detail)
+            tool = tool_cls(settings=tool_options,
+                            in_task=True)
         except Exception as e:
             logger.exception('Error initializing tool "%s": %s %s',
                              tool_cls.name, e, log_detail)
@@ -161,13 +162,13 @@ def RunTool(server_url='',
 
         try:
             # TODO: In Review Bot 4.0, remove the settings argument.
-            logger.info('Executing tool "%s" %s', tool.name, log_detail)
+            logger.debug('Executing tool "%s" %s', tool.name, log_detail)
             tool.execute(review,
                          settings=tool_options,
                          repository=repository,
                          base_commit_id=base_commit_id)
-            logger.info('Tool "%s" completed successfully %s',
-                        tool.name, log_detail)
+            logger.debug('Tool "%s" completed successfully %s',
+                         tool.name, log_detail)
         except Exception as e:
             logger.exception('Error executing tool "%s": %s %s',
                              tool.name, e, log_detail)
@@ -189,7 +190,7 @@ def RunTool(server_url='',
                 status_update.update(state=DONE_SUCCESS,
                                      description='passed.')
             else:
-                logger.info('Publishing review %s', log_detail)
+                logger.debug('Publishing review %s', log_detail)
                 review_id = review.publish().id
 
                 status_update.update(state=DONE_FAILURE,
@@ -200,7 +201,7 @@ def RunTool(server_url='',
             status_update.update(state=ERROR, description='internal error.')
             return False
 
-        logger.info('Review completed successfully %s', log_detail)
+        logger.debug('Review completed successfully %s', log_detail)
         return True
     finally:
         cleanup_tempfiles()
@@ -224,16 +225,16 @@ def update_tools_list(panel, payload):
         bool:
         Whether the task completed successfully.
     """
-    logger.info('Request to refresh installed tools from "%s"',
-                payload['url'])
+    logger.debug('Request to refresh installed tools from "%s"',
+                 payload['url'])
 
-    logger.info('Iterating Tools')
+    logger.debug('Iterating Tools')
     tools = []
 
     for tool_class in get_tool_classes():
         tool_id = tool_class.tool_id
         tool = tool_class()
-        logger.info('Tool: %s', tool_id)
+        logger.debug('Tool: %s', tool_id)
 
         if tool.check_dependencies():
             # NOTE: We return the tool ID as the "entry_point". This sounds
@@ -255,7 +256,7 @@ def update_tools_list(panel, payload):
             logger.warning('%s dependency check failed.',
                            tool_id)
 
-    logger.info('Done iterating Tools')
+    logger.debug('Done iterating Tools')
     hostname = panel.hostname
 
     try:

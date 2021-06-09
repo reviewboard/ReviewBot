@@ -6,7 +6,6 @@ Version Added:
 
 from __future__ import unicode_literals
 
-import logging
 import os
 import re
 
@@ -134,7 +133,7 @@ class FullRepositoryToolMixin(object):
         # Patch all the files first.
         with chdir(working_dir):
             for f in review.files:
-                logging.info('Patching %s', f.dest_file)
+                self.logger.debug('Patching %s', f.dest_file)
 
                 ensure_dirs_exist(os.path.abspath(f.dest_file))
 

@@ -3,15 +3,10 @@ from __future__ import unicode_literals
 import json
 import os
 
-from celery.utils.log import get_task_logger
-
 from reviewbot.config import config
 from reviewbot.tools.base import BaseTool, FilePatternsFromSettingMixin
 from reviewbot.utils.filesystem import make_tempfile
 from reviewbot.utils.process import execute
-
-
-logger = get_task_logger(__name__)
 
 
 class PMDTool(FilePatternsFromSettingMixin, BaseTool):
@@ -184,8 +179,8 @@ class PMDTool(FilePatternsFromSettingMixin, BaseTool):
         files = report.get('files', [])
 
         if len(files) != 1:
-            logger.error('Expected 1 file in PMD output. Got %s: %r',
-                         len(files), files)
+            self.logger.error('Expected 1 file in PMD output. Got %s: %r',
+                              len(files), files)
             return
 
         # Report all errors found by PMD.
@@ -196,8 +191,8 @@ class PMDTool(FilePatternsFromSettingMixin, BaseTool):
                 num_lines = violation['endline'] - first_line + 1
                 start_column = violation['begincolumn']
             except Exception as e:
-                logger.error('Error parsing PMD violations: %s: %r',
-                             e, violation)
+                self.logger.error('Error parsing PMD violations: %s: %r',
+                                  e, violation)
                 continue
 
             f.comment(text=description,

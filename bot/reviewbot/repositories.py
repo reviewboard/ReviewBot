@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 
-import logging
 import os
 
 import appdirs
@@ -8,7 +7,11 @@ import appdirs
 from reviewbot.config import config
 from reviewbot.utils.api import get_api_root
 from reviewbot.utils.filesystem import make_tempdir
+from reviewbot.utils.log import get_logger
 from reviewbot.utils.process import execute
+
+
+logger = get_logger(__name__)
 
 
 repositories = {}
@@ -45,13 +48,13 @@ class GitRepository(Repository):
         if not os.path.exists(self.repo_path):
             os.makedirs(self.repo_path)
 
-            logging.info('Cloning repository %s to %s',
-                         self.clone_path, self.repo_path)
+            logger.info('Cloning repository %s to %s',
+                        self.clone_path, self.repo_path)
             execute(['git', 'clone', '--bare', self.clone_path,
                      self.repo_path])
         else:
-            logging.info('Fetching into existing repository %s',
-                         self.repo_path)
+            logger.info('Fetching into existing repository %s',
+                        self.repo_path)
             execute(['git', '--git-dir=%s' % self.repo_path, 'fetch',
                      'origin', '+refs/heads/*:refs/heads/*', '--prune'])
 
@@ -69,18 +72,18 @@ class GitRepository(Repository):
         workdir = make_tempdir()
         branchname = 'br-%s' % commit_id
 
-        logging.info('Creating temporary branch for clone in repo %s',
-                     self.repo_path)
+        logger.info('Creating temporary branch for clone in repo %s',
+                    self.repo_path)
         execute(['git', '--git-dir=%s' % self.repo_path, 'branch', branchname,
                  commit_id])
 
-        logging.info('Creating working tree for commit ID %s in %s', commit_id,
-                     workdir)
+        logger.info('Creating working tree for commit ID %s in %s', commit_id,
+                    workdir)
         execute(['git', 'clone', '--local', '--no-hardlinks', '--depth', '1',
                  '--branch', branchname, self.repo_path, workdir])
 
-        logging.info('Removing temporary branch for clone in repo %s',
-                     self.repo_path)
+        logger.info('Removing temporary branch for clone in repo %s',
+                    self.repo_path)
         execute(['git', '--git-dir=%s' % self.repo_path, 'branch', '-d',
                  branchname])
 
@@ -110,13 +113,13 @@ class HgRepository(Repository):
         if not os.path.exists(self.repo_path):
             os.makedirs(self.repo_path)
 
-            logging.info('Cloning repository %s to %s',
-                         self.clone_path, self.repo_path)
+            logger.info('Cloning repository %s to %s',
+                        self.clone_path, self.repo_path)
             execute(['hg', 'clone', '-U', self.clone_path,
                      self.repo_path])
         else:
-            logging.info('Pulling into existing repository %s',
-                         self.repo_path)
+            logger.info('Pulling into existing repository %s',
+                        self.repo_path)
             execute(['hg', '-R', self.repo_path, 'pull'])
 
     def checkout(self, commit_id):
@@ -132,8 +135,8 @@ class HgRepository(Repository):
         """
         workdir = make_tempdir()
 
-        logging.info('Creating working tree for commit ID %s in %s', commit_id,
-                     workdir)
+        logger.info('Creating working tree for commit ID %s in %s', commit_id,
+                    workdir)
         execute(['hg', '-R', self.repo_path, 'archive', '-r', commit_id,
                  '-t', 'files', workdir])
 
@@ -153,7 +156,7 @@ def fetch_repositories(url, user=None, token=None):
         token (unicode):
             The configured API token for the user.
     """
-    logging.info('Fetching repositories from Review Board: %s', url)
+    logger.info('Fetching repositories from Review Board: %s', url)
 
     root = get_api_root(url=url,
                         username=user,
@@ -175,8 +178,8 @@ def fetch_repositories(url, user=None, token=None):
             if repo_source:
                 init_repository(repo.name, tool_type.lower(), repo_source)
             else:
-                logging.warn('Cannot find usable path for repository: %s',
-                             repo.name)
+                logger.warning('Cannot find usable path for repository: %s',
+                               repo.name)
 
 
 def init_repository(repo_name, repo_type, repo_source):
@@ -201,8 +204,8 @@ def init_repository(repo_name, repo_type, repo_source):
         repositories[repo_name] = \
             HgRepository(repo_name, repo_source)
     else:
-        logging.error('Unknown type "%s" for configured repository %s',
-                      repo_type, repo_name)
+        logger.error('Unknown type "%s" for configured repository %s',
+                     repo_type, repo_name)
 
 
 def init_repositories():

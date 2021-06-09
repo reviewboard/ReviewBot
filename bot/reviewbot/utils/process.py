@@ -1,9 +1,13 @@
 from __future__ import unicode_literals
 
-import logging
 import os
 import subprocess
 import sys
+
+from reviewbot.utils.log import get_logger
+
+
+logger = get_logger(__name__)
 
 
 def execute(command,
@@ -62,9 +66,9 @@ def execute(command,
         of lines (preserving newlines).
     """
     if isinstance(command, list):
-        logging.debug(subprocess.list2cmdline(command))
+        logger.debug(subprocess.list2cmdline(command))
     else:
-        logging.debug(command)
+        logger.debug(command)
 
     if env:
         env.update(os.environ)

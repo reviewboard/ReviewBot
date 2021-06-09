@@ -4,14 +4,9 @@ from __future__ import unicode_literals
 
 import re
 
-from celery.utils.log import get_task_logger
-
 from reviewbot.config import config
 from reviewbot.tools.base import BaseTool
 from reviewbot.utils.process import execute
-
-
-logger = get_task_logger(__name__)
 
 
 class Doc8Tool(BaseTool):

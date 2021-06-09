@@ -1,10 +1,14 @@
 from __future__ import unicode_literals
 
-import logging
 import os
 import shutil
 import tempfile
 from contextlib import contextmanager
+
+from reviewbot.utils.log import get_logger
+
+
+logger = get_logger(__name__)
 
 
 tmpdirs = []
@@ -38,14 +42,14 @@ def cleanup_tempfiles():
 
     for tmpdir in tmpdirs:
         try:
-            logging.debug('Removing temporary directory %s', tmpdir)
+            logger.debug('Removing temporary directory %s', tmpdir)
             shutil.rmtree(tmpdir)
         except:
             pass
 
     for tmpfile in tmpfiles:
         try:
-            logging.debug('Removing temporary file %s', tmpfile)
+            logger.debug('Removing temporary file %s', tmpfile)
             os.unlink(tmpfile)
         except:
             pass

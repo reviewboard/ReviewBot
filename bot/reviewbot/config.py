@@ -1,6 +1,5 @@
 from __future__ import print_function, unicode_literals
 
-import logging
 import os
 from copy import deepcopy
 from glob import glob
@@ -8,8 +7,11 @@ from glob import glob
 import six
 from appdirs import AppDirs
 
+from reviewbot.utils.log import get_logger
 
-logger = logging.getLogger(__name__)
+
+logger = get_logger(__name__, is_task_logger=False)
+
 _appdirs = AppDirs(appname='reviewbot',
                    appauthor='Beanbag')
 

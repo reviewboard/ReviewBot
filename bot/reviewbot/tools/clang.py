@@ -10,15 +10,10 @@ except ImportError:
     # Python 2.x
     from plistlib import readPlist as plist_load
 
-from celery.utils.log import get_task_logger
-
 from reviewbot.config import config
 from reviewbot.tools.base import BaseTool, FullRepositoryToolMixin
 from reviewbot.utils.filesystem import make_tempfile
 from reviewbot.utils.process import execute
-
-
-logger = get_task_logger(__name__)
 
 
 class ClangTool(FullRepositoryToolMixin, BaseTool):
@@ -109,8 +104,9 @@ class ClangTool(FullRepositoryToolMixin, BaseTool):
                 with open(outfile, 'rb') as fp:
                     results = plist_load(fp)
             except Exception as e:
-                logger.error('Unable to load clang plist output file %s: %s',
-                             outfile, e)
+                self.logger.error('Unable to load clang plist output file '
+                                  '%s: %s',
+                                  outfile, e)
                 return
 
             for diagnostic in results['diagnostics']:

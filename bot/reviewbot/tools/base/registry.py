@@ -8,13 +8,15 @@ Version Added:
 
 from __future__ import unicode_literals
 
-import logging
 import pkg_resources
 
 import six
 
+from reviewbot.utils.log import get_logger
 
-logger = logging.getLogger(__name__)
+
+logger = get_logger(__name__,
+                    is_task_logger=False)
 
 
 #: A mapping of tool IDs to tool classes.

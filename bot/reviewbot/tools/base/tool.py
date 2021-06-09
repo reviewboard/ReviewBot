@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from fnmatch import fnmatchcase
 
 from reviewbot.config import config
+from reviewbot.utils.log import get_logger
 from reviewbot.utils.process import is_exe_in_path
 
 
@@ -149,6 +150,29 @@ class BaseTool(object):
         """
         self.settings = settings or {}
         self.output = None
+        self._logger = None
+
+    @property
+    def logger(self):
+        """The logger for the tool.
+
+        This logger will contain information on the process, the task (if
+        it's running in a task), and the tool name.
+
+        Version Added:
+            3.0
+
+        Type:
+            logging.Logger
+        """
+        if self._logger is None:
+            from reviewbot.celery import celery
+
+            self._logger = get_logger(
+                self.name,
+                is_task_logger=celery.current_task is not None)
+
+        return self._logger
 
     def check_dependencies(self, **kwargs):
         """Verify the tool's dependencies are installed.
