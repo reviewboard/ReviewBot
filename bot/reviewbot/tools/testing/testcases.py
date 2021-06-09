@@ -208,6 +208,44 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
     #:     unicode
     tool_exe_path = None
 
+    def run_get_can_handle_file(self, filename, file_contents=b'',
+                                tool_settings={}):
+        """Run get_can_handle_file with the given file and settings.
+
+        This will create the review objects, set up a repository (if needed
+        by the tool), apply any configuration, and run
+        :py:meth:`~reviewbot.tools.base.BaseTool.get_can_handle_file`.
+
+        Args:
+            filename (unicode):
+                The filename of the file being reviewed.
+
+            file_contents (bytes, optional):
+                File content to review.
+
+            tool_settings (dict, optional):
+                The settings to pass to the tool constructor.
+
+        Returns:
+            bool:
+            ``True`` if the file can be handled. ``False`` if it cannot.
+        """
+        review = self.create_review()
+        review_file = self.create_review_file(
+            review,
+            source_file=filename,
+            dest_file=filename,
+            diff_data=self.create_diff_data(chunks=[{
+                'change': 'insert',
+                'lines': file_contents.splitlines(),
+                'new_linenum': 1,
+            }]),
+            patched_content=file_contents)
+
+        tool = self.tool_class(settings=tool_settings)
+
+        return tool.get_can_handle_file(review_file)
+
     def run_tool_execute(self, filename, file_contents, checkout_dir=None,
                          tool_settings={}):
         """Run execute with the given file and settings.
