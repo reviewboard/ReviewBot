@@ -70,6 +70,23 @@ Deprecated Settings
 
 The following configuration settings have been deprecated:
 
+* ``checkstyle_path``
+
+  The :file:`.jar` file, or its parent directory, should now be specified in
+  ``java_classpath``. For example:
+
+  .. code-block:: python
+
+      # Either the .jar file itself:
+      java_classpath = [
+          '/opt/checkstyle/checkstyle-X.Y.jar',
+      ]
+
+      # Or the parent directory:
+      java_classpath = [
+          '/opt/checkstyle',
+      ]
+
 * ``pmd_path``
 
   This should now be specified as ``pmd`` in ``exe_paths``. For example:

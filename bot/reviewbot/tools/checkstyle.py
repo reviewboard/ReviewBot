@@ -6,27 +6,35 @@ import logging
 from xml.etree import ElementTree
 
 from reviewbot.config import config
-from reviewbot.tools import Tool
+from reviewbot.tools.base import BaseTool, JavaToolMixin
 from reviewbot.utils.filesystem import make_tempfile
-from reviewbot.utils.process import execute, is_exe_in_path
+from reviewbot.utils.process import execute
 
 
-class CheckstyleTool(Tool):
+class CheckstyleTool(JavaToolMixin, BaseTool):
     """Review Bot tool to run checkstyle."""
 
     name = 'checkstyle'
     version = '1.0'
     description = 'Checks code for errors using checkstyle.'
     timeout = 90
+
+    file_patterns = ['*.java']
+    java_main = 'com.puppycrawl.tools.checkstyle.Main'
+
     options = [
         {
             'name': 'config',
             'field_type': 'django.forms.CharField',
             'default': '',
             'field_options': {
-                'label': 'Configuration xml',
-                'help_text': 'Content of configuration xml. See: '
-                             'http://checkstyle.sourceforge.net/config.html',
+                'label': 'Configuration XML',
+                'help_text': (
+                    'This can be the name of a Checkstyle-provided XML '
+                    'configuration ("google_checks.xml" or "sun_checks.xml"), '
+                    'or the contents of a custom configuration XML file (see '
+                    'http://checkstyle.sourceforge.net/config.html).'
+                ),
                 'required': True,
             },
             'widget': {
@@ -39,58 +47,67 @@ class CheckstyleTool(Tool):
         },
     ]
 
-    def check_dependencies(self):
-        """Verify the tool's dependencies are installed.
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments.
 
         Returns:
-            bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not listen for this Tool's queue,
-            and a warning will be logged.
+            list of unicode:
+            The base command line.
         """
-        checkstyle_path = config.get('checkstyle_path')
+        config_xml = self.settings['config'].strip()
 
-        return (checkstyle_path and
-                is_exe_in_path(checkstyle_path) and
-                is_exe_in_path('java'))
+        if config_xml.startswith('<?xml'):
+            config_xml = make_tempfile(config_xml.encode('utf-8'),
+                                       extension='.xml')
 
-    def handle_file(self, f, settings):
+        return super(CheckstyleTool, self).build_base_command(**kwargs) + [
+            '-f=xml',
+            '-c=%s' % config_xml,
+        ]
+
+    def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.
 
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            settings (dict):
-                Tool-specific settings.
+            path (unicode):
+                The local path to the patched file to review.
+
+            base_command (list of unicode):
+                The base command used to run checkstyle.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
         """
-        if not f.dest_file.lower().endswith('.java'):
-            # Ignore the file.
-            return
-
-        path = f.get_patched_file_path()
-
-        if not path:
-            return
-
-        cfgXml = make_tempfile(settings['config'])
-        outfile = make_tempfile()
-
-        execute(
-            [
-                'java',
-                '-jar',
-                config['checkstyle_path'],
-                '-c', cfgXml,
-                '-f', 'xml',
-                '-o', outfile,
-                path,
-            ],
-            ignore_errors=True)
+        output = execute(base_command + [path],
+                         with_errors=False,
+                         ignore_errors=True)
 
         try:
-            root = ElementTree.parse(outfile).getroot()
-            for row in root.iter('error'):
-                f.comment(row.get('message'), int(row.get('line')))
-        except Exception as e:
-            logging.error('Cannot parse xml file: %s', e)
+            root = ElementTree.fromstring(output)
+        except Exception:
+            f.comment(text=("checkstyle wasn't able to parse this file. Check "
+                            "the file for syntax errors, and make sure that "
+                            "your configured settings in Review Bot are "
+                            "correct."),
+                      first_line=None)
+
+            return
+
+        for error in root.iter('error'):
+            column = error.get('column')
+
+            if column:
+                column = int(column)
+
+            f.comment(text=error.get('message'),
+                      first_line=int(error.get('line')),
+                      start_column=column,
+                      severity=error.get('severity'),
+                      error_code=error.get('source'))

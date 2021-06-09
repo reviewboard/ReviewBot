@@ -84,6 +84,18 @@ def load_config():
                 if key in config_module:
                     new_config[key] = deepcopy(config_module[key])
 
+            if 'checkstyle_path' in config_module:
+                logger.warning('checkstyle_path in %s is deprecated and will '
+                               'be removed in Review Bot 4.0. Please put '
+                               'this in "java_classpath". For example:\n'
+                               'java_classpath = [\n'
+                               '    "%s",\n'
+                               ']',
+                               config_file, config_module['checkstyle_path'])
+
+                new_config['java_classpath'].append(
+                    config_module['checkstyle_path'])
+
             if 'pmd_path' in config_module:
                 logger.warning('pmd_path in %s is deprecated and will be '
                                'removed in Review Bot 4.0. Please put '
