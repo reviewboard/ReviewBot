@@ -3,19 +3,18 @@
 from __future__ import unicode_literals
 
 import json
-import logging
 import os
 import re
+from collections import OrderedDict
+
 import six
 
-from reviewbot.tools import RepositoryTool
-from reviewbot.utils.process import execute, is_exe_in_path
+from reviewbot.config import config
+from reviewbot.tools.base import BaseTool, FullRepositoryToolMixin
+from reviewbot.utils.process import execute
 
 
-logger = logging.getLogger(__name__)
-
-
-class GoTool(RepositoryTool):
+class GoTool(FullRepositoryToolMixin, BaseTool):
     """Review Bot tool to run Go Tools."""
 
     name = 'GoTool'
@@ -23,6 +22,10 @@ class GoTool(RepositoryTool):
     description = ('Checks Go code for test errors using built-in Go tools '
                    '"go test", and "go vet".')
     timeout = 90
+
+    exe_dependencies = ['go']
+    file_patterns = ['*.go']
+
     options = [
         {
             'name': 'test',
@@ -43,152 +46,197 @@ class GoTool(RepositoryTool):
             },
         },
     ]
-    package_regex = re.compile(r'^[#].*')
 
-    def check_dependencies(self):
-        """Verify the tool's dependencies are installed.
+    PACKAGE_LINE_RE = re.compile(r'^# (.*)$')
+
+    VET_ERROR_RE = re.compile(
+        r'^(vet: )?(?P<path>.*\.go):(?P<linenum>\d+):(?P<column>\d+): '
+        r'(?P<text>.*)$',
+        re.M)
+
+    def get_can_handle_file(self, review_file, **kwargs):
+        """Return whether this tool can handle a given file.
+
+        Args:
+            review_file (reviewbot.processing.review.File):
+                The file to check.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments passed to :py:meth:`execute`.
+                This is intended for future expansion.
 
         Returns:
             bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not listen for this Tool's queue,
-            and a warning will be logged.
+            ``True`` if the file can be handled. ``False`` if it cannot.
         """
-        return is_exe_in_path('go')
+        return (
+            super(GoTool, self).get_can_handle_file(review_file, **kwargs) and
+            not review_file.dest_file.lower().endswith('_test.go')
+        )
 
-    def handle_files(self, files, settings):
+    def handle_files(self, files, review, **kwargs):
         """Perform a review of all files.
 
         Args:
             files (list of reviewbot.processing.review.File):
                 The files to process.
 
-            settings (dict):
-                Tool-specific settings.
+            review (reviewbot.processing.review.Review):
+                The review that comments will apply to.
+
+            **kwargs (dict):
+                Additional keyword arguments.
         """
         packages = set()
-        patched_file_dict = {}
+        patched_files_map = {}
 
-        # Reference to a review object so that a general comment can be
-        # made in the 'go test' command.
-        review_obj = files[0].review
+        super(GoTool, self).handle_files(files=files,
+                                         packages=packages,
+                                         patched_files_map=patched_files_map,
+                                         **kwargs)
 
-        for index, f in enumerate(files):
-            # Store a review object, but only once.
-            if index == 0:
-                review_obj = f.review
-
-            filename = f.dest_file.lower()
-
-            if not filename.endswith('.go'):
-                # Ignore the file.
-                continue
-
-            if filename.endswith('_test.go'):
-                # Ignore the test file.
-                continue
-
-            path = f.get_patched_file_path()
-
-            if not path:
-                continue
-
-            # Add package to packages set if it does not already exist.
-            packages.add(os.path.dirname(path))
-
-            patched_file_dict[path] = f
+        settings = self.settings
+        run_test = settings.get('test', False)
+        run_vet = settings.get('vet', False)
 
         for package in packages:
-            if settings['test']:
-                self.run_go_test(package, review_obj)
+            if run_test:
+                self.run_go_test(package, review)
 
-            if settings['vet']:
-                self.run_go_vet(package, patched_file_dict)
+            if run_vet:
+                self.run_go_vet(package, patched_files_map)
 
-    def run_go_test(self, package, review_obj):
+    def handle_file(self, f, path, packages, patched_files_map, **kwargs):
+        """Perform a review of a single file.
+
+        Args:
+            f (reviewbot.processing.review.File):
+                The file to process.
+
+            path (unicode):
+                The local path to the patched file to review.
+
+            packages (set of unicode):
+                A set of all package names. This function will add the file's
+                package to this set.
+
+            patched_files_map (dict):
+                A mapping of paths to files being reviewed. This function
+                will add the path and file to this map.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
+        """
+        packages.add(os.path.dirname(path))
+        patched_files_map[path] = f
+
+    def run_go_test(self, package, review):
         """Execute 'go test' on a given package
 
         Args:
             package (unicode):
                 Name of the go package.
 
-            review_obj (reviewbot.processing.review.Review):
+            review (reviewbot.processing.review.Review):
                 The review object.
         """
-        try:
-            output = execute(
-                [
-                    'go',
-                    'test',
-                    '-json',
-                    '-vet=off',
-                    './%s' % package,
-                ],
-                split_lines=True,
-                ignore_errors=True)
+        output = execute(
+            [
+                config['exe_paths']['go'],
+                'test',
+                '-json',
+                '-vet=off',
+                './%s' % package,
+            ],
+            split_lines=True,
+            ignore_errors=True)
 
-            formatted_output = '[%s]' % ','.join(output)
-            json_data = json.loads(formatted_output)
+        test_results = OrderedDict()
+        found_json_errors = False
 
-            for entry in json_data:
-                if entry['Action'] == 'fail' and 'Test' in entry:
-                    test = entry['Test']
-                    review_obj.general_comment('%s failed in the %s package.'
-                                               % (test, package))
-        except Exception as e:
-            logger.exception('Go test execution failed for package'
-                             '%s: %s', package, e)
+        for line in output:
+            try:
+                entry = json.loads(line)
+            except ValueError:
+                found_json_errors = True
+                continue
 
-    def run_go_vet(self, package, patched_file_dict):
+            if 'Test' in entry:
+                action = entry['Action']
+
+                if action in ('fail', 'output'):
+                    test_name = entry['Test']
+                    package = entry['Package']
+
+                    if test_name not in test_results:
+                        test_results[test_name] = {
+                            'failed': False,
+                            'output': [],
+                            'package': package,
+                        }
+
+                    test_result = test_results[test_name]
+
+                    if action == 'output':
+                        test_result['output'].append(entry['Output'])
+                    elif action == 'fail':
+                        test_result['failed'] = True
+
+        if test_results:
+            for test_name, test_result in six.iteritems(test_results):
+                if test_result['failed']:
+                    review.general_comment(
+                        '%s failed in the %s package:\n'
+                        '\n'
+                        '```%s```'
+                        % (test_name,
+                           test_result['package'],
+                           ''.join(test_result['output']).strip()),
+                        rich_text=True)
+        elif found_json_errors:
+            review.general_comment(
+                'Unable to run `go test` on the %s package:\n'
+                '\n'
+                '```%s```'
+                % (package, ''.join(output).strip()),
+                rich_text=True)
+
+    def run_go_vet(self, package, patched_files_map):
         """Execute 'go vet' on a given package
 
         Args:
             package (unicode):
                 Name of the go package.
 
-            patched_file_dict (dict):
+            patched_files_map (dict):
                 Mapping from filename to
                 :py:class:`~reviewbot.processing.review.File` to add comments.
         """
-        try:
-            output = execute(
-                [
-                    'go',
-                    'vet',
-                    '-json',
-                    './%s' % package,
-                ])
+        # Ideally, we would use -json, but unfortunately `go vet` doesn't
+        # always respect this for all errors. Rather than checking for both
+        # JSON output and non-JSON output, we'll just parse the usual way.
+        output = execute(
+            [
+                config['exe_paths']['go'],
+                'vet',
+                './%s' % package,
+            ],
+            with_errors=True,
+            ignore_errors=True)
 
-            package_path = output.split('\n', 1)[0]
+        for m in self.VET_ERROR_RE.finditer(output):
+            path = m.group('path')
+            linenum = int(m.group('linenum'))
+            column = int(m.group('column'))
+            text = m.group('text')
 
-            if package_path.startswith('# '):
-                package_path = package_path[len('# '):]
+            f = patched_files_map.get(path)
 
-            cleaned_output = self.package_regex.sub('', output)
-            json_data = json.loads(cleaned_output)
-
-            # Sample JSON data output:
-            # {
-            #     "...path_to_package/boolexpr": {
-            #         "bools": [
-            #             {
-            #                 "posn": "...path_to_package/bool-expr.go:10:14",
-            #                 "message": "suspect or: i != 0 || i != 1"
-            #             },
-            #             ...additional occurrences of bool errors
-            #         ],
-            #         "loopclosure": [ ... ]
-            #     }
-            # }
-            if package_path in json_data:
-                for i, entry in six.iteritems(json_data[package_path]):
-                    for key in entry:
-                        filename, line_num, col_num = \
-                            os.path.basename(key['posn']).split(':', 2)
-                        file_path = os.path.join(package, filename)
-                        message = key['message']
-                        f = patched_file_dict[file_path]
-                        f.comment('Error: %s' % message, int(line_num))
-        except Exception as e:
-            logger.exception('Go vet execution failed for package'
-                             '%s: %s', package, e)
+            if f is None:
+                self.logger.error('Could not find path "%s" in patched '
+                                  'file map %r',
+                                  path, patched_files_map)
+            else:
+                f.comment(text=text,
+                          first_line=linenum,
+                          start_column=column)

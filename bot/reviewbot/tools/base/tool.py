@@ -266,7 +266,10 @@ class BaseTool(object):
                 Additional keyword arguments, for future expansion.
         """
         if not getattr(self, 'legacy_tool', False):
-            kwargs['base_command'] = self.build_base_command()
+            kwargs.update({
+                'base_command': self.build_base_command(),
+                'review': review,
+            })
 
         self.handle_files(review.files, **kwargs)
 

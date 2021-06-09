@@ -208,7 +208,8 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
     #:     unicode
     tool_exe_path = None
 
-    def run_tool_execute(self, filename, file_contents, tool_settings={}):
+    def run_tool_execute(self, filename, file_contents, checkout_dir=None,
+                         tool_settings={}):
         """Run execute with the given file and settings.
 
         This will create the review objects, set up a repository (if needed
@@ -221,6 +222,10 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
 
             file_contents (bytes):
                 File content to review.
+
+            checkout_dir (unicode, optional):
+                An explicit directory to use as the checkout directory, for
+                tools that require full-repository checkouts.
 
             tool_settings (dict, optional):
                 The settings to pass to the tool constructor.
@@ -236,7 +241,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
 
             @self.spy_for(repository.checkout)
             def _checkout(_self, *args, **kwargs):
-                return tempfile.mkdtemp()
+                return checkout_dir or tempfile.mkdtemp()
         else:
             repository = None
 
