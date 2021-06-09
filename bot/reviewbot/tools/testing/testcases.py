@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 
 import os
 import tempfile
+from copy import deepcopy
 from functools import wraps
 from unittest import SkipTest
 
@@ -300,11 +301,10 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             }]),
             patched_content=file_contents)
 
-        worker_config = {
-            'exe_paths': {
-                self.tool_exe_config_key: self.tool_exe_path,
-            },
-        }
+        worker_config = deepcopy(self.config)
+        worker_config.setdefault('exe_paths', {}).update({
+            self.tool_exe_config_key: self.tool_exe_path,
+        })
 
         with self.override_config(worker_config):
             tool = self.tool_class(settings=tool_settings)
