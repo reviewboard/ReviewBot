@@ -25,7 +25,7 @@ _appdirs = AppDirs(appname='reviewbot',
 DEFAULT_CONFIG = {
     'cookie_dir': _appdirs.user_cache_dir,
     'exe_paths': {},
-    'java_classpath': [],
+    'java_classpaths': {},
     'reviewboard_servers': [],
     'repositories': [],
 }
@@ -87,14 +87,15 @@ def load_config():
             if 'checkstyle_path' in config_module:
                 logger.warning('checkstyle_path in %s is deprecated and will '
                                'be removed in Review Bot 4.0. Please put '
-                               'this in "java_classpath". For example:\n'
-                               'java_classpath = [\n'
-                               '    "%s",\n'
-                               ']',
+                               'this in "java_classpaths". For example:\n'
+                               'java_classpaths = {\n'
+                               '    "checkstyle": ["%s"],\n'
+                               '}',
                                config_file, config_module['checkstyle_path'])
 
-                new_config['java_classpath'].append(
-                    config_module['checkstyle_path'])
+                new_config['java_classpaths']['checkstyle'] = [
+                    config_module['checkstyle_path'],
+                ]
 
             if 'pmd_path' in config_module:
                 logger.warning('pmd_path in %s is deprecated and will be '
@@ -152,17 +153,6 @@ def load_config():
     # customized.
     new_config['cookie_path'] = os.path.join(cookie_dir,
                                              'reviewbot-cookies.txt')
-
-    # Normalize the Java classpath.
-    new_java_classpath = []
-
-    for java_classpath in new_config['java_classpath']:
-        if os.path.isdir(java_classpath):
-            new_java_classpath += glob(os.path.join(java_classpath, '*.jar'))
-        else:
-            new_java_classpath.append(java_classpath)
-
-    new_config['java_classpath'] = new_java_classpath
 
     config.clear()
     config.update(new_config)

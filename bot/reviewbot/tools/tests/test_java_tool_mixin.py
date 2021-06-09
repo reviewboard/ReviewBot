@@ -14,6 +14,7 @@ from reviewbot.utils.process import execute, is_exe_in_path
 
 class MyJavaTool(JavaToolMixin, BaseTool):
     java_main = 'a.b.c.Main'
+    java_classpaths_key = 'mytool'
 
 
 class JavaToolMixinTests(kgb.SpyAgency, TestCase):
@@ -22,27 +23,21 @@ class JavaToolMixinTests(kgb.SpyAgency, TestCase):
     def setUp(self):
         super(JavaToolMixinTests, self).setUp()
 
-        self._old_classpath = os.environ.get('CLASSPATH')
-        os.environ.pop('CLASSPATH', None)
-
         self.tool = MyJavaTool()
 
-    def tearDown(self):
-        super(JavaToolMixinTests, self).tearDown()
-
-        os.environ['CLASSPATH'] = self._old_classpath
-
     def test_build_base_command_with_classpath_config(self):
-        """Testing JavaToolMixin.build_base_command with java_classpath config
+        """Testing JavaToolMixin.build_base_command with java_classpaths config
         """
         new_config = {
             'exe_paths': {
                 'java': '/path/to/java',
             },
-            'java_classpath': [
-                '/path/to/foo.jar',
-                '/path/to/bar.jar',
-            ],
+            'java_classpaths': {
+                'mytool': [
+                    '/path/to/foo.jar',
+                    '/path/to/bar.jar',
+                ],
+            },
         }
 
         with self.override_config(new_config):
@@ -55,58 +50,9 @@ class JavaToolMixinTests(kgb.SpyAgency, TestCase):
                     'a.b.c.Main',
                 ])
 
-    def test_build_base_command_with_classpath_env(self):
-        """Testing JavaToolMixin.build_base_command with $CLASSPATH
-        environment variable
-        """
-        new_config = {
-            'exe_paths': {
-                'java': '/path/to/java',
-            },
-        }
-
-        os.environ['CLASSPATH'] = '/opt/myprog/test1.jar:/opt/myprog/test2.jar'
-
-        with self.override_config(new_config):
-            self.assertEqual(
-                self.tool.build_base_command(),
-                [
-                    '/path/to/java',
-                    '-cp',
-                    '/opt/myprog/test1.jar:/opt/myprog/test2.jar',
-                    'a.b.c.Main',
-                ])
-
-    def test_build_base_command_with_classpath_config_env(self):
-        """Testing JavaToolMixin.build_base_command with java_classpath config
-        and $CLASSPATH environment variable
-        """
-        new_config = {
-            'exe_paths': {
-                'java': '/path/to/java',
-            },
-            'java_classpath': [
-                '/path/to/foo.jar',
-                '/path/to/bar.jar',
-            ],
-        }
-
-        os.environ['CLASSPATH'] = '/opt/myprog/test1.jar:/opt/myprog/test2.jar'
-
-        with self.override_config(new_config):
-            self.assertEqual(
-                self.tool.build_base_command(),
-                [
-                    '/path/to/java',
-                    '-cp',
-                    ('/path/to/foo.jar:/path/to/bar.jar:'
-                     '/opt/myprog/test1.jar:/opt/myprog/test2.jar'),
-                    'a.b.c.Main',
-                ])
-
     def test_build_base_command_with_no_classpath(self):
-        """Testing JavaToolMixin.build_base_command with no java_classpath
-        config or $CLASSPATH environment variable
+        """Testing JavaToolMixin.build_base_command with no java_classpaths
+        config
         """
         new_config = {
             'exe_paths': {
@@ -128,6 +74,8 @@ class JavaToolMixinTests(kgb.SpyAgency, TestCase):
         """
         self.spy_on(is_exe_in_path,
                     op=kgb.SpyOpReturn(True))
+        self.spy_on(self.tool._check_java_classpath,
+                    op=kgb.SpyOpReturn(True))
         self.spy_on(execute,
                     op=kgb.SpyOpReturn('Run myprogram --help for info'))
 
@@ -135,9 +83,9 @@ class JavaToolMixinTests(kgb.SpyAgency, TestCase):
             'exe_paths': {
                 'java': '/path/to/java',
             },
-            'java_classpath': [
-                '/path/to/foo.jar',
-            ],
+            'java_classpaths': {
+                'mytool': ['/path/to/foo.jar'],
+            },
         }
 
         with self.override_config(new_config):
@@ -149,6 +97,9 @@ class JavaToolMixinTests(kgb.SpyAgency, TestCase):
             cache={
                 'java': '/path/to/java',
             })
+        self.assertSpyCalledWith(
+            self.tool._check_java_classpath,
+            ['/path/to/foo.jar'])
         self.assertSpyCalledWith(
             execute,
             [
@@ -162,6 +113,8 @@ class JavaToolMixinTests(kgb.SpyAgency, TestCase):
         """Testing JavaToolMixin.check_dependencies with java not found"""
         self.spy_on(is_exe_in_path,
                     op=kgb.SpyOpReturn(False))
+        self.spy_on(self.tool._check_java_classpath,
+                    op=kgb.SpyOpReturn(True))
         self.spy_on(execute,
                     op=kgb.SpyOpReturn('Run myprogram --help for info'))
 
@@ -169,9 +122,9 @@ class JavaToolMixinTests(kgb.SpyAgency, TestCase):
             'exe_paths': {
                 'java': '/path/to/java',
             },
-            'java_classpath': [
-                '/path/to/foo.jar',
-            ],
+            'java_classpaths': {
+                'mytool': ['/path/to/foo.jar'],
+            },
         }
 
         with self.override_config(new_config):
@@ -183,12 +136,15 @@ class JavaToolMixinTests(kgb.SpyAgency, TestCase):
             cache={
                 'java': '/path/to/java',
             })
+        self.assertSpyNotCalled(self.tool._check_java_classpath)
         self.assertSpyNotCalled(execute)
 
     def test_check_dependencies_with_class_not_found(self):
         """Testing JavaToolMixin.check_dependencies with main class not found
         """
         self.spy_on(is_exe_in_path,
+                    op=kgb.SpyOpReturn(True))
+        self.spy_on(self.tool._check_java_classpath,
                     op=kgb.SpyOpReturn(True))
         self.spy_on(execute,
                     op=kgb.SpyOpReturn('Error: Could not find or load '
@@ -198,9 +154,9 @@ class JavaToolMixinTests(kgb.SpyAgency, TestCase):
             'exe_paths': {
                 'java': '/path/to/java',
             },
-            'java_classpath': [
-                '/path/to/foo.jar',
-            ],
+            'java_classpaths': {
+                'mytool': ['/path/to/foo.jar'],
+            },
         }
 
         with self.override_config(new_config):
@@ -212,6 +168,9 @@ class JavaToolMixinTests(kgb.SpyAgency, TestCase):
             cache={
                 'java': '/path/to/java',
             })
+        self.assertSpyCalledWith(
+            self.tool._check_java_classpath,
+            ['/path/to/foo.jar'])
         self.assertSpyCalledWith(
             execute,
             [

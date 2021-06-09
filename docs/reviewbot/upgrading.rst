@@ -72,20 +72,16 @@ The following configuration settings have been deprecated:
 
 * ``checkstyle_path``
 
-  The :file:`.jar` file, or its parent directory, should now be specified in
-  ``java_classpath``. For example:
+  The :file:`.jar` file should now be specified as an item in a list in
+  ``java_classpaths``, keyed off by ``checkstyle``. For example:
 
   .. code-block:: python
 
-      # Either the .jar file itself:
-      java_classpath = [
-          '/opt/checkstyle/checkstyle-X.Y.jar',
-      ]
-
-      # Or the parent directory:
-      java_classpath = [
-          '/opt/checkstyle',
-      ]
+      java_classpaths = {
+          'checkstyle': [
+              '/opt/checkstyle/checkstyle-X.Y.jar',
+          ],
+      }
 
 * ``pmd_path``
 

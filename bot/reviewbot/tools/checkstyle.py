@@ -21,6 +21,7 @@ class CheckstyleTool(JavaToolMixin, BaseTool):
 
     file_patterns = ['*.java']
     java_main = 'com.puppycrawl.tools.checkstyle.Main'
+    java_classpaths_key = 'checkstyle'
 
     options = [
         {

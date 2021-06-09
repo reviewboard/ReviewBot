@@ -159,6 +159,12 @@ class JavaToolMixin(object):
     #:     unicode
     java_main = None
 
+    #: The key identifying the classpaths to use.
+    #:
+    #: Type:
+    #:     unicode
+    java_classpaths_key = None
+
     exe_dependencies = ['java']
 
     def check_dependencies(self):
@@ -176,6 +182,12 @@ class JavaToolMixin(object):
             and a warning will be logged.
         """
         if not super(JavaToolMixin, self).check_dependencies():
+            return False
+
+        classpath = \
+            config['java_classpaths'].get(self.java_classpaths_key, [])
+
+        if not self._check_java_classpath(classpath):
             return False
 
         output = execute(self._build_java_command(),
@@ -206,10 +218,8 @@ class JavaToolMixin(object):
             list of unicode:
             The base command line for running the Java class.
         """
-        classpath = (
-            '%s:%s' % (':'.join(config.get('java_classpath', [])),
-                       (os.environ.get(str('CLASSPATH')) or ''))
-        ).strip(':')
+        classpath = ':'.join(
+            config['java_classpaths'].get(self.java_classpaths_key, []))
 
         cmdline = [config['exe_paths']['java']]
 
@@ -219,3 +229,24 @@ class JavaToolMixin(object):
         cmdline.append(self.java_main)
 
         return cmdline
+
+    def _check_java_classpath(self, classpath):
+        """Return whether all entries in a classpath exist.
+
+        Args:
+            classpath (list of unicode):
+                The classpath locations.
+
+        Returns:
+            bool:
+            ``True`` if all entries exist on the filesystem. ``False`` if
+            one or more are missing.
+        """
+        if not classpath:
+            return False
+
+        for path in classpath:
+            if not path or not os.path.exists(path):
+                return False
+
+        return True

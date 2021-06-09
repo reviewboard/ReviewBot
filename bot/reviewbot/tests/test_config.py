@@ -153,8 +153,11 @@ class ConfigTests(kgb.SpyAgency, TestCase):
             'checkstyle_path = "/path/to/checkstyle.jar"\n')
 
         self.assertNotIn('checkstyle_path', config)
-        self.assertEqual(config['java_classpath'],
-                         ['/path/to/checkstyle.jar'])
+        self.assertEqual(
+            config['java_classpaths'],
+            {
+                'checkstyle': ['/path/to/checkstyle.jar'],
+            })
 
         self.assertSpyCalledWith(
             logger.info,
@@ -163,11 +166,11 @@ class ConfigTests(kgb.SpyAgency, TestCase):
         self.assertSpyCalledWith(
             logger.warning,
             'checkstyle_path in %s is deprecated and will be removed in '
-            'Review Bot 4.0. Please put this in "java_classpath". For '
+            'Review Bot 4.0. Please put this in "java_classpaths". For '
             'example:\n'
-            'java_classpath = [\n'
-            '    "%s",\n'
-            ']',
+            'java_classpaths = {\n'
+            '    "checkstyle": ["%s"],\n'
+            '}',
             config_file,
             '/path/to/checkstyle.jar')
         self.assertSpyNotCalled(logger.error)

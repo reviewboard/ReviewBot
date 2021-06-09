@@ -7,6 +7,8 @@ import os
 import kgb
 import six
 
+from reviewbot.config import config
+from reviewbot.testing import get_test_dep_path
 from reviewbot.tools.checkstyle import CheckstyleTool
 from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
@@ -23,6 +25,14 @@ class CheckstyleToolTests(BaseToolTestCase):
     tool_class = CheckstyleTool
     tool_exe_config_key = 'java'
     tool_exe_path = '/path/to/java'
+
+    config = {
+        'java_classpaths': {
+            'checkstyle': [
+                get_test_dep_path('checkstyle.jar'),
+            ],
+        },
+    }
 
     SAMPLE_JAVA_CODE = (
         b'public class Test {\n'
@@ -95,7 +105,7 @@ class CheckstyleToolTests(BaseToolTestCase):
             execute,
             [
                 self.tool_exe_path,
-                '-cp', os.environ.get('CLASSPATH'),
+                '-cp', config['java_classpaths']['checkstyle'][0],
                 'com.puppycrawl.tools.checkstyle.Main',
                 '-f=xml',
                 '-c=google_checks.xml',
@@ -166,7 +176,7 @@ class CheckstyleToolTests(BaseToolTestCase):
             execute,
             [
                 self.tool_exe_path,
-                '-cp', os.environ.get('CLASSPATH'),
+                '-cp', config['java_classpaths']['checkstyle'][0],
                 'com.puppycrawl.tools.checkstyle.Main',
                 '-f=xml',
                 '-c=sun_checks.xml',
@@ -236,7 +246,7 @@ class CheckstyleToolTests(BaseToolTestCase):
             execute,
             [
                 self.tool_exe_path,
-                '-cp', os.environ.get('CLASSPATH'),
+                '-cp', config['java_classpaths']['checkstyle'][0],
                 'com.puppycrawl.tools.checkstyle.Main',
                 '-f=xml',
                 '-c=%s' % tmpfiles[-1],
@@ -285,7 +295,7 @@ class CheckstyleToolTests(BaseToolTestCase):
             execute,
             [
                 self.tool_exe_path,
-                '-cp', os.environ.get('CLASSPATH'),
+                '-cp', config['java_classpaths']['checkstyle'][0],
                 'com.puppycrawl.tools.checkstyle.Main',
                 '-f=xml',
                 '-c=%s' % tmpfiles[-1],
@@ -330,7 +340,7 @@ class CheckstyleToolTests(BaseToolTestCase):
             execute,
             [
                 self.tool_exe_path,
-                '-cp', os.environ.get('CLASSPATH'),
+                '-cp', config['java_classpaths']['checkstyle'][0],
                 'com.puppycrawl.tools.checkstyle.Main',
                 '-f=xml',
                 '-c=google_checks.xml',
@@ -367,7 +377,7 @@ class CheckstyleToolTests(BaseToolTestCase):
             execute,
             [
                 self.tool_exe_path,
-                '-cp', os.environ.get('CLASSPATH'),
+                '-cp', config['java_classpaths']['checkstyle'][0],
                 'com.puppycrawl.tools.checkstyle.Main',
                 '-f=xml',
                 '-c=google_checks.xml',
