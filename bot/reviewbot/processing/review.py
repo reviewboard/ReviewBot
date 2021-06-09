@@ -6,7 +6,7 @@ from itertools import islice
 
 from rbtools.api.errors import APIError
 
-from reviewbot.utils.filesystem import make_tempfile
+from reviewbot.utils.filesystem import make_tempdir, make_tempfile
 
 
 class File(object):
@@ -88,7 +88,14 @@ class File(object):
                     raise
 
             if contents:
-                return make_tempfile(contents, self.file_extension)
+                tempdir = make_tempdir()
+                filename = os.path.join(tempdir,
+                                        os.path.basename(self.dest_file))
+
+                with open(filename, 'wb') as fp:
+                    fp.write(contents)
+
+                return filename
             else:
                 return None
 
@@ -103,7 +110,14 @@ class File(object):
         contents = self.original_file_contents
 
         if contents:
-            return make_tempfile(contents, self.file_extension)
+            tempdir = make_tempdir()
+            filename = os.path.join(tempdir,
+                                    os.path.basename(self.source_file))
+
+            with open(filename, 'wb') as fp:
+                fp.write(contents)
+
+            return filename
         else:
             return None
 

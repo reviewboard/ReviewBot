@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import json
+import os
 
 import kgb
 import six
@@ -12,7 +13,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
                                      integration_test,
                                      simulation_test)
-from reviewbot.utils.filesystem import tmpfiles
+from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
@@ -227,7 +228,7 @@ class ShellCheckToolTests(BaseToolTestCase):
                 '--color=never',
                 '--format=json1',
                 '--severity=style',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.sh'),
             ],
             ignore_errors=True)
 
@@ -280,7 +281,7 @@ class ShellCheckToolTests(BaseToolTestCase):
                 '--color=never',
                 '--format=json1',
                 '--severity=warning',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.sh'),
             ],
             ignore_errors=True)
 
@@ -360,7 +361,7 @@ class ShellCheckToolTests(BaseToolTestCase):
                 '--format=json1',
                 '--severity=style',
                 '--exclude=2046,2086',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.sh'),
             ],
             ignore_errors=True)
 
@@ -419,7 +420,7 @@ class ShellCheckToolTests(BaseToolTestCase):
                 '--color=never',
                 '--format=json1',
                 '--severity=style',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.sh'),
             ],
             ignore_errors=True)
 
@@ -463,7 +464,7 @@ class ShellCheckToolTests(BaseToolTestCase):
                 '--color=never',
                 '--format=json1',
                 '--severity=xxx',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.sh'),
             ],
             ignore_errors=True)
 
@@ -505,7 +506,7 @@ class ShellCheckToolTests(BaseToolTestCase):
                 '--format=json1',
                 '--severity=style',
                 '--exclude=ABC',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.sh'),
             ],
             ignore_errors=True)
 
@@ -535,7 +536,7 @@ class ShellCheckToolTests(BaseToolTestCase):
                 '--color=never',
                 '--format=json1',
                 '--severity=style',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.sh'),
             ],
             ignore_errors=True)
 

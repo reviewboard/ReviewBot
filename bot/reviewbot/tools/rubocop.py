@@ -50,16 +50,18 @@ class RubocopTool(BaseTool):
             The base command line.
         """
         settings = self.settings
-        except_list = sorted(
-            {'Naming/FileName'} |
-            set(split_comma_separated(settings.get('except', '').strip())))
+        except_list = split_comma_separated(settings.get('except', '').strip())
 
-        return [
+        cmdline = [
             config['exe_paths']['rubocop'],
             '--format=json',
             '--display-style-guide',
-            '--except=%s' % ','.join(except_list)
         ]
+
+        if except_list:
+            cmdline.append('--except=%s' % ','.join(except_list))
+
+        return cmdline
 
     def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.

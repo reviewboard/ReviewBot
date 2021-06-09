@@ -2,6 +2,8 @@
 
 from __future__ import unicode_literals
 
+import os
+
 import kgb
 import six
 
@@ -10,7 +12,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
                                      integration_test,
                                      simulation_test)
-from reviewbot.utils.filesystem import tmpfiles
+from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
@@ -73,7 +75,7 @@ class CPPCheckToolTests(BaseToolTestCase):
                 self.tool_exe_path,
                 '-q',
                 '--template={line}::{column}::{severity}::{id}::{message}',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.cc'),
             ],
             ignore_errors=True)
 
@@ -151,7 +153,7 @@ class CPPCheckToolTests(BaseToolTestCase):
                 '-q',
                 '--template={line}::{column}::{severity}::{id}::{message}',
                 '--enable=style',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.cc'),
             ],
             ignore_errors=True)
 
@@ -249,7 +251,7 @@ class CPPCheckToolTests(BaseToolTestCase):
                 '-q',
                 '--template={line}::{column}::{severity}::{id}::{message}',
                 '--enable=all',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.cc'),
             ],
             ignore_errors=True)
 
@@ -290,7 +292,7 @@ class CPPCheckToolTests(BaseToolTestCase):
                 '-q',
                 '--template={line}::{column}::{severity}::{id}::{message}',
                 '--language=c',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.cc'),
             ],
             ignore_errors=True)
 
@@ -314,7 +316,7 @@ class CPPCheckToolTests(BaseToolTestCase):
                 self.tool_exe_path,
                 '-q',
                 '--template={line}::{column}::{severity}::{id}::{message}',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.cc'),
             ],
             ignore_errors=True)
 

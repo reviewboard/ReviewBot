@@ -3,6 +3,8 @@
 
 from __future__ import unicode_literals
 
+import os
+
 import kgb
 import six
 
@@ -11,7 +13,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
                                      integration_test,
                                      simulation_test)
-from reviewbot.utils.filesystem import tmpfiles
+from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
@@ -77,7 +79,7 @@ class Doc8ToolTests(BaseToolTestCase):
                 '-q',
                 '--max-line-length=79',
                 '--file-encoding=utf-8',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.rst'),
             ],
             split_lines=True,
             ignore_errors=True)
@@ -135,7 +137,7 @@ class Doc8ToolTests(BaseToolTestCase):
                 '-q',
                 '--max-line-length=79',
                 '--file-encoding=utf-16',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.rst'),
             ],
             split_lines=True,
             ignore_errors=True)
@@ -180,7 +182,7 @@ class Doc8ToolTests(BaseToolTestCase):
                 '-q',
                 '--max-line-length=20',
                 '--file-encoding=utf-8',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.rst'),
             ],
             split_lines=True,
             ignore_errors=True)
@@ -208,7 +210,7 @@ class Doc8ToolTests(BaseToolTestCase):
                 '-q',
                 '--max-line-length=79',
                 '--file-encoding=utf-8',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.rst'),
             ],
             split_lines=True,
             ignore_errors=True)

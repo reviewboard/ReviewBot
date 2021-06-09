@@ -2,6 +2,8 @@
 
 from __future__ import unicode_literals
 
+import os
+
 import kgb
 import six
 
@@ -10,7 +12,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
                                      integration_test,
                                      simulation_test)
-from reviewbot.utils.filesystem import tmpfiles
+from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
@@ -61,7 +63,7 @@ class RustfmtToolTests(BaseToolTestCase):
                 '-q',
                 '--check',
                 '--color=never',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.rs'),
             ],
             ignore_errors=True,
             return_errors=True)
@@ -112,7 +114,7 @@ class RustfmtToolTests(BaseToolTestCase):
                 '-q',
                 '--check',
                 '--color=never',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.rs'),
             ],
             ignore_errors=True,
             return_errors=True)
@@ -138,7 +140,7 @@ class RustfmtToolTests(BaseToolTestCase):
                 '-q',
                 '--check',
                 '--color=never',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.rs'),
             ],
             ignore_errors=True,
             return_errors=True)

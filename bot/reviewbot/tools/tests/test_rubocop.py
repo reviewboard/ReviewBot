@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import json
+import os
 
 import kgb
 import six
@@ -12,7 +13,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
                                      integration_test,
                                      simulation_test)
-from reviewbot.utils.filesystem import tmpfiles
+from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
@@ -170,8 +171,7 @@ class RubocopToolTests(BaseToolTestCase):
                 self.tool_exe_path,
                 '--format=json',
                 '--display-style-guide',
-                '--except=Naming/FileName',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.rb'),
             ],
             ignore_errors=True)
 
@@ -294,8 +294,7 @@ class RubocopToolTests(BaseToolTestCase):
                 self.tool_exe_path,
                 '--format=json',
                 '--display-style-guide',
-                '--except=Naming/FileName',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.rb'),
             ],
             ignore_errors=True)
 
@@ -367,9 +366,8 @@ class RubocopToolTests(BaseToolTestCase):
                 self.tool_exe_path,
                 '--format=json',
                 '--display-style-guide',
-                '--except=Layout/EndAlignment,Naming/FileName,'
-                'Style/GuardClause',
-                tmpfiles[-1],
+                '--except=Layout/EndAlignment,Style/GuardClause',
+                os.path.join(tmpdirs[-1], 'test.rb'),
             ],
             ignore_errors=True)
 
@@ -409,8 +407,8 @@ class RubocopToolTests(BaseToolTestCase):
                 self.tool_exe_path,
                 '--format=json',
                 '--display-style-guide',
-                '--except=Naming/FileName,XXXBAD',
-                tmpfiles[-1],
+                '--except=XXXBAD',
+                os.path.join(tmpdirs[-1], 'test.rb'),
             ],
             ignore_errors=True)
 
@@ -480,8 +478,7 @@ class RubocopToolTests(BaseToolTestCase):
                 self.tool_exe_path,
                 '--format=json',
                 '--display-style-guide',
-                '--except=Naming/FileName',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.rb'),
             ],
             ignore_errors=True)
 
@@ -520,8 +517,7 @@ class RubocopToolTests(BaseToolTestCase):
                 self.tool_exe_path,
                 '--format=json',
                 '--display-style-guide',
-                '--except=Naming/FileName',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.rb'),
             ],
             ignore_errors=True)
 

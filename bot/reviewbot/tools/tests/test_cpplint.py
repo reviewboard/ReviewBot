@@ -2,6 +2,8 @@
 
 from __future__ import unicode_literals
 
+import os
+
 import kgb
 import six
 
@@ -10,7 +12,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
                                      integration_test,
                                      simulation_test)
-from reviewbot.utils.filesystem import tmpfiles
+from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
@@ -89,7 +91,7 @@ class CPPLintToolTests(BaseToolTestCase):
             [
                 self.tool_exe_path,
                 '--verbose=5',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.cc'),
             ],
             ignore_errors=True)
 
@@ -151,7 +153,7 @@ class CPPLintToolTests(BaseToolTestCase):
                 '--verbose=1',
                 ('--filter=-legal/copyright,-whitespace,-build,'
                  '+build/namespaces'),
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.cc'),
             ],
             ignore_errors=True)
 
@@ -271,7 +273,7 @@ class CPPLintToolTests(BaseToolTestCase):
             [
                 self.tool_exe_path,
                 '--verbose=1',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.cc'),
             ],
             ignore_errors=True)
 
@@ -298,7 +300,7 @@ class CPPLintToolTests(BaseToolTestCase):
             [
                 self.tool_exe_path,
                 '--verbose=5',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.cc'),
             ],
             ignore_errors=True)
 

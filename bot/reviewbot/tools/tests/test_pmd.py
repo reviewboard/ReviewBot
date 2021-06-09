@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import json
+import os
 
 import kgb
 import six
@@ -12,7 +13,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
                                      integration_test,
                                      simulation_test)
-from reviewbot.utils.filesystem import tmpfiles
+from reviewbot.utils.filesystem import tmpdirs, tmpfiles
 from reviewbot.utils.process import execute, is_exe_in_path
 
 
@@ -165,7 +166,7 @@ class PMDToolTests(BaseToolTestCase):
                 '-f', 'json',
                 '-R', ('category/java/codestyle.xml/ShortClassName,'
                        'category/java/codestyle.xml/ControlStatementBraces'),
-                '-d', tmpfiles[-2],
+                '-d', os.path.join(tmpdirs[-1], 'test.java'),
                 '-r', tmpfiles[-1],
             ],
             ignore_errors=True)
@@ -252,8 +253,8 @@ class PMDToolTests(BaseToolTestCase):
                 'pmd',
                 '-no-cache',
                 '-f', 'json',
-                '-R', tmpfiles[-3],
-                '-d', tmpfiles[-2],
+                '-R', tmpfiles[-2],
+                '-d', os.path.join(tmpdirs[-1], 'test.java'),
                 '-r', tmpfiles[-1],
             ],
             ignore_errors=True)
@@ -321,8 +322,8 @@ class PMDToolTests(BaseToolTestCase):
                 'pmd',
                 '-no-cache',
                 '-f', 'json',
-                '-R', tmpfiles[-3],
-                '-d', tmpfiles[-2],
+                '-R', tmpfiles[-2],
+                '-d', os.path.join(tmpdirs[-1], 'test.java'),
                 '-r', tmpfiles[-1],
             ],
             ignore_errors=True)
@@ -365,7 +366,7 @@ class PMDToolTests(BaseToolTestCase):
                 '-no-cache',
                 '-f', 'json',
                 '-R', 'category/java/codestyle.xml/ShortClassName',
-                '-d', tmpfiles[-2],
+                '-d', os.path.join(tmpdirs[-1], 'test.java'),
                 '-r', tmpfiles[-1],
             ],
             ignore_errors=True)
@@ -423,7 +424,7 @@ class PMDToolTests(BaseToolTestCase):
                 '-no-cache',
                 '-f', 'json',
                 '-R', 'category/java/codestyle.xml/ShortClassName',
-                '-d', tmpfiles[-2],
+                '-d', os.path.join(tmpdirs[-1], 'test.java'),
                 '-r', tmpfiles[-1],
             ],
             ignore_errors=True)
@@ -466,7 +467,7 @@ class PMDToolTests(BaseToolTestCase):
                 '-no-cache',
                 '-f', 'json',
                 '-R', 'category/java/codestyle.xml/ShortClassName',
-                '-d', tmpfiles[-2],
+                '-d', os.path.join(tmpdirs[-1], 'test.java'),
                 '-r', tmpfiles[-1],
             ],
             ignore_errors=True)
@@ -511,7 +512,7 @@ class PMDToolTests(BaseToolTestCase):
                 '-no-cache',
                 '-f', 'json',
                 '-R', 'category/java/codestyle.xml/ShortClassName',
-                '-d', tmpfiles[-2],
+                '-d', os.path.join(tmpdirs[-1], 'test.java'),
                 '-r', tmpfiles[-1],
             ],
             ignore_errors=True)

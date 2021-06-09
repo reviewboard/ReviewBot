@@ -13,7 +13,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
                                      integration_test,
                                      simulation_test)
-from reviewbot.utils.filesystem import tmpfiles
+from reviewbot.utils.filesystem import tmpdirs, tmpfiles
 from reviewbot.utils.process import execute
 
 
@@ -89,7 +89,7 @@ class JSHintToolTests(BaseToolTestCase):
                 self.tool_exe_path,
                 '--extract=False',
                 '--reporter=%s' % JSHintTool.REPORTER_PATH,
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.js'),
             ],
             ignore_errors=True)
 
@@ -132,7 +132,7 @@ class JSHintToolTests(BaseToolTestCase):
             },
         ])
 
-        config_path = tmpfiles[-2]
+        config_path = tmpfiles[-1]
         self.assertTrue(os.path.exists(config_path))
 
         with open(config_path, 'r') as fp:
@@ -145,7 +145,7 @@ class JSHintToolTests(BaseToolTestCase):
                 '--extract=False',
                 '--reporter=%s' % JSHintTool.REPORTER_PATH,
                 '--config=%s' % config_path,
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.js'),
             ],
             ignore_errors=True)
 

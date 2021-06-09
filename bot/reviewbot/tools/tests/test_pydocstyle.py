@@ -2,6 +2,8 @@
 
 from __future__ import unicode_literals
 
+import os
+
 import kgb
 import six
 
@@ -10,7 +12,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
                                      integration_test,
                                      simulation_test)
-from reviewbot.utils.filesystem import tmpfiles
+from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
@@ -100,7 +102,7 @@ class PydocstyleToolTests(BaseToolTestCase):
             execute,
             [
                 self.tool_exe_path,
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.py'),
             ],
             ignore_errors=True)
 
@@ -174,7 +176,7 @@ class PydocstyleToolTests(BaseToolTestCase):
             [
                 self.tool_exe_path,
                 '--ignore=D100, D400',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.py'),
             ],
             ignore_errors=True)
 
@@ -197,7 +199,7 @@ class PydocstyleToolTests(BaseToolTestCase):
             execute,
             [
                 self.tool_exe_path,
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.py'),
             ],
             ignore_errors=True)
 
