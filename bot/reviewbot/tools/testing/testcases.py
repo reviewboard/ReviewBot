@@ -253,7 +253,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
         return tool.get_can_handle_file(review_file)
 
     def run_tool_execute(self, filename, file_contents, checkout_dir=None,
-                         tool_settings={}):
+                         tool_settings={}, other_files={}):
         """Run execute with the given file and settings.
 
         This will create the review objects, set up a repository (if needed
@@ -274,9 +274,25 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             tool_settings (dict, optional):
                 The settings to pass to the tool constructor.
 
+            other_files (dict, optional):
+                Other files to write to the tree. Each will result in a new
+                file added to the review.
+
+                The dictionary is a map of file paths (relative to the
+                checkout directory) to byte strings.
+
         Returns:
             tuple:
-            A tuple containing the review and the file.
+            A 2-tuple containing:
+
+            1. The review (:py:class:`reviewbot.processing.review.Review)`
+            2. The file entry corresponding to ``filename``
+               (:py:class:`reviewbot.processing.review.File`)
+
+            If ``other_files`` is specified, the second tuple item will
+            instead be a dictionary of keys from ``other_files`` (along with
+            ``filename``) to :py:class:`reviewbot.processing.review.File`
+            instances.
         """
         if self.tool_class.working_directory_required:
             repository = GitRepository(name='MyRepo',
@@ -301,6 +317,23 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             }]),
             patched_content=file_contents)
 
+        review_files = {}
+
+        if other_files:
+            review_files[filename] = review_file
+
+            for other_filename, other_contents in six.iteritems(other_files):
+                review_files[other_filename] = self.create_review_file(
+                    review,
+                    source_file=other_filename,
+                    dest_file=other_filename,
+                    diff_data=self.create_diff_data(chunks=[{
+                        'change': 'insert',
+                        'lines': other_contents.splitlines(),
+                        'new_linenum': 1,
+                    }]),
+                    patched_content=other_contents)
+
         worker_config = deepcopy(self.config)
         worker_config.setdefault('exe_paths', {}).update({
             self.tool_exe_config_key: self.tool_exe_path,
@@ -310,6 +343,9 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             tool = self.tool_class(settings=tool_settings)
             tool.execute(review,
                          repository=repository)
+
+        if other_files:
+            return review, review_files
 
         return review, review_file
 
