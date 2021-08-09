@@ -13,12 +13,12 @@ from reviewbot.tools.base import BaseTool
 from reviewbot.utils.text import base62_encode
 
 
-class CredentialCheckerTool(BaseTool):
-    """Review Bot tool to check for hard-coded security credentials."""
+class SecretScannerTool(BaseTool):
+    """Review Bot tool to check for hard-coded secrets and credentials."""
 
-    name = 'Credential Checker'
+    name = 'Secret Scanner'
     version = '1.0'
-    description = ('Review Bot tool to check for hard-coded security '
+    description = ('Review Bot tool to check for hard-coded secrets and '
                    'credentials.')
     timeout = 60
 
@@ -263,7 +263,7 @@ class CredentialCheckerTool(BaseTool):
 
             )""", re.IGNORECASE | re.VERBOSE)
 
-        return super(CredentialCheckerTool, self).handle_files(files,
+        return super(SecretScannerTool, self).handle_files(files,
                                                                **kwargs)
 
     def handle_file(self, f, **kwargs):

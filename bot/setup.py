@@ -40,7 +40,8 @@ setup(
             'pycodestyle = reviewbot.tools.pycodestyle:PycodestyleTool',
             'pydocstyle = reviewbot.tools.pydocstyle:PydocstyleTool',
             'pyflakes = reviewbot.tools.pyflakes:PyflakesTool',
-            'rbcredentialchecker = reviewbot.tools.rbcredentialchecker:CredentialCheckerTool',
+            ('rbsecretscanner = '
+             'reviewbot.tools.rbsecretscanner:SecretScannerTool'),
             'rubocop = reviewbot.tools.rubocop:RubocopTool',
             'rustfmt = reviewbot.tools.rustfmt:RustfmtTool',
             'shellcheck = reviewbot.tools.shellcheck:ShellCheckTool',
