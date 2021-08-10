@@ -22,10 +22,6 @@ Supported Code Checking Tools
 The Review Bot extension can perform automated code reviews using any of the
 following tools:
 
-* `BuildBot "try"
-  <https://www.reviewboard.org/docs/reviewbot/latest/tools/buildbot/>`_
-  - Builds the patch in a configured BuildBot environment
-
 * `checkstyle
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/checkstyle/>`_
   - A static analysis tool that provides a variety of checkers for Java code

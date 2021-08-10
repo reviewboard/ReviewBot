@@ -5,16 +5,12 @@ from __future__ import unicode_literals
 import json
 
 import six
-from celery.utils.log import get_task_logger
 
 from reviewbot.config import config
 from reviewbot.tools.base import BaseTool
 from reviewbot.tools.utils.codeclimate import \
     add_comment_from_codeclimate_issue
 from reviewbot.utils.process import execute
-
-
-logger = get_task_logger(__name__)
 
 
 class Flake8Tool(BaseTool):
@@ -100,8 +96,8 @@ class Flake8Tool(BaseTool):
         try:
             payload = json.loads(output)
         except Exception as e:
-            logger.error('Unable to parse JSON data from flake8: %s: %r',
-                         e, output)
+            self.logger.error('Unable to parse JSON data from flake8: %s: %r',
+                              e, output)
             return
 
         assert len(payload) == 1

@@ -29,10 +29,6 @@ Supported Code Checking Tools
 Review Bot can perform automated code reviews using any of the following
 tools:
 
-* `BuildBot "try"
-  <https://www.reviewboard.org/docs/reviewbot/latest/tools/buildbot/>`_
-  - Builds the patch in a configured BuildBot environment
-
 * `Cargo Tool
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/cargotool/>`_
   - Checks Rust code for errors and suspicious constructs
@@ -40,7 +36,7 @@ tools:
 * `checkstyle
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/checkstyle/>`_
   - Checks Java code for code formatting issues and code standard
-    inconsistencies
+  inconsistencies
 
 * `Clang Static Analyzer
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/clang/>`_
@@ -56,7 +52,7 @@ tools:
 * `Credential Checker
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/rbcredentialchecker/>`_
   - Checks source code and configuration files for accidental inclusion of
-    sensitive keys and credentials
+  sensitive keys and credentials
 
 * `doc8 <https://www.reviewboard.org/docs/reviewbot/latest/tools/doc8/>`_
   - Check ReStructuredText documentation for styling and syntax errors
@@ -79,7 +75,7 @@ tools:
 
 * `PMD <https://www.reviewboard.org/docs/reviewbot/latest/tools/pmd/>`_
   - Checks code in a variety of programming languages for syntax errors and
-    other problems
+  other problems
 
 * `pycodestyle
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/pycodestyle/>`_
@@ -92,7 +88,7 @@ tools:
 * `pyflakes
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/pyflakes/>`_
   - Checks Python code for missing imports, unused or undefined variables or
-    functions, and more
+  functions, and more
 
 * `RuboCop
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/rubocop/>`_
@@ -101,7 +97,7 @@ tools:
 * `rustfmt
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/rustfmt/>`_
   - Checks Rust code for code formatting issues based on the automatic
-    formatting rules in ``rustfmt``
+  formatting rules in ``rustfmt``
 
 * `ShellCheck
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/rustfmt/>`_

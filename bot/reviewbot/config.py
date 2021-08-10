@@ -1,14 +1,17 @@
 from __future__ import print_function, unicode_literals
 
-import logging
 import os
 from copy import deepcopy
+from glob import glob
 
 import six
 from appdirs import AppDirs
 
+from reviewbot.utils.log import get_logger
 
-logger = logging.getLogger(__name__)
+
+logger = get_logger(__name__, is_task_logger=False)
+
 _appdirs = AppDirs(appname='reviewbot',
                    appauthor='Beanbag')
 
@@ -22,6 +25,7 @@ _appdirs = AppDirs(appname='reviewbot',
 DEFAULT_CONFIG = {
     'cookie_dir': _appdirs.user_cache_dir,
     'exe_paths': {},
+    'java_classpaths': {},
     'reviewboard_servers': [],
     'repositories': [],
 }
@@ -79,6 +83,19 @@ def load_config():
             for key in six.iterkeys(DEFAULT_CONFIG):
                 if key in config_module:
                     new_config[key] = deepcopy(config_module[key])
+
+            if 'checkstyle_path' in config_module:
+                logger.warning('checkstyle_path in %s is deprecated and will '
+                               'be removed in Review Bot 4.0. Please put '
+                               'this in "java_classpaths". For example:\n'
+                               'java_classpaths = {\n'
+                               '    "checkstyle": ["%s"],\n'
+                               '}',
+                               config_file, config_module['checkstyle_path'])
+
+                new_config['java_classpaths']['checkstyle'] = [
+                    config_module['checkstyle_path'],
+                ]
 
             if 'pmd_path' in config_module:
                 logger.warning('pmd_path in %s is deprecated and will be '

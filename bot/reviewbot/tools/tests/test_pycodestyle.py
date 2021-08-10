@@ -2,6 +2,8 @@
 
 from __future__ import unicode_literals
 
+import os
+
 import kgb
 import six
 
@@ -10,7 +12,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
                                      integration_test,
                                      simulation_test)
-from reviewbot.utils.filesystem import tmpfiles
+from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
@@ -79,7 +81,7 @@ class BasePycodestyleToolTests(BaseToolTestCase):
                 self.tool_exe_path,
                 '--max-line-length=79',
                 '--format=%(code)s:%(row)d:%(col)d:%(text)s',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.py'),
             ],
             ignore_errors=True)
 
@@ -128,7 +130,7 @@ class BasePycodestyleToolTests(BaseToolTestCase):
                 '--max-line-length=79',
                 '--format=%(code)s:%(row)d:%(col)d:%(text)s',
                 '--ignore=W123,E722',
-                tmpfiles[-1],
+                os.path.join(tmpdirs[-1], 'test.py'),
             ],
             ignore_errors=True)
 

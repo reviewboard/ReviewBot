@@ -1,63 +1,77 @@
-"""Review Bot tool to run rust fmt."""
+"""Review Bot tool to run rustfmt."""
 
 from __future__ import unicode_literals
 
-import logging
+import re
 
-from reviewbot.tools import Tool
-from reviewbot.utils.process import execute, is_exe_in_path
-
-
-logger = logging.getLogger(__name__)
+from reviewbot.config import config
+from reviewbot.tools.base import BaseTool
+from reviewbot.utils.process import execute
 
 
-class RustfmtTool(Tool):
-    """Review Bot tool to run rust fmt."""
+class RustfmtTool(BaseTool):
+    """Review Bot tool to run rustfmt."""
 
     name = 'rust fmt'
     version = '1.0'
     description = ('Checks that Rust code style matches rustfmt.')
     timeout = 30
 
-    def check_dependencies(self):
-        """Verify the tool's dependencies are installed.
+    exe_dependencies = ['rustfmt']
+    file_patterns = ['*.rs']
+
+    ERROR_RE = re.compile(
+        r'^error: (?P<text>.*)\n'
+        r' --> .*?:(?P<linenum>\d+):(?P<column>\d+)$',
+        re.M)
+
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments.
 
         Returns:
-            bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not listen for this Tool's queue,
-            and a warning will be logged.
+            list of unicode:
+            The base command line.
         """
-        return is_exe_in_path('rustfmt')
+        return [
+            config['exe_paths']['rustfmt'],
+            '-q',
+            '--check',
+            '--color=never',
+        ]
 
-    def handle_file(self, f, settings):
+    def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.
 
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            settings (dict):
-                Tool-specific settings.
+            path (unicode):
+                The local path to the patched file to review.
+
+            base_command (list of unicode):
+                The base command used to run rustfmt.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
         """
-        if not f.dest_file.lower().endswith('.rs'):
-            # Ignore the file.
-            return
+        output, errors = execute(base_command + [path],
+                                 ignore_errors=True,
+                                 return_errors=True)
 
-        path = f.get_patched_file_path()
-
-        if not path:
-            return
-
-        # Build and execute the rust fmt command.
-        try:
-            rustfmt_output = execute(['rustfmt', '--check', path],
-                                     ignore_errors=True)
-
-            if rustfmt_output:
-                f.comment('This file contains formatting errors and should be '
-                          'run through `rustfmt`.',
-                          first_line=None,
-                          rich_text=True)
-        except Exception as e:
-            logger.exception('rustfmt failed for the file: %s %s', path, e)
+        if errors:
+            # The .rs file was likely unable to be parsed. Look for any
+            # errors.
+            for m in self.ERROR_RE.finditer(errors):
+                f.comment(text=m.group('text'),
+                          first_line=int(m.group('linenum')),
+                          start_column=int(m.group('column')))
+        elif output:
+            f.comment('This file contains formatting errors and should be '
+                      'run through `rustfmt`.',
+                      first_line=None,
+                      rich_text=True)

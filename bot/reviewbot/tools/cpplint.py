@@ -23,11 +23,12 @@ from __future__ import unicode_literals
 
 import re
 
-from reviewbot.tools import Tool
-from reviewbot.utils.process import execute, is_exe_in_path
+from reviewbot.config import config
+from reviewbot.tools.base import BaseTool
+from reviewbot.utils.process import execute
 
 
-class CPPLintTool(Tool):
+class CPPLintTool(BaseTool):
     """Review Bot tool to run cpplint."""
 
     name = 'cpplint'
@@ -35,6 +36,13 @@ class CPPLintTool(Tool):
     description = ("Checks code for style errors using Google's cpplint "
                    "tool.")
     timeout = 30
+
+    exe_dependencies = ['cpplint']
+    file_patterns = [
+        '*.c', '*.cc', '*.cpp', '.cxx', '*.c++', '*.cu',
+        '*.h', '*.hh', '*.hpp', '*.hxx', '*.h++', '*.cuh',
+    ]
+
     options = [
         {
             'name': 'verbosity',
@@ -52,98 +60,70 @@ class CPPLintTool(Tool):
         {
             'name': 'excluded_checks',
             'field_type': 'django.forms.CharField',
-            'default': "",
+            'default': '',
             'field_options': {
                 'label': 'Tests to exclude',
                 'help_text': ('Comma-separated list of tests to exclude (run '
-                              'cpplint.py --filter= to see all possible '
+                              'cpplint --filter= to see all possible '
                               'choices).'),
                 'required': False,
             },
         },
     ]
 
-    def check_dependencies(self):
-        """Verify the tool's dependencies are installed.
+    ERROR_RE = re.compile(
+        r'^[^:]+:(?P<linenum>\d+):\s+(?P<text>.*?)\s+'
+        r'\[(?P<category>[^\]]+)\] \[[0-5]\]$',
+        re.M)
+
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments.
 
         Returns:
-            bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not listen for this Tool's queue,
-            and a warning will be logged.
+            list of unicode:
+            The base command line.
         """
-        return is_exe_in_path('cpplint')
+        settings = self.settings
+        verbosity = settings['verbosity']
+        excluded_checks = settings.get('excluded_checks')
 
-    def handle_file(self, f, settings):
+        cmdline = [
+            config['exe_paths']['cpplint'],
+            '--verbose=%s' % verbosity,
+        ]
+
+        if excluded_checks:
+            cmdline.append('--filter=%s' % excluded_checks)
+
+        return cmdline
+
+    def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.
 
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            settings (dict):
-                Tool-specific settings.
+            path (unicode):
+                The local path to the patched file to review.
+
+            base_command (list of unicode):
+                The base command used to run pyflakes.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
         """
-        if not (f.dest_file.lower().endswith('.cpp') or
-                f.dest_file.lower().endswith('.h')):
-            # Ignore the file.
-            return
+        output = execute(base_command + [path],
+                         ignore_errors=True)
 
-        path = f.get_patched_file_path()
-
-        if not path:
-            return
-
-        # Run the script and capture the output.
-        if settings['excluded_checks']:
-            output = execute(
-                [
-                    'cpplint',
-                    '--verbose=%s' % settings['verbosity'],
-                    '--filter=%s' % settings['excluded_checks'],
-                    path,
-                ],
-                split_lines=True,
-                ignore_errors=True)
-        else:
-            output = execute(
-                [
-                    'cpplint',
-                    '--verbose=%s' % self.settings['verbosity'],
-                    path,
-                ],
-                split_lines=True,
-                ignore_errors=True)
-
-        # Now for each line extract the fields and add a comment to the file.
-        for line in output:
-            # Regexp to extract the fields from strings like:
-            # filename.cpp:126: \
-            #   Use int16/int64/etc, rather than the C type long \
-            #   [runtime/int] [4]
-            # filename.cpp:127: \
-            #   Lines should be <= 132 characters long \
-            #   [whitespace/line_length] [2]
-            # filename.cpp:129: \
-            #   Use int16/int64/etc, rather than the C type long \
-            #   [runtime/int] [4]
-            matching_obj = re.findall(r'(\S+:)(\d+:)(.+?\[)(.+?\])(.+)', line)
-            # pre declare all the variables so that they can be used outside
-            # the loop if the match (regexp search) worked.
-            linenumber = 0
-            freetext = ''
-            category = ''
-            verbosity = ''
-
-            for match in matching_obj:
-                # linenumber (: stripped from the end)
-                linenumber = int(match[1][:-1])
-                # freetext ( [ stripped from the end)
-                freetext = match[2][:-1].strip()
-                # category ( ] stripped from the end)
-                category = match[3][:-1].strip()
-                # verbosity (we just want the number between [])
-                verbosity = match[4][2:-1].strip()
-
-                f.comment('%s.\n\nError Group: %s\nVerbosity Level: %s' %
-                          (freetext, category, verbosity), linenumber)
+        for m in self.ERROR_RE.finditer(output):
+            # Note that some errors may have a line number of 0 (indicating
+            # that a copyright header isn't present). We'll be converting this
+            # to 1.
+            f.comment(text=m.group('text'),
+                      first_line=int(m.group('linenum')) or 1,
+                      error_code=m.group('category'))

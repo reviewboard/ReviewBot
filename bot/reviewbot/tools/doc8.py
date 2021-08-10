@@ -2,19 +2,24 @@
 
 from __future__ import unicode_literals
 
-import logging
+import re
 
-from reviewbot.tools import Tool
-from reviewbot.utils.process import execute, is_exe_in_path
+from reviewbot.config import config
+from reviewbot.tools.base import BaseTool
+from reviewbot.utils.process import execute
 
 
-class Doc8Tool(Tool):
+class Doc8Tool(BaseTool):
     """Review Bot tool to run doc8."""
 
     name = 'doc8'
     version = '1.0'
     description = 'Checks reStructuredText for style.'
     timeout = 30
+
+    exe_dependencies = ['doc8']
+    file_patterns = ['*.rst']
+
     options = [
         {
             'name': 'max_line_length',
@@ -38,51 +43,57 @@ class Doc8Tool(Tool):
         },
     ]
 
-    def check_dependencies(self):
-        """Verify that the tool's dependencies are installed.
+    LINE_RE = re.compile(
+        r'^.+:(?P<linenum>\d+): (?P<error_code>D\d{3}) (?P<text>.+)')
+
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments.
 
         Returns:
-            bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not be listed for this Tool's queue,
-            and a warning will be logged.
+            list of unicode:
+            The base command line.
         """
-        return is_exe_in_path('doc8')
+        settings = self.settings
 
-    def handle_file(self, f, settings):
+        return [
+            config['exe_paths']['doc8'],
+            '-q',
+            '--max-line-length=%s' % settings['max_line_length'],
+            '--file-encoding=%s' % settings['encoding'],
+        ]
+
+    def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.
 
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            settings (dict):
-                Tool-specific settings.
+            path (unicode):
+                The local path to the patched file to review.
+
+            base_command (list of unicode):
+                The base command used to run pyflakes.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
         """
-        if not f.dest_file.lower().endswith('.rst'):
-            # Ignore the file.
-            return
+        output = execute(base_command + [path],
+                         split_lines=True,
+                         ignore_errors=True)
 
-        path = f.get_patched_file_path()
-
-        if not path:
-            return
-
-        output = execute(
-            [
-                'doc8', '-q',
-                '--max-line-length=%s' % settings['max_line_length'],
-                '--file-encoding=%s' % settings['encoding'],
-                path,
-            ],
-            split_lines=True,
-            ignore_errors=True)
+        line_re = self.LINE_RE
 
         for line in output:
-            try:
-                # Strip off the filename, since it might have colons in it.
-                line = line[len(path) + 1:]
-                line_num, message = line.split(':', 1)
-                f.comment(message.strip(), int(line_num))
-            except Exception:
-                logging.error('Cannot parse line with doc8: %s', line)
+            m = line_re.match(line)
+
+            if m:
+                # We've validated the types in the regex above, so we should
+                # be safe to cast to int here.
+                f.comment(text=m.group('text'),
+                          first_line=int(m.group('linenum')),
+                          error_code=m.group('error_code'))

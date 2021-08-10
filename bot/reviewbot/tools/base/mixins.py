@@ -6,11 +6,13 @@ Version Added:
 
 from __future__ import unicode_literals
 
-import logging
 import os
 import re
 
+from reviewbot.config import config
 from reviewbot.utils.filesystem import chdir, ensure_dirs_exist
+from reviewbot.utils.process import execute
+from reviewbot.utils.text import split_comma_separated
 
 
 # Python 3.4+ includes glob.escape, but older versions do not. Optimistically,
@@ -68,8 +70,6 @@ class FilePatternsFromSettingMixin(object):
         """
         super(FilePatternsFromSettingMixin, self).__init__(**kwargs)
 
-        split_re = re.compile(r'\s*,+\s*')
-
         settings = self.settings
         file_patterns = None
 
@@ -77,16 +77,15 @@ class FilePatternsFromSettingMixin(object):
             value = settings.get(self.file_patterns_setting, '').strip()
 
             if value:
-                file_patterns = split_re.split(value)
+                file_patterns = split_comma_separated(value)
 
         if not file_patterns and self.file_extensions_setting:
             value = settings.get(self.file_extensions_setting, '').strip()
 
-            if value:
-                file_patterns = [
-                    '*.%s' % glob_escape((ext.strip().lstrip('.')))
-                    for ext in split_re.split(value)
-                ]
+            file_patterns = [
+                '*.%s' % glob_escape(ext.lstrip('.'))
+                for ext in split_comma_separated(value)
+            ]
 
         if file_patterns:
             if self.include_default_file_patterns and self.file_patterns:
@@ -134,7 +133,7 @@ class FullRepositoryToolMixin(object):
         # Patch all the files first.
         with chdir(working_dir):
             for f in review.files:
-                logging.info('Patching %s', f.dest_file)
+                self.logger.debug('Patching %s', f.dest_file)
 
                 ensure_dirs_exist(os.path.abspath(f.dest_file))
 
@@ -145,3 +144,109 @@ class FullRepositoryToolMixin(object):
 
             # Now run the tool for everything.
             super(FullRepositoryToolMixin, self).execute(review, **kwargs)
+
+
+class JavaToolMixin(object):
+    """Mixin for Java-based tools.
+
+    Version Added:
+        3.0
+    """
+
+    #: Main class to call to run the Java application.
+    #:
+    #: Type:
+    #:     unicode
+    java_main = None
+
+    #: The key identifying the classpaths to use.
+    #:
+    #: Type:
+    #:     unicode
+    java_classpaths_key = None
+
+    exe_dependencies = ['java']
+
+    def check_dependencies(self):
+        """Verify the tool's dependencies are installed.
+
+        This will invoke the base class's dependency checking, ensuring that
+        :command:`java` is available, and will then attempt to run the
+        configured Java class (:py:attr:`java_main`), checking that it could
+        be found.
+
+        Returns:
+            bool:
+            True if all dependencies for the tool are satisfied. If this
+            returns False, the worker will not listen for this Tool's queue,
+            and a warning will be logged.
+        """
+        if not super(JavaToolMixin, self).check_dependencies():
+            return False
+
+        classpath = \
+            config['java_classpaths'].get(self.java_classpaths_key, [])
+
+        if not self._check_java_classpath(classpath):
+            return False
+
+        output = execute(self._build_java_command(),
+                         ignore_errors=True)
+
+        return 'Could not find or load main class' not in output
+
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments.
+
+        Returns:
+            list of unicode:
+            The base command line.
+        """
+        return self._build_java_command(**kwargs)
+
+    def _build_java_command(self):
+        """Return the base Java command for running the class.
+
+        This will build the class path and command line for running
+        :py:attr:`java_main`.
+
+        Returns:
+            list of unicode:
+            The base command line for running the Java class.
+        """
+        classpath = ':'.join(
+            config['java_classpaths'].get(self.java_classpaths_key, []))
+
+        cmdline = [config['exe_paths']['java']]
+
+        if classpath:
+            cmdline += ['-cp', classpath]
+
+        cmdline.append(self.java_main)
+
+        return cmdline
+
+    def _check_java_classpath(self, classpath):
+        """Return whether all entries in a classpath exist.
+
+        Args:
+            classpath (list of unicode):
+                The classpath locations.
+
+        Returns:
+            bool:
+            ``True`` if all entries exist on the filesystem. ``False`` if
+            one or more are missing.
+        """
+        if not classpath:
+            return False
+
+        for path in classpath:
+            if not path or not os.path.exists(path):
+                return False
+
+        return True

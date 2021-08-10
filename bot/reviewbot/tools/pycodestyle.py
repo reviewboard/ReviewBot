@@ -2,14 +2,9 @@
 
 from __future__ import unicode_literals
 
-from celery.utils.log import get_task_logger
-
 from reviewbot.config import config
 from reviewbot.tools import BaseTool
 from reviewbot.utils.process import execute
-
-
-logger = get_task_logger(__name__)
 
 
 class PycodestyleTool(BaseTool):
@@ -99,7 +94,8 @@ class PycodestyleTool(BaseTool):
                 line_num = int(line_num)
                 column = int(column)
             except Exception as e:
-                logger.error('Cannot parse pycodestyle line "%s": %s', line, e)
+                self.logger.error('Cannot parse pycodestyle line "%s": %s',
+                                  line, e)
                 continue
 
             f.comment(text=message.strip(),

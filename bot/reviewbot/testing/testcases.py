@@ -356,6 +356,14 @@ class TestCase(unittest.TestCase):
     #:     bool
     preserve_path_env = False
 
+    #: Custom configuration used for all tests.
+    #:
+    #: This will be applied when setting up the test.
+    #:
+    #: Type:
+    #:     dict
+    config = {}
+
     # Increase the maximum size allowed for showing diffs of objects.
     maxDiff = 10000
 
@@ -391,8 +399,9 @@ class TestCase(unittest.TestCase):
         super(TestCase, self).setUp()
 
         # Reset the configuration back to defaults, so tests don't impact
-        # each other.
+        # each other, and load any custom configuration.
         reset_config()
+        config.update(self.config)
 
     def shortDescription(self):
         """Return the description of the current test.
@@ -595,10 +604,10 @@ class TestCase(unittest.TestCase):
                         [
                             line_i + j,
                             next_old_linenum + j,
-                            '',
+                            '==',
                             [],
                             next_new_linenum + j,
-                            '',
+                            '==',
                             [],
                             False,
                         ]

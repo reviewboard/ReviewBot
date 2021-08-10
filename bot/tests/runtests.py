@@ -11,6 +11,7 @@ def run_tests():
     # Make sure we don't have any environment variables here that
     # could pose problems.
     os.environ.pop(str('REVIEWBOT_CONFIG_FILE'), None)
+    os.environ.pop(str('CLASSPATH'), None)
 
     os.environ['PATH'] = '%s:%s' % (
         os.path.abspath(os.path.join(__file__, '..', 'node_modules', '.bin')),

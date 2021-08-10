@@ -147,6 +147,34 @@ class ConfigTests(kgb.SpyAgency, TestCase):
             'Unable to read the Review Bot configuration file: %s')
         self.assertSpyNotCalled(logger.warning)
 
+    def test_load_config_with_deprecated_checkstyle_path(self):
+        """Testing load_config with deprecated checkstyle_path setting"""
+        config_file = self._load_custom_config(
+            'checkstyle_path = "/path/to/checkstyle.jar"\n')
+
+        self.assertNotIn('checkstyle_path', config)
+        self.assertEqual(
+            config['java_classpaths'],
+            {
+                'checkstyle': ['/path/to/checkstyle.jar'],
+            })
+
+        self.assertSpyCalledWith(
+            logger.info,
+            'Loading Review Bot configuration file %s',
+            config_file)
+        self.assertSpyCalledWith(
+            logger.warning,
+            'checkstyle_path in %s is deprecated and will be removed in '
+            'Review Bot 4.0. Please put this in "java_classpaths". For '
+            'example:\n'
+            'java_classpaths = {\n'
+            '    "checkstyle": ["%s"],\n'
+            '}',
+            config_file,
+            '/path/to/checkstyle.jar')
+        self.assertSpyNotCalled(logger.error)
+
     def test_load_config_with_deprecated_pmd_path(self):
         """Testing load_config with deprecated pmd_path setting"""
         config_file = self._load_custom_config('pmd_path = "/path/to/pmd"\n')

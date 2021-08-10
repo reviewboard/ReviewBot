@@ -9,7 +9,6 @@ Review Bot Tools
 .. toctree::
    :maxdepth: 1
 
-   buildbot
    cargotool
    checkstyle
    clang

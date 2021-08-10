@@ -2,16 +2,15 @@
 
 from __future__ import unicode_literals
 
-import logging
+import json
 
-from reviewbot.tools import Tool
-from reviewbot.utils.process import execute, is_exe_in_path
+from reviewbot.config import config
+from reviewbot.tools.base import BaseTool
+from reviewbot.utils.process import execute
+from reviewbot.utils.text import split_comma_separated
 
 
-logger = logging.getLogger(__name__)
-
-
-class RubocopTool(Tool):
+class RubocopTool(BaseTool):
     """Review Bot tool to run rubocop."""
 
     name = 'RuboCop'
@@ -19,6 +18,10 @@ class RubocopTool(Tool):
     description = ('Checks Ruby code for style errors based on the '
                    'community Ruby style guide using RuboCop.')
     timeout = 60
+
+    exe_dependencies = ['rubocop']
+    file_patterns = ['*.rb']
+
     options = [
         {
             'name': 'except',
@@ -35,67 +38,88 @@ class RubocopTool(Tool):
         },
     ]
 
-    def check_dependencies(self):
-        """Verify that the tool's dependencies are installed.
+    def build_base_command(self, **kwargs):
+        """Build the base command line used to review files.
+
+        Args:
+            **kwargs (dict, unused):
+                Additional keyword arguments.
 
         Returns:
-            bool:
-            True if all dependencies for the tool are satisfied. If this
-            returns False, the worker will not be listed for this Tool's queue,
-            and a warning will be logged.
+            list of unicode:
+            The base command line.
         """
-        return is_exe_in_path('rubocop')
+        settings = self.settings
+        except_list = split_comma_separated(settings.get('except', '').strip())
 
-    def handle_file(self, f, settings):
+        cmdline = [
+            config['exe_paths']['rubocop'],
+            '--format=json',
+            '--display-style-guide',
+        ]
+
+        if except_list:
+            cmdline.append('--except=%s' % ','.join(except_list))
+
+        return cmdline
+
+    def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.
 
         Args:
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            settings (dict):
-                Tool-specific settings.
+            path (unicode):
+                The local path to the patched file to review.
+
+            base_command (list of unicode):
+                The base command used to run rubocop.
+
+            **kwargs (dict, unused):
+                Additional keyword arguments.
         """
-        if not f.dest_file.lower().endswith('.rb'):
-            # Ignore the file.
+        output = execute(base_command + [path],
+                         ignore_errors=True)
+
+        try:
+            results = json.loads(output)
+        except ValueError:
+            # There's an error here. It *should* be in the first line.
+            # Subsequent lines may contain stack traces or mostly-empty
+            # result JSON payloads.
+            lines = output.splitlines()
+
+            f.comment('rubocop could not analyze this file, due to the '
+                      'following errors:\n'
+                      '\n'
+                      '```%s```'
+                      % lines[0].strip(),
+                      first_line=None,
+                      rich_text=True)
             return
 
-        path = f.get_patched_file_path()
+        if results['summary']['offense_count'] > 0:
+            for offense in results['files'][0]['offenses']:
+                cop_name = offense['cop_name']
+                message = offense['message']
+                location = offense['location']
 
-        if not path:
-            return
+                # Strip away the cop name prefix, if found.
+                prefix = '%s: ' % cop_name
 
-        if settings['except'] != '':
-            try:
-                output = execute(
-                    [
-                        'rubocop',
-                        '--except=%s' % settings['except'],
-                        '--format=emacs',
-                        path,
-                    ],
-                    split_lines=True,
-                    ignore_errors=True)
-            except Exception as e:
-                logger.exception('RuboCop failed: %s', e)
-        else:
-            try:
-                output = execute(
-                    [
-                        'rubocop',
-                        '--format=emacs',
-                        path,
-                    ],
-                    split_lines=True,
-                    ignore_errors=True)
-            except Exception as e:
-                logger.exception('RuboCop failed: %s', e)
+                if message.startswith(prefix):
+                    message = message[len(prefix):]
 
-        for line in output:
-            try:
-                # Strip off the filename, since it might have colons in it.
-                line = line[len(path) + 1:]
-                line_num, column, message_type, message = line.split(':', 3)
-                f.comment(message.strip(), int(line_num))
-            except Exception as e:
-                logger.exception('Cannot parse the rubocop output: %s', e)
+                # Check the old and new fields, for compatibility.
+                first_line = location.get('start_line', location['line'])
+                last_line = location.get('last_line', location['line'])
+                start_column = location.get('start_column', location['column'])
+
+                f.comment(message,
+                          first_line=first_line,
+                          num_lines=last_line - first_line + 1,
+                          start_column=start_column,
+                          severity=offense.get('severity'),
+                          error_code=cop_name,
+                          rich_text=True)

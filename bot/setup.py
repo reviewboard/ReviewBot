@@ -25,7 +25,6 @@ setup(
             'reviewbot = reviewbot.celery:main'
         ],
         'reviewbot.tools': [
-            'buildbot = reviewbot.tools.buildbot:BuildBotTool',
             'cargotool = reviewbot.tools.cargotool:CargoTool',
             'checkstyle = reviewbot.tools.checkstyle:CheckstyleTool',
             'clang = reviewbot.tools.clang:ClangTool',
@@ -41,7 +40,8 @@ setup(
             'pycodestyle = reviewbot.tools.pycodestyle:PycodestyleTool',
             'pydocstyle = reviewbot.tools.pydocstyle:PydocstyleTool',
             'pyflakes = reviewbot.tools.pyflakes:PyflakesTool',
-            'rbcredentialchecker = reviewbot.tools.rbcredentialchecker:CredentialCheckerTool',
+            ('rbsecretscanner = '
+             'reviewbot.tools.rbsecretscanner:SecretScannerTool'),
             'rubocop = reviewbot.tools.rubocop:RubocopTool',
             'rustfmt = reviewbot.tools.rustfmt:RustfmtTool',
             'shellcheck = reviewbot.tools.shellcheck:ShellCheckTool',
@@ -58,7 +58,6 @@ setup(
     ],
     extras_require={
         'all': [
-            'buildbot>=0.8.7',
             'cpplint>=0.0.3',
             'doc8>=0.8.0',
             'flake8>=3.3.0',

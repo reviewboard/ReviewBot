@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 
 import os
 import tempfile
+from copy import deepcopy
 from functools import wraps
 from unittest import SkipTest
 
@@ -51,10 +52,14 @@ class ToolTestCaseMetaclass(type):
             type:
             The new class.
         """
-        assert d.get('tool_class'), '%s must set base_tool_class' % name
-        assert d.get('tool_exe_config_key'), \
-           '%s must set tool_exe_config_key' % name
-        assert d.get('tool_exe_path'), '%s must set tool_exe_path' % name
+        tool_class = d.get('tool_class')
+
+        assert tool_class, '%s must set base_tool_class' % name
+
+        if tool_class.exe_dependencies:
+            assert d.get('tool_exe_config_key'), \
+               '%s must set tool_exe_config_key' % name
+            assert d.get('tool_exe_path'), '%s must set tool_exe_path' % name
 
         for func_name, func in six.iteritems(d.copy()):
             if callable(func):
@@ -128,8 +133,9 @@ class ToolTestCaseMetaclass(type):
                     raise SkipTest('%s dependencies not available'
                                    % self.tool_class.name)
 
-                self.tool_exe_path = \
-                    config['exe_paths'][self.tool_exe_config_key]
+                if self.tool_exe_config_key:
+                    self.tool_exe_path = \
+                        config['exe_paths'][self.tool_exe_config_key]
 
                 self.spy_on(execute)
                 self.setup_integration_test(**func.integration_setup_kwargs)
@@ -208,7 +214,46 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
     #:     unicode
     tool_exe_path = None
 
-    def run_tool_execute(self, filename, file_contents, tool_settings={}):
+    def run_get_can_handle_file(self, filename, file_contents=b'',
+                                tool_settings={}):
+        """Run get_can_handle_file with the given file and settings.
+
+        This will create the review objects, set up a repository (if needed
+        by the tool), apply any configuration, and run
+        :py:meth:`~reviewbot.tools.base.BaseTool.get_can_handle_file`.
+
+        Args:
+            filename (unicode):
+                The filename of the file being reviewed.
+
+            file_contents (bytes, optional):
+                File content to review.
+
+            tool_settings (dict, optional):
+                The settings to pass to the tool constructor.
+
+        Returns:
+            bool:
+            ``True`` if the file can be handled. ``False`` if it cannot.
+        """
+        review = self.create_review()
+        review_file = self.create_review_file(
+            review,
+            source_file=filename,
+            dest_file=filename,
+            diff_data=self.create_diff_data(chunks=[{
+                'change': 'insert',
+                'lines': file_contents.splitlines(),
+                'new_linenum': 1,
+            }]),
+            patched_content=file_contents)
+
+        tool = self.tool_class(settings=tool_settings)
+
+        return tool.get_can_handle_file(review_file)
+
+    def run_tool_execute(self, filename, file_contents, checkout_dir=None,
+                         tool_settings={}, other_files={}):
         """Run execute with the given file and settings.
 
         This will create the review objects, set up a repository (if needed
@@ -222,12 +267,32 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             file_contents (bytes):
                 File content to review.
 
+            checkout_dir (unicode, optional):
+                An explicit directory to use as the checkout directory, for
+                tools that require full-repository checkouts.
+
             tool_settings (dict, optional):
                 The settings to pass to the tool constructor.
 
+            other_files (dict, optional):
+                Other files to write to the tree. Each will result in a new
+                file added to the review.
+
+                The dictionary is a map of file paths (relative to the
+                checkout directory) to byte strings.
+
         Returns:
             tuple:
-            A tuple containing the review and the file.
+            A 2-tuple containing:
+
+            1. The review (:py:class:`reviewbot.processing.review.Review)`
+            2. The file entry corresponding to ``filename``
+               (:py:class:`reviewbot.processing.review.File`)
+
+            If ``other_files`` is specified, the second tuple item will
+            instead be a dictionary of keys from ``other_files`` (along with
+            ``filename``) to :py:class:`reviewbot.processing.review.File`
+            instances.
         """
         if self.tool_class.working_directory_required:
             repository = GitRepository(name='MyRepo',
@@ -236,7 +301,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
 
             @self.spy_for(repository.checkout)
             def _checkout(_self, *args, **kwargs):
-                return tempfile.mkdtemp()
+                return checkout_dir or tempfile.mkdtemp()
         else:
             repository = None
 
@@ -252,16 +317,35 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             }]),
             patched_content=file_contents)
 
-        worker_config = {
-            'exe_paths': {
-                self.tool_exe_config_key: self.tool_exe_path,
-            },
-        }
+        review_files = {}
+
+        if other_files:
+            review_files[filename] = review_file
+
+            for other_filename, other_contents in six.iteritems(other_files):
+                review_files[other_filename] = self.create_review_file(
+                    review,
+                    source_file=other_filename,
+                    dest_file=other_filename,
+                    diff_data=self.create_diff_data(chunks=[{
+                        'change': 'insert',
+                        'lines': other_contents.splitlines(),
+                        'new_linenum': 1,
+                    }]),
+                    patched_content=other_contents)
+
+        worker_config = deepcopy(self.config)
+        worker_config.setdefault('exe_paths', {}).update({
+            self.tool_exe_config_key: self.tool_exe_path,
+        })
 
         with self.override_config(worker_config):
             tool = self.tool_class(settings=tool_settings)
             tool.execute(review,
                          repository=repository)
+
+        if other_files:
+            return review, review_files
 
         return review, review_file
 

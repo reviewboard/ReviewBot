@@ -1,20 +1,21 @@
 from __future__ import absolute_import, unicode_literals
 
-import logging
 import os
 import sys
 
 from celery import Celery, VERSION as CELERY_VERSION
-from celery.signals import celeryd_after_setup
+from celery.signals import celeryd_after_setup, celeryd_init
 from kombu import Exchange, Queue
 
 from reviewbot.config import config, load_config
 from reviewbot.repositories import repositories, init_repositories
 from reviewbot.tools.base.registry import (get_tool_classes,
                                            load_tool_classes)
+from reviewbot.utils.log import get_logger
 
 
 celery = Celery('reviewbot.celery', include=['reviewbot.tasks'])
+logger = get_logger(__name__)
 
 
 def create_queues():
@@ -54,7 +55,7 @@ def create_queues():
                     Exchange(queue_name, type='direct'),
                     routing_key=queue_name))
         else:
-            logging.warning('%s dependency check failed.', tool_id)
+            tool.logger.warning('dependency checks failed.')
 
     return queues
 
@@ -74,7 +75,7 @@ def setup_cookies():
     cookie_dir = config['cookie_dir']
     cookie_path = config['cookie_path']
 
-    logging.debug('Checking cookie storage at %s', cookie_path)
+    logger.debug('Checking cookie storage at %s', cookie_path)
 
     # Create the cookie storage directory, if it doesn't exist.
     if not os.path.exists(cookie_dir):
@@ -105,7 +106,47 @@ def setup_cookies():
                       'sure Review Bot has the proper permissions.'
                       % cookie_path)
 
-    logging.debug('Cookies can be stored at %s', cookie_path)
+    logger.debug('Cookies can be stored at %s', cookie_path)
+
+
+@celeryd_init.connect
+def setup_logging(instance, conf, **kwargs):
+    """Set up logging for Celery and Review Bot.
+
+    This will configure the log formats we want Celery to use. This differs
+    from Celery's defaults not just in the structure of the log entries, but
+    also in the addition of the logger name (used to identify different
+    tools).
+
+    Args:
+        instance (celery.app.base.Celery):
+            The Celery instance.
+
+        conf (celery.app.utils.Settings):
+            The Celery configuration.
+
+        **kwargs (dict, unused):
+            Additional keyword arguments passed to the signal.
+    """
+    log_format = (
+        '%(asctime)s - %(processName)s - [%(levelname)s] %(name)s: %(message)s'
+    )
+
+    task_log_format = (
+        '%(asctime)s - %(processName)s: %(task_name)s(%(task_id)s) - '
+        '[%(levelname)s] %(name)s: %(message)s'
+    )
+
+    if CELERY_VERSION >= (4, 0):
+        conf.update({
+            'worker_log_format': log_format,
+            'worker_task_log_format': task_log_format,
+        })
+    else:
+        conf.update({
+            'CELERYD_LOG_FORMAT': log_format,
+            'CELERYD_TASK_LOG_FORMAT': task_log_format,
+        })
 
 
 @celeryd_after_setup.connect
@@ -130,7 +171,7 @@ def setup_reviewbot(instance, conf, **kwargs):
     try:
         setup_cookies()
     except IOError as e:
-        logging.error(e)
+        logger.error(e)
         sys.exit(1)
 
     load_tool_classes()

@@ -12,11 +12,13 @@ from __future__ import unicode_literals
 
 from reviewbot.tools.base.tool import BaseTool
 from reviewbot.tools.base.mixins import (FilePatternsFromSettingMixin,
-                                         FullRepositoryToolMixin)
+                                         FullRepositoryToolMixin,
+                                         JavaToolMixin)
 
 
 __all__ = [
     'BaseTool',
     'FilePatternsFromSettingMixin',
     'FullRepositoryToolMixin',
+    'JavaToolMixin',
 ]
