@@ -49,11 +49,6 @@ tools:
 * `CppLint <https://www.reviewboard.org/docs/reviewbot/latest/tools/cpplint/>`_
   - Checks C++ code against Google's style guide
 
-* `Credential Checker
-  <https://www.reviewboard.org/docs/reviewbot/latest/tools/rbcredentialchecker/>`_
-  - Checks source code and configuration files for accidental inclusion of
-  sensitive keys and credentials
-
 * `doc8 <https://www.reviewboard.org/docs/reviewbot/latest/tools/doc8/>`_
   - Check ReStructuredText documentation for styling and syntax errors
 
@@ -98,6 +93,11 @@ tools:
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/rustfmt/>`_
   - Checks Rust code for code formatting issues based on the automatic
   formatting rules in ``rustfmt``
+
+* `Secret Scanner
+  <https://www.reviewboard.org/docs/reviewbot/latest/tools/rbsecretscanner/>`_
+  - Checks source code and configuration files for accidental inclusion of
+  sensitive keys and credentials
 
 * `ShellCheck
   <https://www.reviewboard.org/docs/reviewbot/latest/tools/rustfmt/>`_

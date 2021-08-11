@@ -14,7 +14,6 @@ Review Bot Tools
    clang
    cppcheck
    cpplint
-   rbcredentialchecker
    doc8
    fbinfer
    flake8
@@ -27,4 +26,5 @@ Review Bot Tools
    pyflakes
    rubocop
    rustfmt
+   rbsecretscanner
    shellcheck
