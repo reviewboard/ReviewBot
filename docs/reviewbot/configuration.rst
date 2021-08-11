@@ -101,6 +101,35 @@ On Review Bot 3.0 and higher, the location of the configuration file can also
 be set through the :envvar:`REVIEWBOT_CONFIG_FILE` environment variable.
 
 
+.. _worker-configuration-exe-paths:
+
+Paths
+-----
+
+.. versionadded:: 3.0
+
+Review Bot will look for executables for the tools in the :envvar:`PATH`
+environment variable. However, paths to executables can also be configured
+manually using ``exe_paths``. For example:
+
+.. code-block:: python
+
+    exe_paths = {
+        'go': '/path/to/go',
+        'pmd': '/path/to/pmd',
+    }
+
+
+Some Java-based tools require one or more :file:`.jar` files, which can
+also be provided. For example:
+
+.. code-block:: python
+
+    java_classpaths = {
+        'checkstyle': ['/path/to/checkstyle.jar'],
+    }
+
+
 .. _worker-configuration-cookies:
 
 Cookie Storage
