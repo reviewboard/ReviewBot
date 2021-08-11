@@ -101,8 +101,8 @@ First, you'll need to add a Review Bot configuration in Review Board (see
 The following configuration options are available:
 
 :guilabel:`Check and lint code`:
-    Enable this checkbox if you want to perform lintian checks on uploaded
-    Rust code.
+    Enable this checkbox if you want to perform lint checks on uploaded Rust
+    code.
 
     This will run :command:`cargo clippy` on the code.
 
