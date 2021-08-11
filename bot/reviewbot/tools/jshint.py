@@ -14,8 +14,10 @@ class JSHintTool(FilePatternsFromSettingMixin, BaseTool):
 
     name = 'JSHint'
     version = '1.0'
-    description = ('Checks JavaScript code for style errors and potential '
-                   'problems using JSHint, a JavaScript Code Quality Tool.')
+    description = (
+        'Checks JavaScript code for style errors and potential problems '
+        'using JSHint, a JavaScript Code Quality Tool.'
+    )
     timeout = 30
 
     exe_dependencies = ['jshint']
@@ -29,10 +31,11 @@ class JSHintTool(FilePatternsFromSettingMixin, BaseTool):
             'field_type': 'django.forms.CharField',
             'default': '',
             'field_options': {
-                'label': 'Extra File Extensions',
-                'help_text': ('A comma-separated list of extra file '
-                              'extensions to check (only .js is included by '
-                              'default).'),
+                'label': 'Extra file extensions',
+                'help_text': (
+                    'A comma-separated list of extra file extensions to '
+                    'check (only .js is included by default).'
+                ),
                 'required': False,
             },
         },
@@ -41,10 +44,11 @@ class JSHintTool(FilePatternsFromSettingMixin, BaseTool):
             'field_type': 'django.forms.ChoiceField',
             'field_options': {
                 'label': 'Extract JavaScript from HTML',
-                'help_text': ('Whether JSHint should extract JavaScript from '
-                              'HTML files. If set to "auto", it will only try '
-                              'extracting JavaScript if the file looks like '
-                              'an HTML file.'),
+                'help_text': (
+                    'Whether JSHint should extract JavaScript from HTML '
+                    'files. If set to "auto", it will only try extracting '
+                    'JavaScript if the file looks like an HTML file.'
+                ),
                 'choices': (
                     ('auto', 'auto'),
                     ('always', 'always'),
@@ -60,9 +64,11 @@ class JSHintTool(FilePatternsFromSettingMixin, BaseTool):
             'default': '',
             'field_options': {
                 'label': 'Configuration',
-                'help_text': ('JSON specifying which JSHint options to turn '
-                              'on or off. (This is equivalent to the contents '
-                              'of a .jshintrc file.)'),
+                'help_text': (
+                    'JSON specifying which JSHint options to turn on or '
+                    'off. (This is equivalent to the contents of a '
+                    '.jshintrc file.)'
+                ),
                 'required': False,
             },
             'widget': {

@@ -26,8 +26,11 @@ class Doc8Tool(BaseTool):
             'field_type': 'django.forms.IntegerField',
             'default': 79,
             'field_options': {
-                'label': 'Maximum Line Length',
-                'help_text': 'The maximum line length to allow.',
+                'label': 'Maximum line length',
+                'help_text': (
+                    'The maximum length allowed for lines. Any lines longer '
+                    'than this length will cause an issue to be filed.'
+                ),
                 'required': True,
             },
         },
@@ -37,7 +40,10 @@ class Doc8Tool(BaseTool):
             'default': 'utf-8',
             'field_options': {
                 'label': 'Encoding',
-                'help_text': 'Encoding used for rst files.',
+                'help_text': (
+                    'The encoding expected for reStructuerdText files. '
+                    'There may be issues parsing files using other encodings.'
+                ),
                 'required': True,
             },
         },

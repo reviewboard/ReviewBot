@@ -28,9 +28,10 @@ class PMDTool(FilePatternsFromSettingMixin, BaseTool):
             'default': '',
             'field_options': {
                 'label': 'Rulesets',
-                'help_text': 'A comma-separated list of rulesets to apply or '
-                             'a ruleset XML configuration, starting with '
-                             '"<?xml"',
+                'help_text': (
+                    'A comma-separated list of rulesets to apply or a '
+                    'ruleset XML configuration, starting with "<?xml"',
+                ),
                 'required': True,
             },
             'widget': {
@@ -47,8 +48,10 @@ class PMDTool(FilePatternsFromSettingMixin, BaseTool):
             'default': 'java',
             'field_options': {
                 'label': 'Scan files',
-                'help_text': 'Comma-separated list of file extensions '
-                             'to scan. Leave it empty to check all files.',
+                'help_text': (
+                    'Comma-separated list of file extensions to scan. Leave '
+                    'it empty to check all files.'
+                ),
                 'required': False,
             },
         },

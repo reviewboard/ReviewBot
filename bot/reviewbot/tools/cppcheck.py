@@ -33,8 +33,10 @@ class CPPCheckTool(BaseTool):
 
     name = 'Cppcheck'
     version = '1.0'
-    description = ('Checks code for errors using Cppcheck, a tool for static '
-                   'C/C++ code analysis.')
+    description = (
+        'Checks code for errors using Cppcheck, a tool for static C/C++ '
+        'code analysis.'
+    )
     timeout = 30
 
     exe_dependencies = ['cppcheck']
@@ -51,8 +53,10 @@ class CPPCheckTool(BaseTool):
             'default': True,
             'field_options': {
                 'label': 'Enable standard style checks',
-                'help_text': ('Enable the standard style checks, including '
-                              'most warning, style, and performance checks.'),
+                'help_text': (
+                    'Enable the standard style checks, including most '
+                    'warning, style, and performance checks.'
+                ),
                 'required': False,
             },
         },
@@ -62,8 +66,10 @@ class CPPCheckTool(BaseTool):
             'default': False,
             'field_options': {
                 'label': 'Enable all error checks',
-                'help_text': ('Enable all the error checks. This is likely '
-                              'to include many false positives.'),
+                'help_text': (
+                    'Enable all the error checks. This is likely to include '
+                    'many false positives.'
+                ),
                 'required': False,
             },
         },
@@ -72,7 +78,7 @@ class CPPCheckTool(BaseTool):
             'field_type': 'django.forms.ChoiceField',
             'field_options': {
                 'label': 'Use language',
-                'help_text': ('Force cppcheck to use a specific language.'),
+                'help_text': 'Force cppcheck to use a specific language.',
                 'choices': (
                     ('', 'auto-detect'),
                     ('c', 'C'),

@@ -18,8 +18,9 @@ class SecretScannerTool(BaseTool):
 
     name = 'Secret Scanner'
     version = '1.0'
-    description = ('Review Bot tool to check for hard-coded secrets and '
-                   'credentials.')
+    description = (
+        'Review Bot tool to check for hard-coded secrets and credentials.'
+    )
     timeout = 60
 
     def handle_files(self, files, **kwargs):
@@ -263,8 +264,7 @@ class SecretScannerTool(BaseTool):
 
             )""", re.IGNORECASE | re.VERBOSE)
 
-        return super(SecretScannerTool, self).handle_files(files,
-                                                               **kwargs)
+        return super(SecretScannerTool, self).handle_files(files, **kwargs)
 
     def handle_file(self, f, **kwargs):
         """Perform a review of a single file.

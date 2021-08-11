@@ -16,8 +16,10 @@ class FBInferTool(FullRepositoryToolMixin, BaseTool):
 
     name = 'FBInfer'
     version = '1.0'
-    description = ('Checks code for errors using FBInfer, a tool for static '
-                   'Android, Java, C, C++, and iOS/Objective-C code analysis.')
+    description = (
+        'Checks code for errors using FBInfer, a tool for static Android, '
+        'Java, C, C++, and iOS/Objective-C code analysis.'
+    )
     timeout = 90
 
     exe_dependencies = ['infer']

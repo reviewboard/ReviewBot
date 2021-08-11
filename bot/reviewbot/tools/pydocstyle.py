@@ -27,13 +27,14 @@ class PydocstyleTool(BaseTool):
             'default': '',
             'field_options': {
                 'label': 'Ignore',
-                'help_text': ('A comma-separated list of errors or prefixes '
-                              'to ignore. For example, passing D1 will '
-                              'ignore all error codes beginning with "D1" '
-                              '(i.e. D1, D10). The list will be passed '
-                              'to the --ignore command line argument. '
-                              'If no arguments are specified, pydocstyle '
-                              'will default to PEP 257 convention.'),
+                'help_text': (
+                    'A comma-separated list of errors or prefixes to ignore. '
+                    'For example, passing D1 will ignore all error codes '
+                    'beginning with "D1" (i.e. D1, D10). The list will be '
+                    'passed to the --ignore command line argument. If no '
+                    'arguments are specified, pydocstyle will default to '
+                    'PEP 257 convention.'
+                ),
                 'required': False,
             },
         },

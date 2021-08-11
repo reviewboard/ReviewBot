@@ -30,8 +30,11 @@ class Flake8Tool(BaseTool):
             'field_type': 'django.forms.IntegerField',
             'default': 79,
             'field_options': {
-                'label': 'Maximum Line Length',
-                'help_text': 'The maximum line length to allow.',
+                'label': 'Maximum line length',
+                'help_text': (
+                    'The maximum length allowed for lines. Any lines longer '
+                    'than this length will cause an issue to be filed.'
+                ),
                 'required': True,
             },
         },
@@ -41,9 +44,11 @@ class Flake8Tool(BaseTool):
             'default': "",
             'field_options': {
                 'label': 'Ignore',
-                'help_text': ('A comma-separated list of errors and warnings '
-                              'to ignore. This will be passed to the --ignore '
-                              'command line argument (e.g. E4,W).'),
+                'help_text': (
+                    'A comma-separated list of errors and warnings to '
+                    'ignore. This will be passed to the --ignore command '
+                    'line argument (e.g. E4,W).'
+                ),
                 'required': False,
             },
         },

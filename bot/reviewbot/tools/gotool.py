@@ -19,8 +19,10 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
 
     name = 'GoTool'
     version = '1.0'
-    description = ('Checks Go code for test errors using built-in Go tools '
-                   '"go test", and "go vet".')
+    description = (
+        'Checks Go code for test errors using built-in Go tools "go test", '
+        'and "go vet".'
+    )
     timeout = 90
 
     exe_dependencies = ['go']
@@ -32,8 +34,9 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
             'field_type': 'django.forms.BooleanField',
             'default': False,
             'field_options': {
-                'label': 'Run Tests',
+                'label': 'Run tests',
                 'required': False,
+                'help_text': 'Run unit tests using "go test".',
             },
         },
         {
@@ -41,8 +44,9 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
             'field_type': 'django.forms.BooleanField',
             'default': True,
             'field_options': {
-                'label': 'Vet Code',
+                'label': 'Vet code',
                 'required': False,
+                'help_text': 'Run lint checks against code using "go vet".',
             },
         },
     ]
