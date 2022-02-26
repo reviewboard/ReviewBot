@@ -460,6 +460,13 @@ class Review(object):
     #: Additional text to show below the comments in the review.
     body_bottom = ""
 
+    _VALID_FILEDIFF_STATUS_TYPES = {
+        'copied',
+        'deleted',
+        'modified',
+        'moved',
+    }
+
     def __init__(self, api_root, review_request_id, diff_revision, settings):
         """Initialize the review.
 
@@ -486,13 +493,25 @@ class Review(object):
         self.general_comments = []
 
         # Get the list of files.
-        self.files = []
+        files = []
+
         if self.diff_revision:
-            files = api_root.get_files(
+            filediffs = api_root.get_files(
                 review_request_id=self.review_request_id,
                 diff_revision=self.diff_revision)
 
-            self.files = [File(self, f) for f in files]
+            for filediff in filediffs:
+                # Filter out binary files and symlinks.
+                if (filediff.binary or
+                    filediff.status not in self._VALID_FILEDIFF_STATUS_TYPES or
+                    ('is_symlink' in filediff.extra_data and
+                     filediff.extra_data['is_symlink'])):
+                    continue
+
+                files.append(File(review=self,
+                                  api_filediff=filediff))
+
+        self.files = files
 
     def general_comment(self, text, issue=None, rich_text=False):
         """Make a general comment.

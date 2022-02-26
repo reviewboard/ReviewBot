@@ -485,10 +485,13 @@ class TestCase(unittest.TestCase):
     def create_review_file(self, review, filediff_id=42,
                            source_file='/test.txt',
                            dest_file='/test.txt',
+                           source_revision='abc123',
+                           status='modified',
                            patch=None,
                            patched_content=None,
                            patched_file_path=None,
-                           diff_data=None):
+                           diff_data=None,
+                           extra_data={}):
         """Create a File representing a review on a filediff for testing.
 
         Args:
@@ -503,6 +506,12 @@ class TestCase(unittest.TestCase):
 
             dest_file (unicode, optional):
                 The filename of the modified version of the file.
+
+            source_revision (unicode, optional):
+                The source revision for the file.
+
+            status (unicode, optional):
+                The status value set for the FileDiff.
 
             patch (bytes, optional):
                 The patch content. If not provided, one will be generated.
@@ -519,6 +528,9 @@ class TestCase(unittest.TestCase):
                 virtual line numbers. If not provided, one will be generated,
                 but most test suites will need to generate this themselves.
 
+            extra_data (dict, optional):
+                Extra data to attach in the FileDiff.
+
         Returns:
             reviewbot.processing.review.File:
             The resulting File object.
@@ -528,9 +540,12 @@ class TestCase(unittest.TestCase):
             review_request_id=review.review_request_id,
             source_file=source_file,
             dest_file=dest_file,
+            source_revision=source_revision,
+            status=status,
             patch=patch,
             patched_content=patched_content,
-            diff_data=diff_data)
+            diff_data=diff_data,
+            extra_data=extra_data)
 
         review_file = File(review=review,
                            api_filediff=api_filediff)
@@ -719,10 +734,14 @@ class TestCase(unittest.TestCase):
     def create_filediff_resource(self, filediff_id=42,
                                  review_request_id=123,
                                  source_file='/test.txt',
+                                 source_revision='abc123',
                                  dest_file='/test.txt',
+                                 status='modified',
+                                 binary=False,
                                  patch=None,
                                  patched_content=None,
-                                 diff_data=None):
+                                 diff_data=None,
+                                 extra_data={}):
         """Create a FileDiffResource for testing.
 
         Args:
@@ -735,8 +754,17 @@ class TestCase(unittest.TestCase):
             source_file (unicode, optional):
                 The filename of the original version of the file.
 
+            source_revision (unicode, optional):
+                The source revision for the file.
+
             dest_file (unicode, optional):
                 The filename of the modified version of the file.
+
+            status (unicode, optional):
+                The status value set for the FileDiff.
+
+            binary (bool, optional):
+                Whether this is a binary file.
 
             patch (bytes, optional):
                 The patch content. If not provided, one will be generated.
@@ -749,6 +777,9 @@ class TestCase(unittest.TestCase):
                 The diff data, used to match up line numbers to diff
                 virtual line numbers. If not provided, one will be generated,
                 but most test suites will need to generate this themselves.
+
+            extra_data (dict, optional):
+                Extra data to attach in the FileDiff.
 
         Returns:
             reviewbot.processing.review.File:
@@ -787,7 +818,11 @@ class TestCase(unittest.TestCase):
             payload={
                 'id': filediff_id,
                 'source_file': source_file,
+                'source_revision': source_revision,
                 'dest_file': dest_file,
+                'status': status,
+                'binary': binary,
+                'extra_data': extra_data,
                 '_diff_data': diff_data,
                 '_patch': patch,
                 '_patched_content': patched_content,
