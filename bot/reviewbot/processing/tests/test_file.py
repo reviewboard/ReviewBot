@@ -2,10 +2,18 @@
 
 from __future__ import unicode_literals
 
+import os
+
+import kgb
+from rbtools.api.errors import APIError
+
+from reviewbot.processing.review import (ReviewFileStatus,
+                                         logger as review_logger)
 from reviewbot.testing import TestCase
+from reviewbot.utils.filesystem import tmpdirs
 
 
-class FileTests(TestCase):
+class FileTests(kgb.SpyAgency, TestCase):
     """Unit tests for reviewbot.processing.review.File."""
 
     def setUp(self):
@@ -420,6 +428,248 @@ class FileTests(TestCase):
         self.assertEqual(
             review_file.get_lines(1000, 2, original=True),
             [])
+
+    def test_original_file_contents(self):
+        """Testing File.original_file_contents"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            original_content=b'This is the original content.\n')
+
+        self.assertEqual(review_file.original_file_contents,
+                         b'This is the original content.\n')
+
+    def test_original_file_contents_with_created(self):
+        """Testing File.original_file_contents with status=created"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='PRE-CREATION',
+            dest_file='docs/test.txt',
+            original_content=b'This is new content.\n')
+
+        self.assertIsNone(review_file.original_file_contents)
+
+    def test_original_file_contents_without_get_original_file(self):
+        """Testing File.original_file_contents without original-file/ link
+        in API
+        """
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            original_content=None)
+
+        self.assertIsNone(review_file.original_file_contents)
+
+    def test_original_file_contents_with_http_404(self):
+        """Testing File.original_file_contents with HTTP 404"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            original_content=b'original content')
+
+        self.spy_on(review_file._api_filediff.get_original_file,
+                    op=kgb.SpyOpRaise(APIError(http_status=404,
+                                               error_code=100)))
+
+        self.assertIsNone(review_file.original_file_contents)
+
+    def test_original_file_contents_with_http_500(self):
+        """Testing File.original_file_contents with HTTP 500"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            original_content=b'original content')
+
+        error = APIError(http_status=500,
+                         error_code=221)
+
+        self.spy_on(review_logger.warning)
+        self.spy_on(review_file._api_filediff.get_original_file,
+                    op=kgb.SpyOpRaise(error))
+
+        self.assertIsNone(review_file.original_file_contents)
+        self.assertSpyCalledWith(
+            review_logger.warning,
+            'Received a HTTP 500 fetching original content for %r: %r',
+            review_file._api_filediff,
+            error)
+
+    def test_patched_file_contents(self):
+        """Testing File.patched_file_contents"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            patched_content=b'This is the patched content.\n')
+
+        self.assertEqual(review_file.patched_file_contents,
+                         b'This is the patched content.\n')
+
+    def test_patched_file_contents_with_deleted(self):
+        """Testing File.patched_file_contents with status=created"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            status=ReviewFileStatus.DELETED,
+            patched_content=b'This is new content.\n')
+
+        self.assertIsNone(review_file.patched_file_contents)
+
+    def test_patched_file_contents_without_get_patched_file(self):
+        """Testing File.patched_file_contents without patched-file/ link
+        in API
+        """
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            patched_content=None)
+
+        self.assertIsNone(review_file.patched_file_contents)
+
+    def test_patched_file_contents_with_http_404(self):
+        """Testing File.patched_file_contents with HTTP 404"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            patched_content=b'patched content')
+
+        self.spy_on(review_file._api_filediff.get_patched_file,
+                    op=kgb.SpyOpRaise(APIError(http_status=404,
+                                               error_code=100)))
+
+        self.assertIsNone(review_file.patched_file_contents)
+
+    def test_patched_file_contents_with_http_500(self):
+        """Testing File.patched_file_contents with HTTP 500"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            patched_content=b'patched content')
+
+        error = APIError(http_status=500,
+                         error_code=221)
+
+        self.spy_on(review_logger.warning)
+        self.spy_on(review_file._api_filediff.get_patched_file,
+                    op=kgb.SpyOpRaise(error))
+
+        self.assertIsNone(review_file.patched_file_contents)
+        self.assertSpyCalledWith(
+            review_logger.warning,
+            'Received a HTTP 500 fetching patched content for %r: %r',
+            review_file._api_filediff,
+            error)
+
+    def test_get_original_file_path(self):
+        """Testing File.get_original_file_path"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            original_content=b'original content')
+
+        self.assertEqual(review_file.get_original_file_path(),
+                         os.path.join(tmpdirs[-1], 'test.txt'))
+
+    def test_get_original_file_path_with_created(self):
+        """Testing File.get_original_file_path with status=created"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='PRE-CREATION',
+            dest_file='docs/test.txt',
+            original_content=b'original content')
+
+        self.assertIsNone(review_file.get_original_file_path())
+
+    def test_get_original_file_path_with_empty_string(self):
+        """Testing File.get_original_file_path with content as empty string"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            original_content=b'')
+
+        self.assertEqual(review_file.get_original_file_path(),
+                         os.path.join(tmpdirs[-1], 'test.txt'))
+
+    def test_get_original_file_path_without_get_original_content(self):
+        """Testing File.get_original_file_path without original-file/ link"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            original_content=None)
+
+        self.assertIsNone(review_file.get_original_file_path())
+
+    def test_get_patched_file_path(self):
+        """Testing File.get_patched_file_path"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            patched_content=b'patched content')
+
+        self.assertEqual(review_file.get_patched_file_path(),
+                         os.path.join(tmpdirs[-1], 'test.txt'))
+
+    def test_get_patched_file_path_with_deleted(self):
+        """Testing File.get_patched_file_path with status=deleted"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            status=ReviewFileStatus.DELETED,
+            patched_content=b'patched content')
+
+        self.assertIsNone(review_file.get_patched_file_path())
+
+    def test_get_patched_file_path_with_empty_string(self):
+        """Testing File.get_patched_file_path with content as empty string"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            patched_content=b'')
+
+        self.assertEqual(review_file.get_patched_file_path(),
+                         os.path.join(tmpdirs[-1], 'test.txt'))
+
+    def test_get_patched_file_path_without_get_patched_content(self):
+        """Testing File.get_patched_file_path without patched-file/ link"""
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='abc123',
+            dest_file='docs/test.txt',
+            patched_content=None)
+
+        self.assertIsNone(review_file.get_patched_file_path())
 
     def test_translate_line_num_with_original_false(self):
         """Testing File._translate_line_num with original=False"""

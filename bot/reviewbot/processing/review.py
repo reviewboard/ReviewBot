@@ -10,6 +10,14 @@ from rbtools.api.errors import APIError
 from reviewbot.utils.filesystem import (make_tempdir,
                                         make_tempfile,
                                         normalize_platform_path)
+from reviewbot.utils.log import get_logger
+
+
+#: The logger for the module.
+#:
+#: Version Added:
+#:     3.0
+logger = get_logger(__name__, is_task_logger=False)
 
 
 class ReviewFileStatus(Enum):
@@ -93,11 +101,27 @@ class File(object):
             bytes:
             The contents of the patched file.
         """
-        if not hasattr(self._api_filediff, 'get_patched_file'):
+        if (self.status == ReviewFileStatus.DELETED or
+            not hasattr(self._api_filediff, 'get_patched_file')):
             return None
 
-        patched_file = self._api_filediff.get_patched_file()
-        return patched_file.data
+        try:
+            return self._api_filediff.get_patched_file().data
+        except APIError as e:
+            if e.http_status == 404:
+                # This was a deleted file, a deleted FileDiff entry,
+                # or something has gone wrong with the setup.
+                return None
+            elif e.http_status == 500:
+                # There was an issue with the patch server-side. Likely,
+                # there's a failure applying the patch, or an outage
+                # with a server. Log and skip.
+                logger.warning('Received a HTTP 500 fetching patched '
+                               'content for %r: %r',
+                               self._api_filediff, e)
+                return None
+
+            raise
 
     @property
     def original_file_contents(self):
@@ -107,65 +131,86 @@ class File(object):
             bytes:
             The contents of the original file.
         """
-        if not hasattr(self._api_filediff, 'get_original_file'):
+        if (self.status == ReviewFileStatus.CREATED or
+            not hasattr(self._api_filediff, 'get_original_file')):
             return None
 
-        original_file = self._api_filediff.get_original_file()
-        return original_file.data
+        try:
+            return self._api_filediff.get_original_file().data
+        except APIError as e:
+            if e.http_status == 404:
+                # This was a deleted FileDiff entry, or something has gone
+                # wrong with the setup.
+                return None
+            elif e.http_status == 500:
+                # There was probably an issue with accessing the repository
+                # server-side. Log and skip.
+                logger.warning('Received a HTTP 500 fetching original content '
+                               'for %r: %r',
+                               self._api_filediff, e)
+                return None
+
+            raise
 
     def get_patched_file_path(self):
         """Fetch the patched file and return the filename of it.
 
+        Version Changed:
+            3.0:
+            Empty files no longer return ``None``.
+
         Returns:
             unicode:
             The filename of a new temporary file containing the patched file
-            contents. If the file is empty, return None.
+            contents. If the file is deleted, this will return ``None``.
         """
         if self.patched_file_path:
             return self.patched_file_path
-        else:
-            try:
-                contents = self.patched_file_contents
-            except APIError as e:
-                if e.http_status == 404:
-                    # This was a deleted file.
-                    return None
-                else:
-                    raise
 
-            if contents:
-                tempdir = make_tempdir()
-                filename = os.path.join(tempdir,
-                                        os.path.basename(self.dest_file))
+        if self.status == ReviewFileStatus.DELETED:
+            return None
 
-                with open(filename, 'wb') as fp:
-                    fp.write(contents)
+        contents = self.patched_file_contents
 
-                return filename
-            else:
-                return None
+        # Make sure we don't treat empty files as non-existent at this point.
+        if contents is None:
+            return None
+
+        tempdir = make_tempdir()
+        filename = os.path.join(tempdir, os.path.basename(self.dest_file))
+
+        with open(filename, 'wb') as fp:
+            fp.write(contents)
+
+        return filename
 
     def get_original_file_path(self):
         """Fetch the original file and return the filename of it.
 
+        Version Changed:
+            3.0:
+            Empty files no longer return ``None``.
+
         Returns:
             unicode:
             The filename of a new temporary file containing the original file
-            contents. If the file is empty, return None.
+            contents. If the file is new, this will return ``None``.
         """
+        if self.status == ReviewFileStatus.CREATED:
+            return None
+
         contents = self.original_file_contents
 
-        if contents:
-            tempdir = make_tempdir()
-            filename = os.path.join(tempdir,
-                                    os.path.basename(self.source_file))
-
-            with open(filename, 'wb') as fp:
-                fp.write(contents)
-
-            return filename
-        else:
+        if contents is None:
             return None
+
+        tempdir = make_tempdir()
+        filename = os.path.join(tempdir, os.path.basename(self.source_file))
+
+        with open(filename, 'wb') as fp:
+            fp.write(contents)
+
+        return filename
 
     def get_lines(self, first_line, num_lines=1, original=False):
         """Return the lines from the file in the given range.

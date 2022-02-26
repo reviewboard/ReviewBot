@@ -26,6 +26,9 @@ from reviewbot.config import config, reset_config
 from reviewbot.processing.review import File, Review
 
 
+_UNSET = object()
+
+
 class FileAttachmentItemResource(ItemResource):
     """An item resource for file attachments.
 
@@ -68,9 +71,38 @@ class FileAttachmentListResource(FileAttachmentListResource):
 class DummyFileDiffResource(FileDiffResource):
     """A specialization of FileDiffResource that provides custom data.
 
-    This takes in special ``_diff_data`, ``_patch``, and ``_patched_content``
-    data in the payload, avoiding using HTTP requests to fetch it.
+    This takes in special ``_diff_data`, ``_patch``, ``_original_content``,
+    and ``_patched_content`` data in the payload, avoiding using HTTP requests
+    to fetch it.
     """
+
+    def __getattribute__(self, name):
+        """Return an attribute from the resource.
+
+        This will conditionally allow access to ``get_original_file()`` and
+        ``get_patched_file()`` methods based on whether original/patched
+        file content is set.
+
+        Args:
+            name (str):
+                The name of the attribute.
+
+        Returns:
+            object:
+            The attribute value.
+
+        Raises:
+            AttributeError:
+                The requested attribute does not exist.
+        """
+        if name == 'get_original_file':
+            if self._original_content is not None:
+                return self._get_original_file
+        elif name == 'get_patched_file':
+            if self._patched_content is not None:
+                return self._get_patched_file
+
+        return super(DummyFileDiffResource, self).__getattribute__(name)
 
     def get_patch(self, **kwargs):
         """Return the patch for this FileDiff.
@@ -93,7 +125,28 @@ class DummyFileDiffResource(FileDiffResource):
             token='resource',
             url=self._url)
 
-    def get_patched_file(self, **kwargs):
+    def _get_original_file(self, **kwargs):
+        """Return the original version of the FileDiff's content.
+
+        Args:
+            **kwargs (unused):
+                Unused keyword arguments.
+
+        Returns:
+            rbtools.api.resource.ItemResource:
+            The item resource representing the patched content.
+        """
+        return ItemResource(
+            transport=self._transport,
+            payload={
+                'resource': {
+                    'data': self._original_content,
+                },
+            },
+            token='resource',
+            url='%s/original-file/' % self._url)
+
+    def _get_patched_file(self, **kwargs):
         """Return the patched version of the FileDiff's content.
 
         Args:
@@ -488,7 +541,8 @@ class TestCase(unittest.TestCase):
                            source_revision='abc123',
                            status='modified',
                            patch=None,
-                           patched_content=None,
+                           original_content=_UNSET,
+                           patched_content=_UNSET,
                            patched_file_path=None,
                            diff_data=None,
                            extra_data={}):
@@ -515,6 +569,10 @@ class TestCase(unittest.TestCase):
 
             patch (bytes, optional):
                 The patch content. If not provided, one will be generated.
+
+            original_content (bytes, optional):
+                The original version of the file. If not provided, one will
+                be generated.
 
             patched_content (bytes, optional):
                 The patched version of the file. If not provided, one will
@@ -543,6 +601,7 @@ class TestCase(unittest.TestCase):
             source_revision=source_revision,
             status=status,
             patch=patch,
+            original_content=original_content,
             patched_content=patched_content,
             diff_data=diff_data,
             extra_data=extra_data)
@@ -739,7 +798,8 @@ class TestCase(unittest.TestCase):
                                  status='modified',
                                  binary=False,
                                  patch=None,
-                                 patched_content=None,
+                                 original_content=_UNSET,
+                                 patched_content=_UNSET,
                                  diff_data=None,
                                  extra_data={}):
         """Create a FileDiffResource for testing.
@@ -768,6 +828,10 @@ class TestCase(unittest.TestCase):
 
             patch (bytes, optional):
                 The patch content. If not provided, one will be generated.
+
+            original_content (bytes, optional):
+                The original version of the file. If not provided, one will
+                be generated.
 
             patched_content (bytes, optional):
                 The patched version of the file. If not provided, one will
@@ -800,7 +864,10 @@ class TestCase(unittest.TestCase):
                 }
             )
 
-        if patched_content is None:
+        if original_content is _UNSET:
+            original_content = b'original file!'
+
+        if patched_content is _UNSET:
             patched_content = b'test!'
 
         if diff_data is None:
@@ -825,6 +892,7 @@ class TestCase(unittest.TestCase):
                 'extra_data': extra_data,
                 '_diff_data': diff_data,
                 '_patch': patch,
+                '_original_content': original_content,
                 '_patched_content': patched_content,
             },
             url=('https://reviews.example.com/api/review-requests/%s/'
