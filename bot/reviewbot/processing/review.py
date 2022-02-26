@@ -2,11 +2,49 @@ from __future__ import division, unicode_literals
 
 import json
 import os
+from enum import Enum
 from itertools import islice
 
 from rbtools.api.errors import APIError
 
-from reviewbot.utils.filesystem import make_tempdir, make_tempfile
+from reviewbot.utils.filesystem import (make_tempdir,
+                                        make_tempfile,
+                                        normalize_platform_path)
+
+
+class ReviewFileStatus(Enum):
+    """The change status of a file.
+
+    Version Added:
+        3.0
+    """
+
+    CREATED = 'created'
+    DELETED = 'deleted'
+    MODIFIED = 'modified'
+    MOVED = 'moved'
+    COPIED = 'copied'
+
+    @classmethod
+    def for_filediff(cls, filediff):
+        """Return a status for a FileDiff.
+
+        Args:
+            filediff (rbtools.api.resource.Resource):
+                The filediff resource.
+
+        Returns:
+            ReviewFileStatus:
+            The resulting status.
+
+        Raises:
+            ValueError:
+                The status for the FileDiff is unknown/unsupported.
+        """
+        if filediff.source_revision == 'PRE-CREATION':
+            return cls.CREATED
+        else:
+            return cls(filediff.status)
 
 
 class File(object):
@@ -31,13 +69,21 @@ class File(object):
         """
         self.review = review
         self.id = int(api_filediff.id)
-        self.source_file = api_filediff.source_file
-        self.dest_file = api_filediff.dest_file
         self.diff_data = api_filediff.get_diff_data()
-        self._api_filediff = api_filediff
-        self.filename, self.file_extension = os.path.splitext(
-            api_filediff.dest_file)
+        self.status = ReviewFileStatus.for_filediff(api_filediff)
         self.patched_file_path = None
+
+        self.source_file = normalize_platform_path(api_filediff.source_file)
+
+        if api_filediff.source_file == api_filediff.dest_file:
+            # We don't need to normalize again. Just copy.
+            self.dest_file = self.source_file
+        else:
+            self.dest_file = normalize_platform_path(api_filediff.dest_file)
+
+        self.filename, self.file_extension = os.path.splitext(self.dest_file)
+
+        self._api_filediff = api_filediff
 
     @property
     def patched_file_contents(self):
