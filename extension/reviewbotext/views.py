@@ -243,21 +243,48 @@ class WorkerStatusView(View):
                                                            reply=True,
                                                            timeout=10)
 
+                state = 'success'
+                error = None
+                hosts = []
+
+                for item in reply:
+                    for worker_host, data in six.iteritems(item):
+                        worker_status = data.get('status')
+
+                        if worker_status == 'ok':
+                            hosts.append({
+                                'hostname': worker_host.split('@', 1)[1],
+                                'tools': data['tools'],
+                            })
+                        elif worker_status == 'error':
+                            state = 'error'
+                            error = (
+                                'Error from %s: %s'
+                                % (worker_host, data['error'])
+                            )
+                            break
+                        else:
+                            state = 'error'
+                            error = (
+                                "Unexpected result when querying worker "
+                                "status for %s. Please check the worker's "
+                                "logs for information."
+                                % worker_host
+                            )
+                            break
+
                 response = {
-                    'state': 'success',
-                    'hosts': [
-                        {
-                            'hostname': hostname.split('@', 1)[1],
-                            'tools': data['tools'],
-                        }
-                        for item in reply
-                        for hostname, data in six.iteritems(item)
-                    ],
+                    'state': state,
                 }
+
+                if state == 'success':
+                    response['hosts'] = hosts
+                else:
+                    response['error'] = error
             except IOError as e:
                 response = {
                     'state': 'error',
-                    'error': 'Unable to connect to broker: %s.' % e,
+                    'error': 'Unable to connect to broker: %s' % e,
                 }
         else:
             response = {
