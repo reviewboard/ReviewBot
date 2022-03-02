@@ -228,26 +228,6 @@ class Flake8ToolTests(BaseToolTestCase):
                 },
                 'type': 'issue',
             },
-            {
-                'categories': ['Style'],
-                'check_name': 'E225',
-                'description': 'missing whitespace around operator',
-                'fingerprint': 'd3a70e876294def236f2343d842febcc',
-                'location': {
-                    'path': './test.py',
-                    'positions': {
-                        'begin': {
-                            'column': 6,
-                            'line': 1,
-                        },
-                        'end': {
-                            'column': 6,
-                            'line': 1,
-                        },
-                    },
-                },
-                'type': 'issue',
-            },
         ],
     })
     def test_execute_with_syntax_errors(self):
@@ -271,19 +251,6 @@ class Flake8ToolTests(BaseToolTestCase):
                     '\n'
                     'Column: 5\n'
                     'Error code: E999'
-                ),
-                'issue_opened': True,
-                'rich_text': False,
-            },
-            {
-                'filediff_id': review_file.id,
-                'first_line': 1,
-                'num_lines': 1,
-                'text': (
-                    'missing whitespace around operator\n'
-                    '\n'
-                    'Column: 6\n'
-                    'Error code: E225'
                 ),
                 'issue_opened': True,
                 'rich_text': False,

@@ -124,7 +124,7 @@ class ShellCheckToolTests(BaseToolTestCase):
                 'level': 'style',
                 'line': 3,
                 'message': ('Use $(...) notation instead of legacy '
-                            'backticked `...`.'),
+                            'backticks `...`.'),
             },
             {
                 'code': 2086,
@@ -190,7 +190,7 @@ class ShellCheckToolTests(BaseToolTestCase):
                 'first_line': 3,
                 'num_lines': 1,
                 'text': (
-                    'Use $(...) notation instead of legacy backticked `...`.\n'
+                    'Use $(...) notation instead of legacy backticks `...`.\n'
                     '\n'
                     'Suggested replacement:\n'
                     '```eval $(foo)```\n'
@@ -319,7 +319,7 @@ class ShellCheckToolTests(BaseToolTestCase):
                 'level': 'style',
                 'line': 3,
                 'message': ('Use $(...) notation instead of legacy '
-                            'backticked `...`.'),
+                            'backticks `...`.'),
             },
         ],
     })
@@ -339,7 +339,7 @@ class ShellCheckToolTests(BaseToolTestCase):
                 'first_line': 3,
                 'num_lines': 1,
                 'text': (
-                    'Use $(...) notation instead of legacy backticked `...`.\n'
+                    'Use $(...) notation instead of legacy backticks `...`.\n'
                     '\n'
                     'Suggested replacement:\n'
                     '```eval $(foo)```\n'

@@ -18,6 +18,7 @@ import six
 from reviewbot.config import config
 from reviewbot.repositories import GitRepository
 from reviewbot.testing import TestCase
+from reviewbot.utils.filesystem import make_tempdir
 from reviewbot.utils.process import execute
 
 
@@ -312,7 +313,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
 
             @self.spy_for(repository.checkout)
             def _checkout(_self, *args, **kwargs):
-                return checkout_dir or tempfile.mkdtemp()
+                return checkout_dir or make_tempdir()
         else:
             repository = None
 
