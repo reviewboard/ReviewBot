@@ -134,13 +134,7 @@ class FullRepositoryToolMixin(object):
         with chdir(working_dir):
             for f in review.files:
                 self.logger.debug('Patching %s', f.dest_file)
-
-                ensure_dirs_exist(os.path.abspath(f.dest_file))
-
-                with open(f.dest_file, 'wb') as fp:
-                    fp.write(f.patched_file_contents)
-
-                f.patched_file_path = f.dest_file
+                f.apply_patch(working_dir)
 
             # Now run the tool for everything.
             super(FullRepositoryToolMixin, self).execute(review, **kwargs)

@@ -10,7 +10,7 @@ from rbtools.api.errors import APIError
 from reviewbot.processing.review import (ReviewFileStatus,
                                          logger as review_logger)
 from reviewbot.testing import TestCase
-from reviewbot.utils.filesystem import tmpdirs
+from reviewbot.utils.filesystem import make_tempdir, tmpdirs
 
 
 class FileTests(kgb.SpyAgency, TestCase):
@@ -61,6 +61,280 @@ class FileTests(kgb.SpyAgency, TestCase):
                     'old_linenum': 66,
                 },
             ]))
+
+    def test_apply_patch_with_add(self):
+        """Testing File.apply_patch with added file"""
+        tempdir = make_tempdir()
+        filename = os.path.join(tempdir, 'docs', 'test.txt')
+
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            source_revision='PRE-CREATION',
+            dest_file='docs/test.txt',
+            patched_content=b'This is the new content.\n')
+        review_file.apply_patch(tempdir)
+
+        self.assertTrue(os.path.exists(filename))
+
+        with open(filename, 'r') as fp:
+            self.assertEqual(fp.read(), 'This is the new content.\n')
+
+    def test_apply_patch_with_add_and_abs_path(self):
+        """Testing File.apply_patch with added file and absolute path"""
+        tempdir = make_tempdir()
+        filename = os.path.join(tempdir, 'docs', 'test.txt')
+
+        review_file = self.create_review_file(
+            self.review,
+            source_file='/docs/test.txt',
+            source_revision='PRE-CREATION',
+            dest_file='/docs/test.txt',
+            patched_content=b'This is the new content.\n')
+        review_file.apply_patch(tempdir)
+
+        self.assertTrue(os.path.exists(filename))
+
+        with open(filename, 'r') as fp:
+            self.assertEqual(fp.read(), 'This is the new content.\n')
+
+    def test_apply_patch_with_copy(self):
+        """Testing File.apply_patch with copied file"""
+        tempdir = make_tempdir()
+        docs_dir = os.path.join(tempdir, 'docs')
+        filename1 = os.path.join(docs_dir, 'test1.txt')
+        filename2 = os.path.join(tempdir, 'docs2', 'test2.txt')
+
+        os.mkdir(docs_dir, 0o755)
+
+        with open(filename1, 'w') as fp:
+            fp.write('This is a test.\n')
+
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test1.txt',
+            dest_file='docs2/test2.txt',
+            status=ReviewFileStatus.COPIED,
+            patched_content=b'This is the new content.\n')
+        review_file.apply_patch(tempdir)
+
+        with open(filename1, 'r') as fp:
+            self.assertEqual(fp.read(), 'This is a test.\n')
+
+        with open(filename2, 'r') as fp:
+            self.assertEqual(fp.read(), 'This is the new content.\n')
+
+    def test_apply_patch_with_copy_and_missing(self):
+        """Testing File.apply_patch with copied file and file is missing"""
+        tempdir = make_tempdir()
+        filename2 = os.path.join(tempdir, 'docs2', 'test2.txt')
+
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test1.txt',
+            dest_file='docs2/test2.txt',
+            status=ReviewFileStatus.COPIED,
+            patched_content=b'This is the new content.\n')
+        review_file.apply_patch(tempdir)
+
+        with open(filename2, 'r') as fp:
+            self.assertEqual(fp.read(), 'This is the new content.\n')
+
+    def test_apply_patch_with_copy_and_abs_path(self):
+        """Testing File.apply_patch with copied file and absolute path"""
+        tempdir = make_tempdir()
+        docs_dir = os.path.join(tempdir, 'docs')
+        filename1 = os.path.join(docs_dir, 'test1.txt')
+        filename2 = os.path.join(tempdir, 'docs2', 'test2.txt')
+
+        os.mkdir(docs_dir, 0o755)
+
+        with open(filename1, 'w') as fp:
+            fp.write('This is a test.\n')
+
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test1.txt',
+            dest_file='docs2/test2.txt',
+            status=ReviewFileStatus.COPIED,
+            patched_content=b'This is the new content.\n')
+        review_file.apply_patch(tempdir)
+
+        with open(filename1, 'r') as fp:
+            self.assertEqual(fp.read(), 'This is a test.\n')
+
+        with open(filename2, 'r') as fp:
+            self.assertEqual(fp.read(), 'This is the new content.\n')
+
+    def test_apply_patch_with_delete(self):
+        """Testing File.apply_patch with deleted file"""
+        tempdir = make_tempdir()
+        docs_dir = os.path.join(tempdir, 'docs')
+        filename = os.path.join(docs_dir, 'test.txt')
+
+        os.mkdir(docs_dir, 0o755)
+
+        with open(filename, 'w') as fp:
+            fp.write('This is a test.\n')
+
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            dest_file='docs/test.txt',
+            status=ReviewFileStatus.DELETED,
+            patched_content=b'This is the new content.\n')
+        review_file.apply_patch(tempdir)
+
+        self.assertFalse(os.path.exists(filename))
+
+    def test_apply_patch_with_delete_and_missing(self):
+        """Testing File.apply_patch with deleted file and file missing"""
+        tempdir = make_tempdir()
+        docs_dir = os.path.join(tempdir, 'docs')
+        filename = os.path.join(docs_dir, 'test.txt')
+
+        os.mkdir(docs_dir, 0o755)
+
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            dest_file='docs/test.txt',
+            status=ReviewFileStatus.DELETED,
+            patched_content=b'This is the new content.\n')
+        review_file.apply_patch(tempdir)
+
+        self.assertFalse(os.path.exists(filename))
+
+    def test_apply_patch_with_delete_and_abs_path(self):
+        """Testing File.apply_patch with deleted file and absolute path"""
+        tempdir = make_tempdir()
+        docs_dir = os.path.join(tempdir, 'docs')
+        filename = os.path.join(docs_dir, 'test.txt')
+
+        os.mkdir(docs_dir, 0o755)
+
+        with open(filename, 'w') as fp:
+            fp.write('This is a test.\n')
+
+        review_file = self.create_review_file(
+            self.review,
+            source_file='/docs/test.txt',
+            dest_file='/docs/test.txt',
+            status=ReviewFileStatus.DELETED,
+            patched_content=b'This is the new content.\n')
+        review_file.apply_patch(tempdir)
+
+        self.assertFalse(os.path.exists(filename))
+
+    def test_apply_patch_with_modified(self):
+        """Testing File.apply_patch with modified file"""
+        tempdir = make_tempdir()
+        docs_dir = os.path.join(tempdir, 'docs')
+        filename = os.path.join(docs_dir, 'test.txt')
+
+        os.mkdir(docs_dir, 0o755)
+
+        with open(filename, 'w') as fp:
+            fp.write('This is a test.\n')
+
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test.txt',
+            dest_file='docs/test.txt',
+            patched_content=b'This is the new content.\n')
+        review_file.apply_patch(tempdir)
+
+        with open(filename, 'r') as fp:
+            self.assertEqual(fp.read(),
+                             'This is the new content.\n')
+
+    def test_apply_patch_with_modified_and_abs_path(self):
+        """Testing File.apply_patch with modified file and absolute path"""
+        tempdir = make_tempdir()
+        docs_dir = os.path.join(tempdir, 'docs')
+        filename = os.path.join(docs_dir, 'test.txt')
+
+        os.mkdir(docs_dir, 0o755)
+
+        with open(filename, 'w') as fp:
+            fp.write('This is a test.\n')
+
+        review_file = self.create_review_file(
+            self.review,
+            source_file='/docs/test.txt',
+            dest_file='/docs/test.txt',
+            patched_content=b'This is the new content.\n')
+        review_file.apply_patch(tempdir)
+
+        with open(filename, 'r') as fp:
+            self.assertEqual(fp.read(),
+                             'This is the new content.\n')
+
+    def test_apply_patch_with_move(self):
+        """Testing File.apply_patch with moved file"""
+        tempdir = make_tempdir()
+        docs_dir = os.path.join(tempdir, 'docs')
+        filename1 = os.path.join(docs_dir, 'test1.txt')
+        filename2 = os.path.join(tempdir, 'docs2', 'test2.txt')
+
+        os.mkdir(docs_dir, 0o755)
+
+        with open(filename1, 'w') as fp:
+            fp.write('This is a test.\n')
+
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test1.txt',
+            dest_file='docs2/test2.txt',
+            status=ReviewFileStatus.MOVED,
+            patched_content=b'This is the new content.\n')
+        review_file.apply_patch(tempdir)
+
+        self.assertFalse(os.path.exists(filename1))
+
+        with open(filename2, 'r') as fp:
+            self.assertEqual(fp.read(), 'This is the new content.\n')
+
+    def test_apply_patch_with_move_and_abs_path(self):
+        """Testing File.apply_patch with moved file and absolute path"""
+        tempdir = make_tempdir()
+        docs_dir = os.path.join(tempdir, 'docs')
+        filename1 = os.path.join(docs_dir, 'test1.txt')
+        filename2 = os.path.join(tempdir, 'docs2', 'test2.txt')
+
+        os.mkdir(docs_dir, 0o755)
+
+        with open(filename1, 'w') as fp:
+            fp.write('This is a test.\n')
+
+        review_file = self.create_review_file(
+            self.review,
+            source_file='/docs/test1.txt',
+            dest_file='/docs2/test2.txt',
+            status=ReviewFileStatus.MOVED,
+            patched_content=b'This is the new content.\n')
+        review_file.apply_patch(tempdir)
+
+        self.assertFalse(os.path.exists(filename1))
+
+        with open(filename2, 'r') as fp:
+            self.assertEqual(fp.read(), 'This is the new content.\n')
+
+    def test_apply_patch_with_move_and_missing(self):
+        """Testing File.apply_patch with moved file and file is missing"""
+        tempdir = make_tempdir()
+        filename2 = os.path.join(tempdir, 'docs2', 'test2.txt')
+
+        review_file = self.create_review_file(
+            self.review,
+            source_file='docs/test1.txt',
+            dest_file='docs2/test2.txt',
+            status=ReviewFileStatus.MOVED,
+            patched_content=b'This is the new content.\n')
+        review_file.apply_patch(tempdir)
+
+        with open(filename2, 'r') as fp:
+            self.assertEqual(fp.read(), 'This is the new content.\n')
 
     def test_comment(self):
         """Testing File.comment"""

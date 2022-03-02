@@ -7,7 +7,8 @@ from itertools import islice
 
 from rbtools.api.errors import APIError
 
-from reviewbot.utils.filesystem import (make_tempdir,
+from reviewbot.utils.filesystem import (ensure_dirs_exist,
+                                        make_tempdir,
                                         make_tempfile,
                                         normalize_platform_path)
 from reviewbot.utils.log import get_logger
@@ -249,6 +250,60 @@ class File(object):
                                                original=original)
             ),
             num_lines))
+
+    def apply_patch(self, root_target_dir):
+        """Apply the patch for this file to the filesystem.
+
+        The file will be written relative to the current directory.
+
+        Version Added:
+            3.0
+
+        Args:
+            root_target_dir (unicode):
+                The root directory for the project. No files are allowed to
+                be created, modified, deleted, or linked to outside of this
+                path.
+
+        Raises:
+            reviewbot.errors.SuspiciousFilePath:
+                The patch tried to work with a file outside of
+                ``root_target_dir``.
+        """
+        source_file = os.path.abspath(os.path.join(root_target_dir,
+                                                   self.source_file))
+        dest_file = os.path.abspath(os.path.join(root_target_dir,
+                                                 self.dest_file))
+
+        assert os.path.commonprefix((source_file, dest_file,
+                                     root_target_dir)) == root_target_dir, (
+            '%r and %r must be located within %r'
+            % (source_file, dest_file, root_target_dir))
+
+        if self.status == ReviewFileStatus.DELETED:
+            try:
+                os.unlink(source_file)
+            except Exception as e:
+                # We'll log and then continue.
+                logger.warning('Unable to delete source file "%s" for '
+                               'FileDiff ID=%s: %s',
+                               source_file, self.id, e)
+        else:
+            ensure_dirs_exist(dest_file)
+
+            if self.status == ReviewFileStatus.MOVED:
+                try:
+                    os.rename(source_file, dest_file)
+                except Exception as e:
+                    # We'll log and then continue, just creating the new file.
+                    logger.warning('Unable to move source file "%s" to '
+                                   'to "%s" for FileDiff ID=%s',
+                                   source_file, dest_file, self.id)
+
+            with open(dest_file, 'wb') as fp:
+                fp.write(self.patched_file_contents)
+
+        self.patched_file_path = self.dest_file
 
     def comment(self, text, first_line, num_lines=1, start_column=None,
                 error_code=None, issue=None, rich_text=False, original=False,
