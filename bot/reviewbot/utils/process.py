@@ -64,6 +64,8 @@ def execute(command,
 
         If ``split_lines`` is ``True``, those strings will instead be lists
         of lines (preserving newlines).
+
+        All resulting strings will be Unicode.
     """
     if isinstance(command, list):
         logger.debug(subprocess.list2cmdline(command))
@@ -102,6 +104,9 @@ def execute(command,
                              env=env)
 
     data, errors = p.communicate()
+
+    if isinstance(data, bytes):
+        data = data.decode('utf-8')
 
     if split_lines:
         data = data.splitlines(True)

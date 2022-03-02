@@ -13,6 +13,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
                                      integration_test,
                                      simulation_test)
+from reviewbot.tools.base.mixins import JavaToolMixin
 from reviewbot.utils.filesystem import tmpdirs, tmpfiles
 from reviewbot.utils.process import execute, is_exe_in_path
 
@@ -24,6 +25,9 @@ class PMDToolTests(BaseToolTestCase):
     tool_class = PMDTool
     tool_exe_config_key = 'pmd'
     tool_exe_path = '/path/to/pmd'
+    tool_extra_exe_paths = {
+        'java': '/path/to/java',
+    }
 
     def test_check_dependencies_with_no_config(self):
         """Testing PMDTool.check_dependencies with no configured pmd_path"""
@@ -35,18 +39,35 @@ class PMDToolTests(BaseToolTestCase):
         """Testing PMDTool.check_dependencies with configured pmd_path not
         found on filesystem
         """
-        self.spy_on(is_exe_in_path, op=kgb.SpyOpReturn(False))
+        self.spy_on(is_exe_in_path, op=kgb.SpyOpMatchInOrder([
+            {
+                'args': ('/path/to/java',),
+                'op': kgb.SpyOpReturn(True),
+            },
+            {
+                'args': ('/path/to/pmd',),
+                'op': kgb.SpyOpReturn(False),
+            },
+        ]))
 
         new_config = {
             'exe_paths': {
+                'java': '/path/to/java',
                 'pmd': '/path/to/pmd',
             }
         }
 
-        with self.override_config(new_config):
-            tool = PMDTool()
-            self.assertFalse(tool.check_dependencies())
-            self.assertSpyCalledWith(is_exe_in_path, '/path/to/pmd')
+        JavaToolMixin.set_has_java_runtime(True)
+
+        try:
+            with self.override_config(new_config):
+                tool = PMDTool()
+                self.assertFalse(tool.check_dependencies())
+        finally:
+            JavaToolMixin.clear_has_java_runtime()
+
+        self.assertSpyCalledWith(is_exe_in_path, '/path/to/java')
+        self.assertSpyCalledWith(is_exe_in_path, '/path/to/pmd')
 
     def test_check_dependencies_with_pmd_found(self):
         """Testing PMDTool.check_dependencies with configured pmd_path
@@ -56,14 +77,20 @@ class PMDToolTests(BaseToolTestCase):
 
         new_config = {
             'exe_paths': {
+                'java': '/path/to/java',
                 'pmd': '/path/to/pmd',
             }
         }
 
-        with self.override_config(new_config):
-            tool = PMDTool()
-            self.assertTrue(tool.check_dependencies())
-            self.assertSpyCalledWith(is_exe_in_path, '/path/to/pmd')
+        JavaToolMixin.set_has_java_runtime(True)
+
+        try:
+            with self.override_config(new_config):
+                tool = PMDTool()
+                self.assertTrue(tool.check_dependencies())
+                self.assertSpyCalledWith(is_exe_in_path, '/path/to/pmd')
+        finally:
+            JavaToolMixin.clear_has_java_runtime()
 
     @integration_test()
     @simulation_test(output_payload={
@@ -553,6 +580,8 @@ class PMDToolTests(BaseToolTestCase):
             stderr (unicode, optional):
                 The error output to simulate from PMD.
         """
+        assert isinstance(stderr, six.text_type)
+
         @self.spy_for(execute)
         def _execute(cmdline, *args, **kwargs):
             if output_payload is not None:

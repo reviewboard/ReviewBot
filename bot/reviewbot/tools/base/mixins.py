@@ -161,6 +161,27 @@ class JavaToolMixin(object):
 
     exe_dependencies = ['java']
 
+    @classmethod
+    def set_has_java_runtime(cls, has_runtime):
+        """Set whether there's a Java runtime installed.
+
+        Args:
+            has_runtime (bool):
+                Whether there's a runtime installed.
+        """
+        JavaToolMixin._has_java_runtime = has_runtime
+
+    @classmethod
+    def clear_has_java_runtime(cls):
+        """Clear whether there's a Java runtime installed.
+
+        This will force the next dependency check to re-check for a runtime.
+        """
+        try:
+            delattr(JavaToolMixin, '_has_java_runtime')
+        except AttributeError:
+            pass
+
     def check_dependencies(self):
         """Verify the tool's dependencies are installed.
 
@@ -175,19 +196,40 @@ class JavaToolMixin(object):
             returns False, the worker will not listen for this Tool's queue,
             and a warning will be logged.
         """
+        # Run any standard dependency checks.
         if not super(JavaToolMixin, self).check_dependencies():
             return False
 
-        classpath = \
-            config['java_classpaths'].get(self.java_classpaths_key, [])
+        # Make sure that `java` has a suitable runtime. It's not enough
+        # to just be present in the path.
+        if not hasattr(JavaToolMixin, '_has_java_runtime'):
+            try:
+                execute([config['exe_paths']['java'], '-version'])
 
-        if not self._check_java_classpath(classpath):
+                JavaToolMixin.set_has_java_runtime(True)
+            except Exception:
+                JavaToolMixin.set_has_java_runtime(False)
+
+        if not JavaToolMixin._has_java_runtime:
             return False
 
-        output = execute(self._build_java_command(),
-                         ignore_errors=True)
+        # If there's a classpath set, make sure the modules we need are in it.
+        if self.java_classpaths_key is not None:
+            classpath = \
+                config['java_classpaths'].get(self.java_classpaths_key, [])
 
-        return 'Could not find or load main class' not in output
+            if not self._check_java_classpath(classpath):
+                return False
+
+        # If this tool is invoked directly through Java with a Main class,
+        # check it now.
+        if self.java_main:
+            output = execute(self._build_java_command(),
+                             ignore_errors=True)
+
+            return 'Could not find or load main class' not in output
+
+        return True
 
     def build_base_command(self, **kwargs):
         """Build the base command line used to review files.

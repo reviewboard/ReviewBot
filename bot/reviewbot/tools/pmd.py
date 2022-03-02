@@ -4,12 +4,14 @@ import json
 import os
 
 from reviewbot.config import config
-from reviewbot.tools.base import BaseTool, FilePatternsFromSettingMixin
+from reviewbot.tools.base import (BaseTool,
+                                  FilePatternsFromSettingMixin,
+                                  JavaToolMixin)
 from reviewbot.utils.filesystem import make_tempfile
 from reviewbot.utils.process import execute
 
 
-class PMDTool(FilePatternsFromSettingMixin, BaseTool):
+class PMDTool(JavaToolMixin, FilePatternsFromSettingMixin, BaseTool):
     """Review Bot tool to run PMD."""
 
     name = 'PMD'
@@ -17,7 +19,7 @@ class PMDTool(FilePatternsFromSettingMixin, BaseTool):
     description = 'Checks code for errors using the PMD source code checker.'
     timeout = 90
 
-    exe_dependencies = ['pmd']
+    exe_dependencies = ['java', 'pmd']
 
     file_extensions_setting = 'file_ext'
 
@@ -124,7 +126,7 @@ class PMDTool(FilePatternsFromSettingMixin, BaseTool):
             # First, though, filter out the errors and sanitize them.
             rulesets_file = base_command[-1]
 
-            errors = '\n'.join(
+            error_output = '\n'.join(
                 _error
                 .replace(os.path.realpath(path), f.source_file)
                 .replace(rulesets_file,
@@ -140,7 +142,7 @@ class PMDTool(FilePatternsFromSettingMixin, BaseTool):
                       '```\n'
                       '%s\n'
                       '```'
-                      % errors.strip(),
+                      % error_output.strip(),
                       first_line=None)
             return
 
