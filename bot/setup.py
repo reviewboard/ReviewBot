@@ -22,7 +22,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'reviewbot = reviewbot.celery:main'
+            'reviewbot = reviewbot.main:main'
         ],
         'reviewbot.tools': [
             'cargotool = reviewbot.tools.cargotool:CargoTool',
