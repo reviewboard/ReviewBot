@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.conf.urls import url
 from django.contrib import admin
-from django.shortcuts import render_to_response
+from django.http import HttpResponse
 from django.template.context import RequestContext
 from reviewboard.extensions.base import get_extension_manager
 
@@ -51,13 +51,29 @@ class ToolAdmin(admin.ModelAdmin):
         }),
     )
 
-    def refresh_tools_view(self, request, template_name='refresh.html'):
+    def refresh_tools_view(self, *args, **kwargs):
+        """Refresh the list of tools.
+
+        This will mark all current tools as stale and ask the workers to
+        send new tool information.
+
+        Args:
+            *args (tuple, unused):
+                Unused positional arguments.
+
+            **kwargs (dict, unused):
+                Unused keyword arguments.
+
+        Returns:
+            django.http.HttpResponse:
+            The result of the API call.
+        """
         Tool.objects.all().update(in_last_update=False)
         ReviewBotExtension.instance.send_refresh_tools()
 
-        return render_to_response(
-            template_name,
-            RequestContext(request, {},  current_app=self.admin_site.name))
+        # The caller is not sensitive to the contents. It's just looking for
+        # a response.
+        return HttpResponse('ok')
 
     def get_urls(self):
         urls = super(ToolAdmin, self).get_urls()
