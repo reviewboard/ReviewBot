@@ -2,11 +2,58 @@ from __future__ import division, unicode_literals
 
 import json
 import os
+from enum import Enum
 from itertools import islice
 
 from rbtools.api.errors import APIError
 
-from reviewbot.utils.filesystem import make_tempdir, make_tempfile
+from reviewbot.utils.filesystem import (ensure_dirs_exist,
+                                        make_tempdir,
+                                        make_tempfile,
+                                        normalize_platform_path)
+from reviewbot.utils.log import get_logger
+
+
+#: The logger for the module.
+#:
+#: Version Added:
+#:     3.0
+logger = get_logger(__name__, is_task_logger=False)
+
+
+class ReviewFileStatus(Enum):
+    """The change status of a file.
+
+    Version Added:
+        3.0
+    """
+
+    CREATED = 'created'
+    DELETED = 'deleted'
+    MODIFIED = 'modified'
+    MOVED = 'moved'
+    COPIED = 'copied'
+
+    @classmethod
+    def for_filediff(cls, filediff):
+        """Return a status for a FileDiff.
+
+        Args:
+            filediff (rbtools.api.resource.Resource):
+                The filediff resource.
+
+        Returns:
+            ReviewFileStatus:
+            The resulting status.
+
+        Raises:
+            ValueError:
+                The status for the FileDiff is unknown/unsupported.
+        """
+        if filediff.source_revision == 'PRE-CREATION':
+            return cls.CREATED
+        else:
+            return cls(filediff.status)
 
 
 class File(object):
@@ -31,13 +78,21 @@ class File(object):
         """
         self.review = review
         self.id = int(api_filediff.id)
-        self.source_file = api_filediff.source_file
-        self.dest_file = api_filediff.dest_file
         self.diff_data = api_filediff.get_diff_data()
-        self._api_filediff = api_filediff
-        self.filename, self.file_extension = os.path.splitext(
-            api_filediff.dest_file)
+        self.status = ReviewFileStatus.for_filediff(api_filediff)
         self.patched_file_path = None
+
+        self.source_file = normalize_platform_path(api_filediff.source_file)
+
+        if api_filediff.source_file == api_filediff.dest_file:
+            # We don't need to normalize again. Just copy.
+            self.dest_file = self.source_file
+        else:
+            self.dest_file = normalize_platform_path(api_filediff.dest_file)
+
+        self.filename, self.file_extension = os.path.splitext(self.dest_file)
+
+        self._api_filediff = api_filediff
 
     @property
     def patched_file_contents(self):
@@ -47,11 +102,27 @@ class File(object):
             bytes:
             The contents of the patched file.
         """
-        if not hasattr(self._api_filediff, 'get_patched_file'):
+        if (self.status == ReviewFileStatus.DELETED or
+            not hasattr(self._api_filediff, 'get_patched_file')):
             return None
 
-        patched_file = self._api_filediff.get_patched_file()
-        return patched_file.data
+        try:
+            return self._api_filediff.get_patched_file().data
+        except APIError as e:
+            if e.http_status == 404:
+                # This was a deleted file, a deleted FileDiff entry,
+                # or something has gone wrong with the setup.
+                return None
+            elif e.http_status == 500:
+                # There was an issue with the patch server-side. Likely,
+                # there's a failure applying the patch, or an outage
+                # with a server. Log and skip.
+                logger.warning('Received a HTTP 500 fetching patched '
+                               'content for %r: %r',
+                               self._api_filediff, e)
+                return None
+
+            raise
 
     @property
     def original_file_contents(self):
@@ -61,65 +132,86 @@ class File(object):
             bytes:
             The contents of the original file.
         """
-        if not hasattr(self._api_filediff, 'get_original_file'):
+        if (self.status == ReviewFileStatus.CREATED or
+            not hasattr(self._api_filediff, 'get_original_file')):
             return None
 
-        original_file = self._api_filediff.get_original_file()
-        return original_file.data
+        try:
+            return self._api_filediff.get_original_file().data
+        except APIError as e:
+            if e.http_status == 404:
+                # This was a deleted FileDiff entry, or something has gone
+                # wrong with the setup.
+                return None
+            elif e.http_status == 500:
+                # There was probably an issue with accessing the repository
+                # server-side. Log and skip.
+                logger.warning('Received a HTTP 500 fetching original content '
+                               'for %r: %r',
+                               self._api_filediff, e)
+                return None
+
+            raise
 
     def get_patched_file_path(self):
         """Fetch the patched file and return the filename of it.
 
+        Version Changed:
+            3.0:
+            Empty files no longer return ``None``.
+
         Returns:
             unicode:
             The filename of a new temporary file containing the patched file
-            contents. If the file is empty, return None.
+            contents. If the file is deleted, this will return ``None``.
         """
         if self.patched_file_path:
             return self.patched_file_path
-        else:
-            try:
-                contents = self.patched_file_contents
-            except APIError as e:
-                if e.http_status == 404:
-                    # This was a deleted file.
-                    return None
-                else:
-                    raise
 
-            if contents:
-                tempdir = make_tempdir()
-                filename = os.path.join(tempdir,
-                                        os.path.basename(self.dest_file))
+        if self.status == ReviewFileStatus.DELETED:
+            return None
 
-                with open(filename, 'wb') as fp:
-                    fp.write(contents)
+        contents = self.patched_file_contents
 
-                return filename
-            else:
-                return None
+        # Make sure we don't treat empty files as non-existent at this point.
+        if contents is None:
+            return None
+
+        tempdir = make_tempdir()
+        filename = os.path.join(tempdir, os.path.basename(self.dest_file))
+
+        with open(filename, 'wb') as fp:
+            fp.write(contents)
+
+        return filename
 
     def get_original_file_path(self):
         """Fetch the original file and return the filename of it.
 
+        Version Changed:
+            3.0:
+            Empty files no longer return ``None``.
+
         Returns:
             unicode:
             The filename of a new temporary file containing the original file
-            contents. If the file is empty, return None.
+            contents. If the file is new, this will return ``None``.
         """
+        if self.status == ReviewFileStatus.CREATED:
+            return None
+
         contents = self.original_file_contents
 
-        if contents:
-            tempdir = make_tempdir()
-            filename = os.path.join(tempdir,
-                                    os.path.basename(self.source_file))
-
-            with open(filename, 'wb') as fp:
-                fp.write(contents)
-
-            return filename
-        else:
+        if contents is None:
             return None
+
+        tempdir = make_tempdir()
+        filename = os.path.join(tempdir, os.path.basename(self.source_file))
+
+        with open(filename, 'wb') as fp:
+            fp.write(contents)
+
+        return filename
 
     def get_lines(self, first_line, num_lines=1, original=False):
         """Return the lines from the file in the given range.
@@ -158,6 +250,60 @@ class File(object):
                                                original=original)
             ),
             num_lines))
+
+    def apply_patch(self, root_target_dir):
+        """Apply the patch for this file to the filesystem.
+
+        The file will be written relative to the current directory.
+
+        Version Added:
+            3.0
+
+        Args:
+            root_target_dir (unicode):
+                The root directory for the project. No files are allowed to
+                be created, modified, deleted, or linked to outside of this
+                path.
+
+        Raises:
+            reviewbot.errors.SuspiciousFilePath:
+                The patch tried to work with a file outside of
+                ``root_target_dir``.
+        """
+        source_file = os.path.abspath(os.path.join(root_target_dir,
+                                                   self.source_file))
+        dest_file = os.path.abspath(os.path.join(root_target_dir,
+                                                 self.dest_file))
+
+        assert os.path.commonprefix((source_file, dest_file,
+                                     root_target_dir)) == root_target_dir, (
+            '%r and %r must be located within %r'
+            % (source_file, dest_file, root_target_dir))
+
+        if self.status == ReviewFileStatus.DELETED:
+            try:
+                os.unlink(source_file)
+            except Exception as e:
+                # We'll log and then continue.
+                logger.warning('Unable to delete source file "%s" for '
+                               'FileDiff ID=%s: %s',
+                               source_file, self.id, e)
+        else:
+            ensure_dirs_exist(dest_file)
+
+            if self.status == ReviewFileStatus.MOVED:
+                try:
+                    os.rename(source_file, dest_file)
+                except Exception as e:
+                    # We'll log and then continue, just creating the new file.
+                    logger.warning('Unable to move source file "%s" to '
+                                   'to "%s" for FileDiff ID=%s',
+                                   source_file, dest_file, self.id)
+
+            with open(dest_file, 'wb') as fp:
+                fp.write(self.patched_file_contents)
+
+        self.patched_file_path = self.dest_file
 
     def comment(self, text, first_line, num_lines=1, start_column=None,
                 error_code=None, issue=None, rich_text=False, original=False,
@@ -460,6 +606,13 @@ class Review(object):
     #: Additional text to show below the comments in the review.
     body_bottom = ""
 
+    _VALID_FILEDIFF_STATUS_TYPES = {
+        'copied',
+        'deleted',
+        'modified',
+        'moved',
+    }
+
     def __init__(self, api_root, review_request_id, diff_revision, settings):
         """Initialize the review.
 
@@ -486,13 +639,25 @@ class Review(object):
         self.general_comments = []
 
         # Get the list of files.
-        self.files = []
+        files = []
+
         if self.diff_revision:
-            files = api_root.get_files(
+            filediffs = api_root.get_files(
                 review_request_id=self.review_request_id,
                 diff_revision=self.diff_revision)
 
-            self.files = [File(self, f) for f in files]
+            for filediff in filediffs:
+                # Filter out binary files and symlinks.
+                if (filediff.binary or
+                    filediff.status not in self._VALID_FILEDIFF_STATUS_TYPES or
+                    ('is_symlink' in filediff.extra_data and
+                     filediff.extra_data['is_symlink'])):
+                    continue
+
+                files.append(File(review=self,
+                                  api_filediff=filediff))
+
+        self.files = files
 
     def general_comment(self, text, issue=None, rich_text=False):
         """Make a general comment.

@@ -15,8 +15,10 @@ class RubocopTool(BaseTool):
 
     name = 'RuboCop'
     version = '1.0'
-    description = ('Checks Ruby code for style errors based on the '
-                   'community Ruby style guide using RuboCop.')
+    description = (
+        'Checks Ruby code for style errors based on the community Ruby style '
+        'guide using RuboCop.'
+    )
     timeout = 60
 
     exe_dependencies = ['rubocop']
@@ -29,10 +31,12 @@ class RubocopTool(BaseTool):
             'default': '',
             'field_options': {
                 'label': 'Except',
-                'help_text': ('Run all cops enabled by configuration except '
-                              'the specified cop(s) and/or departments. This '
-                              'will be passed to the --except command line '
-                              'argument (e.g. Lint/UselessAssignment).'),
+                'help_text': (
+                    'Run all cops enabled by configuration except the '
+                    'specified cop(s) and/or departments. This will be '
+                    'passed to the --except command line argument (e.g. '
+                    'Lint/UselessAssignment).'
+                ),
                 'required': False,
             },
         },
@@ -90,7 +94,7 @@ class RubocopTool(BaseTool):
             # result JSON payloads.
             lines = output.splitlines()
 
-            f.comment('rubocop could not analyze this file, due to the '
+            f.comment('RuboCop could not analyze this file, due to the '
                       'following errors:\n'
                       '\n'
                       '```%s```'

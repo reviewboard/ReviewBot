@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import json
 import os
+import re
 
 import kgb
 import six
@@ -391,7 +392,7 @@ class RubocopToolTests(BaseToolTestCase):
                 'first_line': 1,
                 'num_lines': 1,
                 'text': (
-                    'rubocop could not analyze this file, due to the '
+                    'RuboCop could not analyze this file, due to the '
                     'following errors:\n'
                     '\n'
                     '```Unrecognized cop or department: XXXBAD.```'
@@ -453,6 +454,13 @@ class RubocopToolTests(BaseToolTestCase):
             filename='test.rb',
             file_contents=b'{{]]')
 
+        self.assertNotEqual(review.comments, [])
+
+        # Normalize the Ruby version number in the result, for comparison.
+        review.comments[0]['text'] = re.sub(r'Ruby \d+.\d+',
+                                            'Ruby X.Y',
+                                            review.comments[0]['text'])
+
         self.assertEqual(review.comments, [
             {
                 'filediff_id': review_file.id,
@@ -460,7 +468,7 @@ class RubocopToolTests(BaseToolTestCase):
                 'num_lines': 1,
                 'text': (
                     'unexpected token tRBRACK\n'
-                    '(Using Ruby 2.4 parser; configure using '
+                    '(Using Ruby X.Y parser; configure using '
                     '`TargetRubyVersion` parameter, under `AllCops`)\n'
                     '\n'
                     'Column: 3\n'

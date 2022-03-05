@@ -33,8 +33,7 @@ class CPPLintTool(BaseTool):
 
     name = 'cpplint'
     version = '1.0'
-    description = ("Checks code for style errors using Google's cpplint "
-                   "tool.")
+    description = "Checks code for style errors using Google's cpplint tool."
     timeout = 30
 
     exe_dependencies = ['cpplint']
@@ -51,9 +50,11 @@ class CPPLintTool(BaseTool):
             'min_value': 1,
             'max_value': 5,
             'field_options': {
-                'label': 'Verbosity level for CPP Lint',
-                'help_text': ('Which level of messages should be displayed. '
-                              '1=All, 5=Few.'),
+                'label': 'Verbosity level for cpplint',
+                'help_text': (
+                    'Which level of messages should be displayed. '
+                    '1=All, 5=Few.'
+                ),
                 'required': True,
             },
         },
@@ -63,9 +64,10 @@ class CPPLintTool(BaseTool):
             'default': '',
             'field_options': {
                 'label': 'Tests to exclude',
-                'help_text': ('Comma-separated list of tests to exclude (run '
-                              'cpplint --filter= to see all possible '
-                              'choices).'),
+                'help_text': (
+                    'Comma-separated list of tests to exclude (run cpplint '
+                    '--filter= to see all possible choices).'
+                ),
                 'required': False,
             },
         },

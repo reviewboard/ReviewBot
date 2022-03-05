@@ -10,6 +10,78 @@ languages.
 .. _PMD: https://pmd.github.io/
 
 
+Supported File Types
+====================
+
+The following are supported by this tool:
+
+* Apex: :file:`*.cls`
+* C/C++: :file:`*.c`, :file:`*.cc`, :file:`*.cpp`, :file:`*.cxx`,
+  :file:`*.C`, :file:`*.h`, :file:`*.hpp`, :file:`*.hxx`
+* C#: :file:`*.cs`
+* Dart: :file:`*.dart`
+* Fortran: :file:`*.f`, :file:`*.f66`, :file:`*.f77`, :file:`*.f90`,
+  :file:`*.for`
+* Go: :file:`*.go`
+* Groovy: :file:`*.groovy`
+* Java: :file:`*.java`
+* JavaScript: :file:`*.js`
+* Java Server Pages: :file:`*.jsp`, :file:`*.jspf`, :file:`*.jspx`,
+  :file:`*.tag`
+* Kotlin: :file:`*.kt`
+* Lua: :file:`*.lua`
+* Matlab: :file:`*.m`
+* Modelica: :file:`*.mo`
+* Objective-C: :file:`*.h`, :file:`*.m`
+* Perl: :file:`*.plm`, :file:`*.pm`, :file:`*.t`
+* PHP: :file:`*.class`, :file:`*.php`
+* PL/SQL: :file:`*.fnc`, :file:`*.pkb`, :file:`*.pkh`, :file:`*.pks`,
+  :file:`*.plb`, :file:`*.pld`, :file:`*.plh`, :file:`*.pls`, :file:`*.prc`,
+  :file:`*.sql`, :file:`*.tpb`, :file:`*.tps`, :file:`*.trg`, :file:`*.tyb`,
+  :file:`*.typ`
+* Python: :file:`*.py`
+* Ruby: :file:`*.cgi`, :file:`*.class`, :file:`*.rb`
+* Scala: :file:`*.scala`
+* Swift: :file:`*.swift`
+* VisualForce: :file:`*.component`, :file:`*.page`
+* VM: :file:`*.vm`
+* XML: :file:`*.xml`
+
+It may also scan other file extensions to see if they appear to be one of the
+languages above.
+
+PMD can be configured to match only specific file types.
+
+
+..
+  File Extension References:
+
+  * Apex: https://github.com/pmd/pmd/blob/master/pmd-apex/src/main/java/net/sourceforge/pmd/cpd/ApexLanguage.java
+  * C/C++: https://github.com/pmd/pmd/blob/master/pmd-cpp/src/main/java/net/sourceforge/pmd/cpd/CPPLanguage.java
+  * C#: https://github.com/pmd/pmd/blob/master/pmd-cs/src/main/java/net/sourceforge/pmd/cpd/CsLanguage.java
+  * Dart: https://github.com/pmd/pmd/blob/master/pmd-dart/src/main/java/net/sourceforge/pmd/cpd/DartLanguage.java
+  * Fortran: https://github.com/pmd/pmd/blob/master/pmd-fortran/src/main/java/net/sourceforge/pmd/cpd/FortranLanguage.java
+  * Go: https://github.com/pmd/pmd/blob/master/pmd-go/src/main/java/net/sourceforge/pmd/cpd/GoLanguage.java
+  * Groovy: https://github.com/pmd/pmd/blob/master/pmd-groovy/src/main/java/net/sourceforge/pmd/cpd/GroovyLanguage.java
+  * Java: https://github.com/pmd/pmd/blob/master/pmd-java/src/main/java/net/sourceforge/pmd/cpd/JavaLanguage.java
+  * Java Server Pages: https://github.com/pmd/pmd/blob/master/pmd-jsp/src/main/java/net/sourceforge/pmd/cpd/JSPLanguage.java
+  * Kotlin: https://github.com/pmd/pmd/blob/master/pmd-kotlin/src/main/java/net/sourceforge/pmd/cpd/KotlinLanguage.java
+  * Lua: https://github.com/pmd/pmd/blob/master/pmd-lua/src/main/java/net/sourceforge/pmd/cpd/LuaLanguage.java
+  * Matlab: https://github.com/pmd/pmd/blob/master/pmd-matlab/src/main/java/net/sourceforge/pmd/cpd/MatlabLanguage.java
+  * Modelica: https://github.com/pmd/pmd/blob/master/pmd-modelica/src/main/java/net/sourceforge/pmd/cpd/ModelicaLanguage.java
+  * Objective-C: https://github.com/pmd/pmd/blob/master/pmd-objectivec/src/main/java/net/sourceforge/pmd/cpd/ObjectiveCLanguage.java
+  * Perl: https://github.com/pmd/pmd/blob/master/pmd-perl/src/main/java/net/sourceforge/pmd/cpd/PerlLanguage.java
+  * PHP: https://github.com/pmd/pmd/blob/master/pmd-php/src/main/java/net/sourceforge/pmd/cpd/PHPLanguage.java
+  * PL/SQL: https://github.com/pmd/pmd/blob/master/pmd-plsql/src/main/java/net/sourceforge/pmd/cpd/PLSQLLanguage.java
+  * Python: https://github.com/pmd/pmd/blob/master/pmd-python/src/main/java/net/sourceforge/pmd/cpd/PythonLanguage.java
+  * Ruby: https://github.com/pmd/pmd/blob/master/pmd-ruby/src/main/java/net/sourceforge/pmd/cpd/RubyLanguage.java
+  * Scala: https://github.com/pmd/pmd/blob/master/pmd-scala-modules/pmd-scala-common/src/main/java/net/sourceforge/pmd/cpd/ScalaLanguage.java
+  * Swift: https://github.com/pmd/pmd/blob/master/pmd-swift/src/main/java/net/sourceforge/pmd/cpd/SwiftLanguage.java
+  * VisualForce: https://github.com/pmd/pmd/blob/master/pmd-visualforce/src/main/java/net/sourceforge/pmd/cpd/VfLanguage.java
+  * VM: https://github.com/pmd/pmd/blob/master/pmd-vm/src/main/java/net/sourceforge/pmd/lang/vm/VmLanguageModule.java
+  * XML: https://github.com/pmd/pmd/blob/master/pmd-xml/src/main/java/net/sourceforge/pmd/xml/cpd/XmlLanguage.java
+
+
 Installation
 ============
 
@@ -55,7 +127,7 @@ Enabling PMD in Review Board
 First, you'll need to add a Review Bot configuration in Review Board (see
 :ref:`extension-configuration-tools`).
 
-The following fields are available:
+The following configuration options are available:
 
 :guilabel:`Rulesets` (required):
     This can be one of the following:

@@ -75,9 +75,7 @@ class SetupCookiesTests(kgb.SpyAgency, TestCase):
 
         with self.override_config(new_config):
             expected_message = re.escape(
-                'Unable to create cookies directory '
-                '"/xxx-reviewbot/cookies/": [Errno 13] Permission denied: '
-                '\'/xxx-reviewbot\''
+                'Unable to create cookies directory "/xxx-reviewbot/cookies/":'
             )
 
             with self.assertRaisesRegexp(IOError, expected_message):

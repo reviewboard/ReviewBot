@@ -4,6 +4,7 @@ import os
 import sys
 
 from celery import Celery, VERSION as CELERY_VERSION
+from celery.bin.worker import worker
 from celery.signals import celeryd_after_setup, celeryd_init
 from kombu import Exchange, Queue
 
@@ -14,8 +15,24 @@ from reviewbot.tools.base.registry import (get_tool_classes,
 from reviewbot.utils.log import get_logger
 
 
-celery = Celery('reviewbot.celery', include=['reviewbot.tasks'])
+celery = None
 logger = get_logger(__name__)
+
+
+class ReviewBotCelery(Celery):
+    """A Celery specialization for Review Bot.
+
+    This takes care of initializing Celery with the right options.
+
+    Version Added:
+        3.0
+    """
+
+    def __init__(self):
+        """Initialize Celery."""
+        super(ReviewBotCelery, self).__init__(
+            main='reviewbot.celery',
+            include=['reviewbot.tasks'])
 
 
 def create_queues():
@@ -185,9 +202,33 @@ def setup_reviewbot(instance, conf, **kwargs):
     instance.app.amqp.queues = create_queues()
 
 
-def main():
-    celery.start()
+def get_celery():
+    """Return a Celery instance.
+
+    This will only be constructed the first time this is called. All
+    subsequent calls will reuse a cached instance.
+
+    Version Added:
+        3.0
+
+    Returns:
+        ReviewBotCelery:
+        The Celery instance.
+    """
+    global celery
+
+    if celery is None:
+        celery = ReviewBotCelery()
+
+    return celery
 
 
-if __name__ == '__main__':
-    main()
+def create_worker_command():
+    """Create and return the command instance for starting a worker.
+
+    Version Added:
+        3.0
+    """
+    assert celery is not None
+
+    return worker(celery)

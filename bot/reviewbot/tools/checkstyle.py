@@ -34,7 +34,7 @@ class CheckstyleTool(JavaToolMixin, BaseTool):
                     'This can be the name of a Checkstyle-provided XML '
                     'configuration ("google_checks.xml" or "sun_checks.xml"), '
                     'or the contents of a custom configuration XML file (see '
-                    'http://checkstyle.sourceforge.net/config.html).'
+                    'https://checkstyle.sourceforge.io/config.html).'
                 ),
                 'required': True,
             },

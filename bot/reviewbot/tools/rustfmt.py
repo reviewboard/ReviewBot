@@ -14,7 +14,7 @@ class RustfmtTool(BaseTool):
 
     name = 'rust fmt'
     version = '1.0'
-    description = ('Checks that Rust code style matches rustfmt.')
+    description = 'Checks that Rust code style matches rustfmt.'
     timeout = 30
 
     exe_dependencies = ['rustfmt']

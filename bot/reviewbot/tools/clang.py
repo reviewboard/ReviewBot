@@ -25,7 +25,10 @@ class ClangTool(FullRepositoryToolMixin, BaseTool):
     timeout = 30
 
     exe_dependencies = ['clang']
-    file_patterns = ['*.c', '*.cpp', '*.cxx', '*.m', '*.mm']
+    file_patterns = [
+        '*.c', '*.cc', '*.cpp', '*.cxx', '*.c++',
+        '*.m', '*.mm',
+    ]
 
     options = [
         {
@@ -34,9 +37,11 @@ class ClangTool(FullRepositoryToolMixin, BaseTool):
             'default': '',
             'field_options': {
                 'label': 'Clang command-line arguments',
-                'help_text': 'Any additional arguments to include on the '
-                             'command-line when invoking clang --analyze. '
-                             'Used primarily to set include paths.',
+                'help_text': (
+                    'Any additional arguments to include on the command line '
+                    'when invoking clang --analyze. Used primarily to set '
+                    'include paths.'
+                ),
                 'required': False,
             },
         },

@@ -18,6 +18,7 @@ import six
 from reviewbot.config import config
 from reviewbot.repositories import GitRepository
 from reviewbot.testing import TestCase
+from reviewbot.utils.filesystem import make_tempdir
 from reviewbot.utils.process import execute
 
 
@@ -214,6 +215,17 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
     #:     unicode
     tool_exe_path = None
 
+    #: Extra executables needed to run the tool.
+    #:
+    #: If the tool needs more than one executable for executions or dependency
+    #: checks, they should be placed here. Keys are equivalent to
+    #: :py:attr:`tool_exe_config_key`, and values are equivalent to
+    #: :py:attr:`tool_exe_path`.
+    #:
+    #: Type:
+    #:     dict
+    tool_extra_exe_paths = {}
+
     def run_get_can_handle_file(self, filename, file_contents=b'',
                                 tool_settings={}):
         """Run get_can_handle_file with the given file and settings.
@@ -301,7 +313,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
 
             @self.spy_for(repository.checkout)
             def _checkout(_self, *args, **kwargs):
-                return checkout_dir or tempfile.mkdtemp()
+                return checkout_dir or make_tempdir()
         else:
             repository = None
 
@@ -335,9 +347,13 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
                     patched_content=other_contents)
 
         worker_config = deepcopy(self.config)
-        worker_config.setdefault('exe_paths', {}).update({
+        exe_paths = worker_config.setdefault('exe_paths', {})
+        exe_paths.update({
             self.tool_exe_config_key: self.tool_exe_path,
         })
+
+        if self.tool_extra_exe_paths:
+            exe_paths.update(self.tool_extra_exe_paths)
 
         with self.override_config(worker_config):
             tool = self.tool_class(settings=tool_settings)

@@ -16,8 +16,10 @@ class CargoTool(FullRepositoryToolMixin, BaseTool):
 
     name = 'CargoTool'
     version = '1.0'
-    description = ('Checks Rust code for linting and test errors using '
-                   'built-in Rust tools "cargo clippy", and "cargo test".')
+    description = (
+        'Checks Rust code for linting and test errors using built-in Rust '
+        'tools "cargo clippy", and "cargo test".'
+    )
     timeout = 120
 
     exe_dependencies = ['cargo', 'cargo-clippy']
@@ -29,8 +31,11 @@ class CargoTool(FullRepositoryToolMixin, BaseTool):
             'field_type': 'django.forms.BooleanField',
             'default': True,
             'field_options': {
-                'label': 'Check and Lint Code',
+                'label': 'Check and lint code',
                 'required': False,
+                'help_text': (
+                    'Compile using "cargo clippy", checking for errors.'
+                ),
             },
         },
         {
@@ -38,8 +43,9 @@ class CargoTool(FullRepositoryToolMixin, BaseTool):
             'field_type': 'django.forms.BooleanField',
             'default': False,
             'field_options': {
-                'label': 'Run Tests',
+                'label': 'Run tests',
                 'required': False,
+                'help_text': 'Run unit tests using "cargo test".',
             },
         },
     ]

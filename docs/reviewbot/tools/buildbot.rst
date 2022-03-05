@@ -6,6 +6,8 @@
 Buildbot "try"
 ==============
 
+.. deprecated:: 2.0
+
 Buildbot support is no longer available as of Review Bot 3.0.
 
 The original version of this feature wasn't useful outside of very

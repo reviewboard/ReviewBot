@@ -146,9 +146,12 @@ class JavaToolMixinTests(kgb.SpyAgency, TestCase):
                     op=kgb.SpyOpReturn(True))
         self.spy_on(self.tool._check_java_classpath,
                     op=kgb.SpyOpReturn(True))
-        self.spy_on(execute,
-                    op=kgb.SpyOpReturn('Error: Could not find or load '
-                                       'main class a.b.c.Main'))
+        self.spy_on(
+            execute,
+            op=kgb.SpyOpReturnInOrder([
+                'java version "1.8.0_60"\n',
+                'Error: Could not find or load main class a.b.c.Main',
+            ]))
 
         new_config = {
             'exe_paths': {
@@ -159,9 +162,20 @@ class JavaToolMixinTests(kgb.SpyAgency, TestCase):
             },
         }
 
-        with self.override_config(new_config):
-            self.assertFalse(self.tool.check_dependencies())
+        JavaToolMixin.clear_has_java_runtime()
 
+        try:
+            with self.override_config(new_config):
+                self.assertFalse(self.tool.check_dependencies())
+        finally:
+            JavaToolMixin.clear_has_java_runtime()
+
+        self.assertSpyCalledWith(
+            is_exe_in_path,
+            '/path/to/java',
+            cache={
+                'java': '/path/to/java',
+            })
         self.assertSpyCalledWith(
             is_exe_in_path,
             '/path/to/java',
@@ -172,7 +186,13 @@ class JavaToolMixinTests(kgb.SpyAgency, TestCase):
             self.tool._check_java_classpath,
             ['/path/to/foo.jar'])
         self.assertSpyCalledWith(
-            execute,
+            execute.calls[0],
+            [
+                '/path/to/java',
+                '-version',
+            ])
+        self.assertSpyCalledWith(
+            execute.calls[1],
             [
                 '/path/to/java',
                 '-cp',

@@ -22,7 +22,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'reviewbot = reviewbot.celery:main'
+            'reviewbot = reviewbot.main:main'
         ],
         'reviewbot.tools': [
             'cargotool = reviewbot.tools.cargotool:CargoTool',
@@ -51,6 +51,7 @@ setup(
         'appdirs>=1.4.4',
         'celery>=3.1.25,<4.0; python_version=="2.7"',
         'celery>=4.4,<5.0; python_version>="3.6"',
+        'enum; python_version == "2.7"',
         'RBTools>=1.0',
 
         # We unconditionally include these plugins to ensure they're present.

@@ -1,0 +1,27 @@
+.. default-intersphinx:: reviewbot2.0
+
+
+==============================
+Review Bot 2.0.2 Release Notes
+==============================
+
+**Release date**: March 4, 2022
+
+
+.. note::
+
+   If you're using Review Board 4, make sure you're using 4.0.6 or newer
+   for the best experience.
+
+
+Bug Fixes
+=========
+
+* Fixed the button for refreshing the list of tools on Review Board 4.
+
+
+Contributors
+============
+
+* Christian Hammond
+* David Trowbridge

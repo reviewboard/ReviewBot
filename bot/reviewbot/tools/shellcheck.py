@@ -16,8 +16,9 @@ class ShellCheckTool(BaseTool):
 
     name = 'ShellCheck'
     version = '1.0'
-    description = ('Checks bash/sh shell scripts for style and programming '
-                   'errors.')
+    description = (
+        'Checks bash/sh shell scripts for style and programming errors.'
+    )
     timeout = 60
 
     exe_dependencies = ['shellcheck']
@@ -28,9 +29,11 @@ class ShellCheckTool(BaseTool):
             'name': 'severity',
             'field_type': 'django.forms.ChoiceField',
             'field_options': {
-                'label': 'Minimum Severity',
-                'help_text': ('Minimum severity of errors to consider '
-                              '(style, info, warning, error).'),
+                'label': 'Minimum severity',
+                'help_text': (
+                    'Minimum severity of errors to consider (style, info, '
+                    'warning, error).'
+                ),
                 'choices': (
                     ('style', 'style'),
                     ('info', 'info'),
@@ -44,13 +47,14 @@ class ShellCheckTool(BaseTool):
         {
             'name': 'exclude',
             'field_type': 'django.forms.CharField',
-            'default': "",
+            'default': '',
             'field_options': {
                 'label': 'Exclude',
-                'help_text': ('A comma-separated of specified codes to be '
-                              'excluded from the report. This will be passed '
-                              'to the --exclude command line argument (e.g. '
-                              'SC1009,SC1073).'),
+                'help_text': (
+                    'A comma-separated of specified codes to be excluded '
+                    'from the report. This will be passed to the --exclude '
+                    'command line argument (e.g. SC1009,SC1073).'
+                ),
                 'required': False,
             },
         },
