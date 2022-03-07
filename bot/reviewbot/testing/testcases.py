@@ -181,6 +181,21 @@ class DummyFileDiffResource(FileDiffResource):
         return self._diff_data
 
 
+class RepositoryListResource(ListResource):
+    """An list resource for repositories.
+
+    This exists so we can more easily spy on methods for this resource.
+
+    Version Added:
+        3.0
+    """
+
+    def __init__(self, **kwargs):
+        super(RepositoryListResource, self).__init__(
+            token='repositories',
+            **kwargs)
+
+
 class ReviewBotReviewResource(ItemResource):
     """An item resource for Review Bot reviews.
 
@@ -343,6 +358,27 @@ class DummyRootResource(RootResource):
             The empty list.
         """
         return []
+
+    def get_repositories(self, **kwargs):
+        """Return all repository resources.
+
+        This will be empty by default. Consumers can spy on this to override
+        results.
+
+        Args:
+            **kwargs (unused):
+                Unused keyword arguments.
+
+        Returns:
+            RepositoryListResource:
+            The resulting repository list resource.
+        """
+        return RepositoryListResource(
+            transport=self._transport,
+            payload={
+                'total_results': 0,
+            },
+            url='%srepositories/' % self._url)
 
     def get_status_update(self, review_request_id, status_update_id,
                           **kwargs):
