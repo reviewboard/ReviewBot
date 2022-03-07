@@ -40,3 +40,18 @@ def get_logger(name, is_task_logger=True):
         return _get_task_logger(name)
 
     return _get_logger(name)
+
+
+def get_root_logger():
+    """Return a root logger for Review Bot.
+
+    This will use "Review Bot" as the logger name.
+
+    Version Added:
+        3.0
+
+    Returns:
+        logging.Logger:
+        The root logger.
+    """
+    return get_logger('Review Bot', is_task_logger=False)

@@ -7,10 +7,10 @@ from glob import glob
 import six
 from appdirs import AppDirs
 
-from reviewbot.utils.log import get_logger
+from reviewbot.utils.log import get_root_logger
 
 
-logger = get_logger(__name__, is_task_logger=False)
+logger = get_root_logger()
 
 _appdirs = AppDirs(appname='reviewbot',
                    appauthor='Beanbag')
@@ -44,6 +44,21 @@ deprecated_keys = {
 config = deepcopy(DEFAULT_CONFIG)
 
 
+def get_config_file_path():
+    """Return the configuration file path.
+
+    Version Added:
+        3.0
+
+    Returns:
+        unicode:
+        The configuration file path.
+    """
+    return os.environ.get(
+        str('REVIEWBOT_CONFIG_FILE'),
+        os.path.join(_appdirs.site_config_dir, 'config.py'))
+
+
 def load_config():
     """Load the Review Bot configuraiton.
 
@@ -64,9 +79,7 @@ def load_config():
     """
     global config
 
-    config_file = os.environ.get(
-        str('REVIEWBOT_CONFIG_FILE'),
-        os.path.join(_appdirs.site_config_dir, 'config.py'))
+    config_file = get_config_file_path()
 
     # We're going to work on a copy of this and set it only at the end, in
     # the event that we're sharing state with other threads.
@@ -126,8 +139,8 @@ def load_config():
                          e,
                          exc_info=True)
     else:
-        logger.warning('Review Bot configuration was not found at %s. '
-                       'Using the defaults.',
+        logger.warning('Configuration was not found at %s. Using the '
+                       'defaults.',
                        config_file)
 
     # Ensure some settings are set to sane values.

@@ -8,15 +8,19 @@ from celery.bin.worker import worker
 from celery.signals import celeryd_after_setup, celeryd_init
 from kombu import Exchange, Queue
 
-from reviewbot.config import config, load_config
+from reviewbot import VERSION
+from reviewbot.config import config, get_config_file_path, load_config
 from reviewbot.repositories import repositories, init_repositories
 from reviewbot.tools.base.registry import (get_tool_classes,
                                            load_tool_classes)
-from reviewbot.utils.log import get_logger
+from reviewbot.utils.log import get_root_logger
 
 
 celery = None
-logger = get_logger(__name__)
+logger = get_root_logger()
+
+
+_manual_url = 'https://www.reviewboard.org/docs/reviewbot/%s.%s/' % VERSION[:2]
 
 
 class ReviewBotCelery(Celery):
@@ -47,6 +51,10 @@ def create_queues():
         Queue('celery', default_exchange, routing_key='celery'),
     ]
 
+    found_tools = []
+    missing_dep_tools = []
+    working_dir_tools = []
+
     # Detect the installed tools and select the corresponding queues to
     # consume from.
     for tool_class in get_tool_classes():
@@ -55,10 +63,14 @@ def create_queues():
         queue_name = '%s.%s' % (tool_id, tool_class.version)
 
         if tool.check_dependencies():
+            found_tools.append(tool_id)
+
             if tool.working_directory_required:
                 # Set up a queue for each configured repository. This way only
                 # workers which have the relevant repository configured will
                 # pick up applicable tasks.
+                working_dir_tools.append(tool_id)
+
                 for repo_name in repositories:
                     repo_queue_name = '%s.%s' % (queue_name, repo_name)
 
@@ -72,7 +84,77 @@ def create_queues():
                     Exchange(queue_name, type='direct'),
                     routing_key=queue_name))
         else:
-            tool.logger.warning('dependency checks failed.')
+            missing_dep_tools.append(tool_id)
+
+    s = [
+        'Welcome!',
+        '',
+        'Review Bot will connect to %s' % celery.connection().as_uri(),
+        '',
+    ]
+
+    if found_tools:
+        s += [
+            'The following tools are available:',
+            '',
+        ] + [
+            '  * %s' % _tool_id
+            for _tool_id in found_tools
+        ] + ['']
+
+    if missing_dep_tools:
+        s += [
+            'The following tools are missing dependencies:',
+            '',
+        ] + [
+            '  * %s' % _tool_id
+            for _tool_id in missing_dep_tools
+        ] + [
+            '',
+            'See %stools/ for help on installing tools.'
+            % _manual_url,
+            '',
+        ]
+
+    if working_dir_tools:
+        if not repositories:
+            s += [
+                'The following tools cannot be used without one or more '
+                'configured repositories in %s:'
+                % get_config_file_path(),
+                '',
+            ] + [
+                '  * %s' % _tool_id
+                for _tool_id in working_dir_tools
+            ]
+        else:
+            s += [
+                'The following tools require a configured repository in %s:'
+                % get_config_file_path(),
+                '',
+            ] + [
+                '  * %s' % _tool_id
+                for _tool_id in working_dir_tools
+            ]
+
+            s += [
+                '',
+                'Configured repositories include:',
+                '',
+            ] + [
+                '  * %s' % _repository
+                for _repository in repositories
+            ]
+
+        s += [
+            '',
+            'See %sconfiguration/#worker-configuration-repositories for '
+            'help on configuring repositories.'
+            % _manual_url,
+            '',
+        ]
+
+    logger.info('\n'.join(s))
 
     return queues
 
@@ -146,7 +228,7 @@ def setup_logging(instance, conf, **kwargs):
             Additional keyword arguments passed to the signal.
     """
     log_format = (
-        '%(asctime)s - %(processName)s - [%(levelname)s] %(name)s: %(message)s'
+        '%(asctime)s - [%(levelname)s] %(name)s: %(message)s'
     )
 
     task_log_format = (

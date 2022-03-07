@@ -240,7 +240,8 @@ def main(argv=sys.argv[1:]):
             umask=options.umask,
             concurrency=options.concurrency,
             pool_cls=options.pool_cls,
-            autoscale=options.autoscale)
+            autoscale=options.autoscale,
+            quiet=True)
 
     sys.exit(exit_code)
 

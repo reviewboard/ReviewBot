@@ -115,8 +115,7 @@ class ConfigTests(kgb.SpyAgency, TestCase):
 
         self.assertSpyCalledWith(
             logger.warning,
-            ('Review Bot configuration was not found at %s. Using the '
-             'defaults.'),
+            'Configuration was not found at %s. Using the defaults.',
             os.path.join(tempdir, 'config.py'))
 
         self.assertSpyNotCalled(logger.info)
