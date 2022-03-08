@@ -113,21 +113,23 @@ environment variable. However, paths to executables can also be configured
 manually using ``exe_paths``. For example:
 
 .. code-block:: python
+   :caption: config.py
 
-    exe_paths = {
-        'go': '/path/to/go',
-        'pmd': '/path/to/pmd',
-    }
+   exe_paths = {
+       'go': '/path/to/go',
+       'pmd': '/path/to/pmd',
+   }
 
 
 Some Java-based tools require one or more :file:`.jar` files, which can
 also be provided. For example:
 
 .. code-block:: python
+   :caption: config.py
 
-    java_classpaths = {
-        'checkstyle': ['/path/to/checkstyle.jar'],
-    }
+   java_classpaths = {
+       'checkstyle': ['/path/to/checkstyle.jar'],
+   }
 
 
 .. _worker-configuration-cookies:
@@ -153,6 +155,7 @@ If needed, an explicit path can be configured by setting ``cookie_dir`` to an
 absolute path on the local filesystem. For example:
 
 .. code-block:: python
+   :caption: config.py
 
    cookie_dir = '/opt/reviewbot/data/'
 
@@ -174,10 +177,10 @@ of repositories:
 * Git
 * Mercurial
 
-This requires configuring each repository on the worker, which allows
-different repositories to be spread across different hosts. Repositories are
-specified in the worker configuration file as a list of dictionaries, with
-three fields:
+The worker can define the list of repositories they're allowed to clone.
+Your workers don't all need to support the same list of repositories.
+
+Each repository definition supports the following configuration fields:
 
 ``name`` (required)
     The configured name of the repository in Review Board.
@@ -192,9 +195,18 @@ three fields:
     The git or Mercurial URL (possibly including credentials) to clone the
     repository from.
 
-For example:
+These repositories can be specified in the main Review Bot worker
+configuration file, or in a separate JSON file.
+
+
+1. The Review Bot configuration file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To configure your repositories here, set the ``repositories`` key. For
+example:
 
 .. code-block:: python
+   :caption: config.py
 
    repositories = [
        {
@@ -203,15 +215,53 @@ For example:
            'clone_path': 'https://github.com/reviewboard/reviewboard.git',
        },
        {
-           'name': 'Git',
+           'name': 'Upstream Git',
            'type': 'git',
            'clone_path': 'https://github.com/git/git.git',
        },
        {
-           'name': 'MercurialRockz',
+           'name': 'Upstream Mercurial',
            'type': 'hg',
            'clone_path': 'https://www.mercurial-scm.org/repo/hg/',
        },
+   ]
+
+
+2. Repositories JSON file
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 3.0
+
+You can manage your repositories in a separate JSON file. To do this, set
+the ``repositories_config_path`` to the location of your JSON file.
+
+For example:
+
+.. code-block:: python
+   :caption: config.py
+
+   repositories_config_path = '/etc/xdg/reviewbot/repositories.json'
+
+
+.. code-block:: json
+   :caption: repositories.json
+
+   [
+       {
+           "name": "Review Board",
+           "type": "git",
+           "clone_path": "https://github.com/reviewboard/reviewboard.git"
+       },
+       {
+           "name": "Upstream Git",
+           "type": "git",
+           "clone_path": "https://github.com/git/git.git"
+       },
+       {
+           "name": "Upstream Mercurial",
+           "type": "hg",
+           "clone_path": "https://www.mercurial-scm.org/repo/hg/"
+       }
    ]
 
 
@@ -226,9 +276,19 @@ If you have many workers and repositories, it may not be feasible to configure
 repositories by hand. You can also configure a list of Review Board servers to
 fetch lists of repositories from.
 
-This is done by setting ``reviewboard_servers`` to a list of dictionaries,
-each one representing an accessible Review Board server. Each entry has the
-following fields:
+.. note::
+
+   Either the repository's :guilabel:`Path` or :guilabel:`Mirror Path` field
+   in Review Board must be set to a URL that the Review Bot worker can access
+   and clone from.
+
+   If the path is configured to a local file path on the Review Board server,
+   and the worker doesn't have local access to that same path (e.g., it's
+   running on a different server, and you're not using a shared filesystem
+   mount), then you will need to expose the repository over HTTP(S) and set
+   :guilabel:`Mirror Path` to that address.
+
+Each server definition supports the following configuration fields:
 
 ``url`` (required)
     The URL to the Review Board server. This must be accessible to the
@@ -252,35 +312,34 @@ information on the repositories you want to use (i.e., if
 turned off or the repositories are set up with access control lists in
 Review Board).
 
+These servers can be specified in the main Review Bot worker configuration
+file, or in a separate JSON file.
+
+
+1. The Review Bot configuration file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To configure your list of servers here, set the ``reviewboard_servers`` key.
+For example:
+
 For example:
 
 .. code-block:: python
+   :caption: config.py
 
    reviewboard_servers = [
        {
            'user': 'reviewbot',
            'token': 'dd16b7208a2a8c88be6788c22340ae46823fc57e',
-           'url': 'http://reviewboard',
+           'url': 'https://reviews1.eng.example.com',
        },
        {
-           'url': 'http://rb',
+           'url': 'https://reviews2.eng.example.com',
        },
    ]
 
 Be aware that manually configured repositories will override any
 automatically fetched configuration of a duplicate repository entry.
-
-.. important::
-
-   Either the repository's :guilabel:`Path` or :guilabel:`Mirror Path` field
-   in Review Board must be set to a URL that the Review Bot worker can access
-   and clone from.
-
-   If the path is configured to a local file path on the Review Board server,
-   and the worker doesn't have local access to that same path (e.g., it's
-   running on a different server, and you're not using a shared filesystem
-   mount), then you will need to expose the repository over HTTP(S) and set
-   :guilabel:`Mirror Path` to that address.
 
 .. note:: This setting was renamed in Review Bot 3.0.
 
@@ -289,3 +348,35 @@ automatically fetched configuration of a duplicate repository entry.
    4.0.
 
    See :ref:`upgrading-config-3.0`.
+
+
+2. Servers JSON file
+^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 3.0
+
+You can manage your list of Review Board servers in a separate JSON file. To
+do this, set the ``reviewboard_servers_config_path`` to the location of your
+JSON file.
+
+For example:
+
+.. code-block:: python
+   :caption: config.py
+
+   reviewboard_servers_config_path = '/etc/xdg/reviewbot/servers.json'
+
+
+.. code-block:: json
+   :caption: servers.json
+
+   [
+       {
+           "user": "reviewbot",
+           "token": "dd16b7208a2a8c88be6788c22340ae46823fc57e",
+           "url": "https://reviews1.eng.example.com"
+       },
+       {
+           "url": "https://reviews2.eng.example.com"
+       }
+   ]
