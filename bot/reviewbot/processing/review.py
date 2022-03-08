@@ -648,7 +648,7 @@ class Review(object):
 
             for filediff in filediffs:
                 # Filter out binary files and symlinks.
-                if (filediff.binary or
+                if (getattr(filediff, 'binary', False) or
                     filediff.status not in self._VALID_FILEDIFF_STATUS_TYPES or
                     ('is_symlink' in filediff.extra_data and
                      filediff.extra_data['is_symlink'])):
