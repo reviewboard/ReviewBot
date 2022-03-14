@@ -1,0 +1,148 @@
+# NOTE: This file is for example purposes only! You probably don't want to
+#       include broker credentials in this file, and you may not need all these
+#       images. Make sure you are using the best practices for your deployment.
+
+version: '3.7'
+
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.8-alpine
+    restart: always
+    hostname: 'rabbitmq'
+    environment:
+      - RABBITMQ_DEFAULT_VHOST=reviewbot
+      - RABBITMQ_DEFAULT_USER=reviewbot
+      - RABBITMQ_DEFAULT_PASS=reviewbot123
+      - RABBITMQ_ERLANG_COOKIE=secret-dont-tell
+    volumes:
+      - ./rabbitmq/data:/var/lib/rabbitmq/
+      - ./rabbitmq/logs:/var/log/rabbitmq
+    ports:
+      - 15672:15672
+      - 5672:5672
+    healthcheck:
+      test: ['CMD', 'rabbitmqctl', 'status']
+      interval: 5s
+      timeout: 20s
+      retries: 5
+
+  reviewbot-c:
+    image: beanbag/reviewbot-c:3.0
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - BROKER_URL=amqp://reviewbot:reviewbot123@rabbitmq/reviewbot
+    volumes:
+      - ./config:/config
+      - ./repos:/repos
+
+  reviewbot-fbinfer:
+    image: beanbag/reviewbot-fbinfer:3.0
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - BROKER_URL=amqp://reviewbot:reviewbot123@rabbitmq/reviewbot
+    volumes:
+      - ./config:/config
+      - ./repos:/repos
+
+  reviewbot-go:
+    image: beanbag/reviewbot-go:3.0
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - BROKER_URL=amqp://reviewbot:reviewbot123@rabbitmq/reviewbot
+    volumes:
+      - ./config:/config
+      - ./repos:/repos
+
+  reviewbot-java:
+    image: beanbag/reviewbot-java:3.0
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - BROKER_URL=amqp://reviewbot:reviewbot123@rabbitmq/reviewbot
+    volumes:
+      - ./config:/config
+      - ./repos:/repos
+
+  reviewbot-javascript:
+    image: beanbag/reviewbot-javascript:3.0
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - BROKER_URL=amqp://reviewbot:reviewbot123@rabbitmq/reviewbot
+    volumes:
+      - ./config:/config
+      - ./repos:/repos
+
+  reviewbot-pmd:
+    image: beanbag/reviewbot-pmd:3.0
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - BROKER_URL=amqp://reviewbot:reviewbot123@rabbitmq/reviewbot
+    volumes:
+      - ./config:/config
+      - ./repos:/repos
+
+  reviewbot-python:
+    image: beanbag/reviewbot-python:3.0
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - BROKER_URL=amqp://reviewbot:reviewbot123@rabbitmq/reviewbot
+    volumes:
+      - ./config:/config
+      - ./repos:/repos
+
+  reviewbot-ruby:
+    image: beanbag/reviewbot-ruby:3.0
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - BROKER_URL=amqp://reviewbot:reviewbot123@rabbitmq/reviewbot
+    volumes:
+      - ./config:/config
+      - ./repos:/repos
+
+  reviewbot-rust:
+    image: beanbag/reviewbot-rust:3.0
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - BROKER_URL=amqp://reviewbot:reviewbot123@rabbitmq/reviewbot
+    volumes:
+      - ./config:/config
+      - ./repos:/repos
+
+  reviewbot-shell:
+    image: beanbag/reviewbot-shell:3.0
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - BROKER_URL=amqp://reviewbot:reviewbot123@rabbitmq/reviewbot
+    volumes:
+      - ./config:/config
+      - ./repos:/repos
