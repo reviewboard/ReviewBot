@@ -1,8 +1,8 @@
 .. _configuration:
 
-=============
-Configuration
-=============
+======================
+Configuring Review Bot
+======================
 
 
 .. _extension-configuration:
@@ -27,6 +27,8 @@ Review Bot uses a special user account to post reviews. If you were previously
 using Review Bot 0.1 or 0.2, select the existing Review Bot user. Otherwise,
 click :guilabel:`create a new user for Review Bot`.
 
+
+.. _extension-configuration-broker-url:
 
 Broker URL
 ----------
@@ -199,6 +201,8 @@ These repositories can be specified in the main Review Bot worker
 configuration file, or in a separate JSON file.
 
 
+.. _worker-configuration-repositories-setting:
+
 1. The Review Bot configuration file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -226,6 +230,8 @@ example:
        },
    ]
 
+
+.. _worker-configuration-repositories-json:
 
 2. Repositories JSON file
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -316,6 +322,8 @@ These servers can be specified in the main Review Bot worker configuration
 file, or in a separate JSON file.
 
 
+.. _worker-configuration-reviewboard-servers-setting:
+
 1. The Review Bot configuration file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -349,6 +357,8 @@ automatically fetched configuration of a duplicate repository entry.
 
    See :ref:`upgrading-config-3.0`.
 
+
+.. _worker-configuration-reviewboard-servers-json:
 
 2. Servers JSON file
 ^^^^^^^^^^^^^^^^^^^^

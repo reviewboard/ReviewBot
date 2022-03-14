@@ -1,27 +1,28 @@
 .. _upgrading:
 
-=========
-Upgrading
-=========
+====================
+Upgrading Review Bot
+====================
 
 .. _upgrading-packages:
 
 Upgrading Review Bot Packages
 =============================
 
-From Review Bot 1.0+
---------------------
+From Review Bot 1.0 or Newer
+----------------------------
 
-Upgrading Review Bot is easy. To start, upgrade the extension on the Review
-Board server::
+Upgrading Review Bot is easy. You'll just need to upgrade the extension,
+workers, and then make any necessary configuration changes.
+
+
+Upgrade the Extension
+~~~~~~~~~~~~~~~~~~~~~
+
+To start, upgrade the extension on the Review Board server::
 
     $ sudo pip install -U reviewbot-extension
 
-And then upgrade each worker::
-
-    $ sudo pip install -U reviewbot-worker
-
-(If you're installing in a virtual environment, don't use ``sudo``.)
 
 Depending on your configuration, you may need to restart or reload your web
 server. The specific command depends on your individual setup, but is usually
@@ -32,8 +33,23 @@ something like the following::
 Open the Review Board administration page and click :guilabel:`Extensions`.
 You should see the new version of Review Bot installed.
 
-Follow :ref:`upgrading-config` for any configuration changes you may need to
-make.
+
+Upgrade the Workers
+~~~~~~~~~~~~~~~~~~~
+
+You can now upgrade each worker.
+
+If you have a :ref:`manual installation <installation-manual>`, run::
+
+    $ sudo pip install -U reviewbot-worker
+
+(If you're installing in a virtual environment, don't use ``sudo``.)
+
+Then follow the :ref:`upgrading-config` for any configuration changes you may
+need to make.
+
+If you're using our :ref:`official Docker images <installation-docker>`, you
+can just switch to a newer tag and restart your containers.
 
 
 From Review Bot 0.1 or 0.2

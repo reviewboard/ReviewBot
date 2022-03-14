@@ -358,3 +358,8 @@ intersphinx_mapping = {
     'celery': ('http://docs.celeryproject.org/en/3.1/', None),
     'reviewboard': ('https://reviewboard.org/docs/manual/latest/', None),
 }
+
+
+extlinks = {
+    'docker': ('https://hub.docker.com/r/%s', ''),
+}

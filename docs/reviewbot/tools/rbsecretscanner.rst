@@ -1,4 +1,4 @@
-.. _tool-rbcredentialchecker:
+.. _tool-rbsecretscanner:
 
 ==============
 Secret Scanner
