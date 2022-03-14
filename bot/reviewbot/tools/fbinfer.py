@@ -315,6 +315,9 @@ class FBInferTool(FullRepositoryToolMixin, BaseTool):
         # this file. We can generate an absolute path from there.
         report_filename = os.path.join(cwd, 'infer-out', 'report.json')
 
+        if not os.path.exists(report_filename):
+            return []
+
         try:
             with open(report_filename, 'r') as fp:
                 return [
