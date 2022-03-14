@@ -1,3 +1,5 @@
+"""Review Bot tool to run Clang."""
+
 from __future__ import unicode_literals
 
 import os

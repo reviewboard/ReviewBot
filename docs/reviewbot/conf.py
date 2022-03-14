@@ -26,7 +26,11 @@ parent_dir = os.path.abspath(os.path.join(__file__, '..', '..', '..'))
 sys.path.insert(0, os.path.join(parent_dir, 'bot'))
 sys.path.insert(0, os.path.join(parent_dir, 'extension'))
 
+import reviewbot
 import reviewbotext
+
+from beanbag_docutils.sphinx.ext.github import github_linkcode_resolve
+
 
 # -- General configuration ------------------------------------------------
 
@@ -38,12 +42,18 @@ import reviewbotext
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.linkcode',
+    'sphinx.ext.napoleon',
     'sphinx.ext.todo',
-    'beanbag_docutils.sphinx.ext.retina_images',
+    'beanbag_docutils.sphinx.ext.autodoc_utils',
     'beanbag_docutils.sphinx.ext.django_utils',
     'beanbag_docutils.sphinx.ext.extlinks',
     'beanbag_docutils.sphinx.ext.http_role',
+    'beanbag_docutils.sphinx.ext.ref_utils',
+    'beanbag_docutils.sphinx.ext.retina_images',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -104,13 +114,11 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # default_role = None
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
-#
-# add_function_parentheses = True
+add_function_parentheses = True
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
-#
-# add_module_names = True
+add_module_names = False
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
@@ -337,26 +345,88 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-# Documents to append as an appendix to all manuals.
-#
-# texinfo_appendices = []
 
-# If false, no module index is generated.
-#
-# texinfo_domain_indices = True
-
-# How to display URL addresses: 'footnote', 'no', or 'inline'.
-#
-# texinfo_show_urls = 'footnote'
-
-# If true, do not generate a @detailmenu in the "Top" node's menu.
-#
-# texinfo_no_detailmenu = False
+# Autodoc setup.
+autoclass_content = 'class'
+autodoc_default_options = {
+    'members': True,
+    'member-order': 'bysource',
+    'special-members': True,
+    'undoc-members': True,
+    'show-inheritance': True,
+}
 
 
+autodoc_excludes = {
+    '*': [
+        '__dict__',
+        '__doc__',
+        '__module__',
+        '__weakref__',
+    ],
+    'class': [
+        # Common to models.
+        'DoesNotExist',
+        'MultipleObjectsReturned',
+
+        # Common to forms.
+        'base_fields',
+        'media',
+    ],
+}
+
+autosummary_generate = True
+
+napoleon_beanbag_docstring = True
+napoleon_google_docstring = False
+napoleon_numpy_docstring = False
+
+
+# Set up code linking.
+rb_version = reviewbot.VERSION
+
+if rb_version[3] == 'final' or rb_version[5] > 0:
+    git_branch = 'release-%s.%s' % (rb_version[0], rb_version[1])
+
+    if reviewbot.is_release():
+        if rb_version[2]:
+            git_branch += '.%s' % rb_version[2]
+
+            if rb_version[3]:
+                git_branch += '.%s' % rb_version[3]
+
+        if version[4] != 'final':
+            git_branch += rb_version[4]
+
+            if rb_version[5]:
+                git_branch += '%d' % rb_version[5]
+    else:
+        git_branch += '.x'
+else:
+    git_branch = 'master'
+
+
+# Check whether reviewboard.org intersphinx lookups should use the local
+# server.
+if os.getenv('DOCS_USE_LOCAL_RBWEBSITE') == '1':
+    rbwebsite_url = 'http://localhost:8081'
+else:
+    rbwebsite_url = 'https://www.reviewboard.org'
+
+
+def linkcode_resolve(domain, info):
+    return github_linkcode_resolve(domain=domain,
+                                   info=info,
+                                   allowed_module_names=['reviewbot'],
+                                   github_org_id='reviewboard',
+                                   github_repo_id='reviewbot',
+                                   branch=git_branch)
+
+
+# Cross-referencing.
 intersphinx_mapping = {
     'celery': ('http://docs.celeryproject.org/en/3.1/', None),
-    'reviewboard': ('https://reviewboard.org/docs/manual/latest/', None),
+    'reviewboard': ('%s/docs/manual/latest/' % rbwebsite_url, None),
 }
 
 

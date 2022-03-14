@@ -343,7 +343,7 @@ class BaseTool(object):
             :py:meth:`~reviewbot.processing.File.get_patched_file_path`
             command, and must be valid for this method to be called.
 
-            ``base_command` is added, which would be the result of
+            ``base_command`` is added, which would be the result of
             :py:meth:`build_base_command`.
 
             ``**kwargs`` is now expected.

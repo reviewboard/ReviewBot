@@ -14,6 +14,9 @@ def integration_test(**kwargs):
     :py:meth:`~reviewbot.tools.testing.testcases.BaseToolTestCase
     .setup_integration_test`.
 
+    Version Added:
+        3.0
+
     Args:
         **kwargs (dict):
             Keyword arguments to pass during setup.
@@ -36,6 +39,9 @@ def simulation_test(**kwargs):
     The arguments provided to this decorator will be passed to
     :py:meth:`~reviewbot.tools.testing.testcases.BaseToolTestCase
     .setup_simulation_test`.
+
+    Version Added:
+        3.0
 
     Args:
         **kwargs (dict):

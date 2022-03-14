@@ -1,4 +1,4 @@
-"""Review Bot tool to run Cargo Commands."""
+"""Review Bot tool to run Cargo commands."""
 
 from __future__ import unicode_literals
 

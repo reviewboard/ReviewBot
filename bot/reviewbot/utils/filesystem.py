@@ -1,3 +1,5 @@
+"""Utilities for filesystem operations and path normalization."""
+
 from __future__ import unicode_literals
 
 import ntpath

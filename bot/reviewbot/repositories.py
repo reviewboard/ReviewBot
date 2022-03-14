@@ -1,3 +1,5 @@
+"""Full access repository management."""
+
 from __future__ import unicode_literals
 
 import os

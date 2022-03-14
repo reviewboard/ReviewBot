@@ -1,3 +1,5 @@
+"""Review Bot tool to run PMD."""
+
 from __future__ import unicode_literals
 
 import json

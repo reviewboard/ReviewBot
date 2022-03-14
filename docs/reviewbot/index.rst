@@ -179,6 +179,20 @@ Multi-Language Tools
   sensitive keys and credentials
 
 
+Extending Review Bot
+====================
+
+Review Bot can be extended through custom tools. To do this, you'll need to
+create a :py:class:`reviewbot.tools.base.tool.BaseTool` subclass, registered
+through the ``reviewbot.tools`` Python entrypoint in a Python package.
+
+Unit tests can be built using the :py:mod:`reviewbot.tools.testing` module.
+
+See the :ref:`module and class reference <reviewbot-coderef>` for details.
+
+
+
+
 .. toctree::
    :hidden:
 
@@ -186,3 +200,4 @@ Multi-Language Tools
    upgrading
    configuration
    tools/index
+   coderef/index
