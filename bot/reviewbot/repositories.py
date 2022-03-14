@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import os
+from uuid import uuid4
 
 import appdirs
 import six
@@ -136,7 +137,7 @@ class GitRepository(BaseRepository):
             logger.info('Fetching into existing repository %s',
                         self.repo_path)
             execute(['git', '--git-dir=%s' % self.repo_path, 'fetch',
-                     'origin', '+refs/heads/*:refs/heads/*', '--prune'])
+                     'origin', '+refs/heads/*:refs/heads/*'])
 
     def checkout(self, commit_id):
         """Check out the given commit.
@@ -150,22 +151,23 @@ class GitRepository(BaseRepository):
             The name of a directory with the given checkout.
         """
         workdir = make_tempdir()
-        branchname = 'br-%s' % commit_id
+        branchname = 'br-%s-%s' % (commit_id, uuid4())
 
         logger.info('Creating temporary branch for clone in repo %s',
                     self.repo_path)
         execute(['git', '--git-dir=%s' % self.repo_path, 'branch', branchname,
                  commit_id])
 
-        logger.info('Creating working tree for commit ID %s in %s', commit_id,
-                    workdir)
-        execute(['git', 'clone', '--local', '--no-hardlinks', '--depth', '1',
-                 '--branch', branchname, self.repo_path, workdir])
-
-        logger.info('Removing temporary branch for clone in repo %s',
-                    self.repo_path)
-        execute(['git', '--git-dir=%s' % self.repo_path, 'branch', '-d',
-                 branchname])
+        try:
+            logger.info('Creating working tree for commit ID %s in %s', commit_id,
+                        workdir)
+            execute(['git', 'clone', '--local', '--no-hardlinks', '--depth', '1',
+                     '--branch', branchname, self.repo_path, workdir])
+        finally:
+            logger.info('Removing temporary branch for clone in repo %s',
+                        self.repo_path)
+            execute(['git', '--git-dir=%s' % self.repo_path, 'branch', '-d',
+                     branchname])
 
         return workdir
 
