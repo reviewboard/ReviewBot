@@ -366,3 +366,7 @@ intersphinx_mapping = {
     'reviewbot2.0': ('%s/docs/reviewbot/2.0/' % rbwebsite_url, None),
     'reviewbot3.0': ('%s/docs/reviewbot/3.0/' % rbwebsite_url, None),
 }
+
+extlinks = {
+    'docker': ('https://hub.docker.com/r/%s', ''),
+}

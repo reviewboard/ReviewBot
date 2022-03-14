@@ -14,74 +14,341 @@ Compatibility
 Review Bot 3.0 includes full support for Review Board 3.0 and 4.0, and
 Python 2.7 and 3.6 through 3.9.
 
-We previously stated that Review Bot 2.0 offered support for Review Board 4.0
-and Python 3, but due to changes made since that announcement, it's no longer
-compatible. If you're planning to move to Review Board 4.0 or Python 3, you'll
-want to install Review Bot 3.0.
+
+New Features
+============
+
+Official Docker Images
+----------------------
+
+We now have official :ref:`Docker images <installation-docker>` for Review Bot
+workers. Going forward, all releases (including betas) will come with Docker
+images, ready for testing or deployment in your network.
+
+The base image (:docker:`beanbag/reviewbot-base`) can be used to easily build
+your own workers with exactly the tools you need. We also offer pre-built
+images containing tools for various languages.
+
+See the :ref:`documentation <installation-docker>` to get started.
+
+
+JSON Management of Repositories
+-------------------------------
+
+The list of repositories or Review Board servers for :ref:`full repository
+access <worker-configuration-repositories>` can now be managed in external
+JSON files, using the :ref:`repositories_config_path
+<worker-configuration-repositories-json>` and
+:ref:`reviewboard_servers_config_path
+<worker-configuration-reviewboard-servers-json>` settings.
+
+This is used by the new Docker images, and can help larger organizations
+better manage their available list of repositories through in-house
+automation.
+
+
+Improved Worker Experience
+--------------------------
+
+The Review Bot worker is built on Celery_, and the command line and startup
+screen mostly identified as Celery, making for a less-than-optimal experience.
+It also required running :command:`reviewbot worker` as the command.
+
+Now, you simply run :command:`reviewbot`, without the ``worker`` parameter,
+to start up Review Bot. The command line options are tailored for our use,
+rather than Celery's.
+
+When starting up, Review Bot will log information about the available tools
+and repositories that can be used by that particular worker. The old Celery
+information is no longer displayed.
+
+
+.. _Celery: https://www.celeryproject.org/
+
+
+New Worker Configuration Options
+--------------------------------
+
+The Review Bot worker now provides new options for configuring
+:ref:`tool paths <worker-configuration-exe-paths>` and
+:ref:`cookie storage locations <worker-configuration-cookies>`.
+
+Some of these replace legacy options, which will stop working in Review Bot 4.
+See :ref:`upgrading` for instructions.
+
+The location of the configuration file can also be changed by setting the
+:envvar:`REVIEWBOT_CONFIG_FILE` environment variable.
 
 
 New Tools
-=========
+---------
 
 * :ref:`tool-cargotool`
 
   This tool can check Rust source code for errors and suspicious constructs.
 
-  Patch by Jacob Blazusiak.
+  It supports running :command:`cargo clippy` to perform lint checks on files,
+  and :command:`cargo test` to run unit test suites.
 
-* :ref:`tool-rbcredentialchecker`
+  This requires :ref:`full repository access
+  <worker-configuration-repositories>`.
+
+  Based on a patch by Jacob Blazusiak.
+
+* :ref:`tool-rbsecretscanner`
 
   This in-house tool checks source code and configuration files for any
-  accidental inclusion of credentials or access keys.
+  accidental inclusion of credentials or access keys. This can scan for the
+  following:
 
-  Patch by Cecilia Wei.
+  * AWS Access, KWS, and Secret keys
+  * Asana access tokens
+  * Discord bot tokens and webhook URLs
+  * Dropbox tokens
+  * Facebook access tokens
+  * GitHub OAuth tokens (legacy and modern)
+  * Google Cloud API keys, client IDs, and service accounts
+  * Heroku API keys
+  * JSON Web Tokens
+  * Mailchimp API keys
+  * Mailgun API keys
+  * NPM access tokens
+  * PGP private keys
+  * PyPI API tokens
+  * RSA private keys
+  * SSH private keys
+  * SSL certificates
+  * Slack tokens and webhook URLs
+  * Stripe access keys
+  * Twilio API keys and account SIDs
+  * Twitter OAuth tokens
+
+  Based on a patch by Cecilia Wei.
 
 * :ref:`tool-fbinfer`
 
-  This from Facebook checks source code from a wide variety of programming
-  languages for many different kinds of issues.
+  This tool from Facebook checks source code from a wide variety of
+  programming languages, looking for many different kinds of issues.
 
-  Patch by Jacob Blazusiak.
+  It can handle a number of build systems, such as Make, Gradle, Ant,
+  XCode, and more.
+
+  It's a heavier-weight tool, requiring proper configuration. It also requires
+  :ref:`full repository access <worker-configuration-repositories>`.
+
+  Based on a patch by Jacob Blazusiak.
 
 * :ref:`tool-gofmt`
 
-  This tool checks Go source code for common formatting issues.
+  This tool checks Go source code for common formatting issues. If it finds
+  a file that needs to be run through :command:`go fmt`, it will leave a
+  comment recommending that the user runs this and re-uploads the diff.,
 
-  Patch by Jacob Blazusiak.
+  Based on a patch by Jacob Blazusiak.
 
 * :ref:`tool-gotool`
 
-  This tool checks Go source code for problems by running through
-  :command:`go test` and :command:`go vet`.
+  This tool checks Go source code for problems.
 
-  Patch by Jacob Blazusiak.
+  It supports running :command:`go vet` to perform lint checks on files,
+  and :command:`go test` to run unit test suites.
+
+  This tool requires :ref:`full repository access
+  <worker-configuration-repositories>`.
+
+  Based on a patch by Jacob Blazusiak.
 
 * :ref:`tool-rubocop`
 
   This tool checks Ruby code for common errors, potential problems, and
   source code formatting issues.
 
-  Patch by Cecilia Wei.
+  It can be customized to exclude particular cops/departments that should not
+  be checked.
+
+  If RuboCop knows any documentation relevant to an error, it will include
+  a link in the comment, helping to more easily resolve the issue.
+
+  Based on a patch by Cecilia Wei.
 
 * :ref:`tool-rustfmt`
 
-  This tool checks Rust code for code formatting inconsistencies.
+  This tool checks Go source code for common formatting issues. If it finds
+  a file that needs to be run through :command:`rustfmt`, it will leave a
+  comment recommending that the user runs this and re-uploads the diff.,
 
-  Patch by Jacob Blazusiak.
+  Based on a patch by Jacob Blazusiak.
 
 * :ref:`tool-shellcheck`
 
-  This tool checks Bash/sh shell scripts for common problems and misused
+  This tool checks stanard shell scripts for common problems and misused
   commands.
 
-  Patch by Cecilia Wei.
+  This supports :file:`*.bash`, :file:`*.bats`, :file:`*.dash`,
+  :file:`*.ksh`, and :file:`*.sh` files.
+
+  It can be customized to exclude particular error codes, and to change the
+  minimum level of severity for any errors that should be reported.
+
+  Based on a patch by Cecilia Wei.
 
 
-Bug Fixes
-=========
+Tool Enhancements
+-----------------
 
-* Fixed some browser-side form validation issues that would come up in
-  Review Bot 2.0 if testing against Review Board 4.0 betas.
+* Most tools now include enhanced information when reporting errors in code,
+  such as line and column numbers/ranges, severity warnings, and tool error
+  codes.
+
+* Most tools have improved report parsing, helping ensure that reports from
+  tools are always represented in some way, even when they fail to check
+  code.
+
+* Tools that provide customizable file extensions for processing are now
+  more forgiving when extra spaces or commas are present in the extension
+  list.
+
+* :ref:`tool-checkstyle` XML configuration has improved.
+
+  Checkstyle now supports specifying the name of a bundled XML ruleset file
+  (either ``google_checks.xml`` or ``sun_checks.xml``).
+
+  This can be used instead of providing a full XML file during configuration.
+
+  JAR files with custom XML files can also be provided in the
+  :ref:`java_classpaths <worker-configuration-exe-paths>` and referenced
+  during configuration.
+
+* :ref:`tool-clang` now leaves comments when encountering syntax errors.
+
+* :ref:`tool-cpplint` and :ref:`tool-cppcheck` now checks for more standard
+  C/C++ source and header file patterns.
+
+* :ref:`tool-pyflakes` now reports syntax errors.
+
+
+Removed Features
+================
+
+* Buildbot is no longer supported.
+
+  The support we had in prior releases was a prototype, and had a lot of
+  issues. We are evaluating bringing Buildbot back as a separate integration
+  for Review Board in the future.
+
+
+Extensibility
+=============
+
+* Reworked how tools are built.
+
+  All tools in the worker should now subclass
+  :py:class:`~reviewbot.tools.base.tool.BaseTool`. This provides a lot of
+  new functionality for helping to rapidly construct a tool and process
+  incoming requests, including:
+
+  * Specifying dependencies through
+    :py:attr:`~reviewbot.tools.base.tool.BaseTool.exe_dependencies`.
+
+  * Specifying supported file patterns through
+    :py:attr:`~reviewbot.tools.base.tool.BaseTool.file_patterns`.
+
+  * Providing a standard logger through
+    :py:attr:`~reviewbot.tools.base.tool.BaseTool.logger`.
+
+  * Determining whether a file can be checked through
+    :py:meth:`~reviewbot.tools.base.tool.BaseTool.get_can_handle_file`.
+
+  * Building base command lines for tool execution through
+    :py:meth:`~reviewbot.tools.base.tool.BaseTool.execute`.
+
+  The old legacy :py:class:`~reviewbot.tools.Tool` still exists, but is
+  deprecated and scheduled to be removed in Review Bot 4.
+
+* Added mixins for common tool functionality.
+
+  This includes:
+
+  * User-customizable file pattern options through
+    :py:class:`~reviewbot.tools.base.mixins.FilePatternsFromSettingMixin`.
+
+  * Full repository access and execution through
+    :py:class:`~reviewbot.tools.base.mixins.FullRepositoryToolMixin`.
+
+  * Java-based tool setup and execution through
+    :py:class:`~reviewbot.tools.base.mixins.JavaToolMixin`.
+
+* :py:meth:`File.comment() <reviewbot.processing.review.File.comment>`
+  now accepts standard arguments for columns, error codes, severity levels,
+  and extra listed metadata.
+
+* Added a unit testing framework for tools.
+
+  Unit tests can now be written for custom tools, providing helpers for
+  writing simulation and integration tests.
+
+  See :py:mod:`reviewbot.tools.testing.testcases` and
+  :py:mod:`reviewbot.tools.testing.decorators` for information.
+
+
+Extension Bug Fixes
+===================
+
+* Fixed a crash that could occur when checking worker status if the worker
+  returns an error message or an unexpected result.
+
+
+Worker Bug Fixes
+================
+
+Full Repository Access Tools
+----------------------------
+
+* Fixed applying patches containing new files, deleted files, and symlinks
+  when using tools requiring full repository access. (:bug:`4678`,
+  :bug:`4888`, :bug:`4912`, :bug:`4982`)
+
+* Fixed applying patches containing DOS/Windows-based file paths on a
+  Linux-based install of the worker.
+
+* Binary files are now skipped when applying patches, rather than resulting
+  in a possible error.
+
+* Fixed race conditions when running multiple tools requiring full repository
+  access on the same Git repository.
+
+* Added validation of repository configuration.
+
+  Any issues found in the configuration of a repository or a Review Board
+  server now logs an error and will be skipped. In previous releases,
+  errors could cause Review Bot to fail to start up until fixed.
+
+
+Tool Compatibility
+------------------
+
+* All tools now only run for files they support. (:bug:`4885`)
+
+* Fixed a bug in :ref:`tool-checkstyle` that could prevent filenames from
+  being properly matched.
+
+* :ref:`tool-clang` no longer fails to check code when encountering syntax
+  errors.
+
+* :ref:`tool-clang` now runs correctly on Python 3.
+
+* :ref:`tool-clang` now always comments on the correct lines, rather than
+  sometimes being offset.
+
+* :ref:`tool-cppcheck` now runs without excluded file checks (:bug:`4671`)
+
+* :ref:`tool-cppcheck` now respects the default setting for whether to report
+  comments as issues to resolve.
+
+* :ref:`tool-pydocstyle` now reports the full message for each error found,
+  not just part of it.
+
+* Fixed parsing issues that could occur with :ref:`tool-rubocop`.
 
 
 Contributors
