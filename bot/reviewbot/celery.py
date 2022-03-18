@@ -4,9 +4,11 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import sys
+import textwrap
 
 from celery import (Celery,
                     VERSION as CELERY_VERSION,
+                    __version__ as celery_version_str,
                     concurrency as celery_concurrency,
                     maybe_patch_concurrency)
 from celery.platforms import maybe_drop_privileges
@@ -103,6 +105,38 @@ def create_queues(hostname):
         '',
         'Review Bot will connect to %s' % celery.connection().as_uri(),
         'as %s.' % hostname,
+        '',
+    ]
+
+    python_version_str = '%s.%s' % sys.version_info[:2]
+
+    if sys.version_info[0] == 2:
+        compat_text = (
+            'Note that you are running Review Bot using Python '
+            '%(python_version)s and Celery %(celery_version)s, both of '
+            'which are out-of-date and are no longer receiving security '
+            'fixes. We recommend upgrading to a modern Python 3. '
+            'Review Bot 3 is the last release that will support these '
+            'versions.'
+            % {
+                'python_version': python_version_str,
+                'celery_version': celery_version_str,
+            })
+    else:
+        compat_text = (
+            'You are running Review Bot using Python %(python_version)s '
+            'and Celery %(celery_version)s. Make sure to keep up on the '
+            'latest supported versions of Python 3 and Celery '
+            '%(celery_major_version)s in order to stay nice and secure.'
+            % {
+                'python_version': python_version_str,
+                'celery_version': celery_version_str,
+                'celery_major_version': CELERY_VERSION[0],
+            })
+
+    s += [
+        textwrap.fill(compat_text,
+                      width=75),
         '',
     ]
 
