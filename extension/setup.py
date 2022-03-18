@@ -28,8 +28,8 @@ setup(
             'reviewbot = reviewbotext.extension:ReviewBotExtension',
     },
     install_requires=[
-        'celery>=3.1.25,<4.0; python_version=="2.7"',
-        'celery>=4.4,<5.0; python_version>="3.6"',
+        'celery>=3.1.25,<4.0; python_version == "2.7"',
+        'celery>=5.2.3,<6.0; python_version >= "3.6"',
     ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',

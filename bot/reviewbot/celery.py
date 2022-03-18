@@ -5,10 +5,20 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 
-from celery import Celery, VERSION as CELERY_VERSION
-from celery.bin.worker import worker
+from celery import (Celery,
+                    VERSION as CELERY_VERSION,
+                    concurrency as celery_concurrency,
+                    maybe_patch_concurrency)
+from celery.platforms import maybe_drop_privileges
 from celery.signals import celeryd_after_setup, celeryd_init
 from kombu import Exchange, Queue
+
+try:
+    # Celery 5, Python 3+
+    from celery.bin.worker import detach as detach_process
+except ImportError:
+    # Celery 3, Python 2.7
+    from celery.bin.celeryd_detach import detach as detach_process
 
 from reviewbot import VERSION
 from reviewbot.config import config, get_config_file_path, load_config
@@ -41,7 +51,7 @@ class ReviewBotCelery(Celery):
             include=['reviewbot.tasks'])
 
 
-def create_queues():
+def create_queues(hostname):
     """Create the celery queues.
 
     Returns:
@@ -92,6 +102,7 @@ def create_queues():
         'Welcome!',
         '',
         'Review Bot will connect to %s' % celery.connection().as_uri(),
+        'as %s.' % hostname,
         '',
     ]
 
@@ -238,7 +249,7 @@ def setup_logging(instance, conf, **kwargs):
         '[%(levelname)s] %(name)s: %(message)s'
     )
 
-    if CELERY_VERSION >= (4, 0):
+    if CELERY_VERSION >= (5, 0):
         conf.update({
             'worker_log_format': log_format,
             'worker_task_log_format': task_log_format,
@@ -278,12 +289,12 @@ def setup_reviewbot(instance, conf, **kwargs):
     load_tool_classes()
     init_repositories()
 
-    if CELERY_VERSION >= (4, 0):
+    if CELERY_VERSION >= (5, 0):
         conf.accept_content = ['json']
     else:
         conf.CELERY_ACCEPT_CONTENT = ['json']
 
-    instance.app.amqp.queues = create_queues()
+    instance.app.amqp.queues = create_queues(hostname=instance.hostname)
 
 
 def get_celery():
@@ -307,12 +318,132 @@ def get_celery():
     return celery
 
 
-def create_worker_command():
-    """Create and return the command instance for starting a worker.
+def start_worker(broker, hostname, loglevel, logfile, detach, pidfile, uid,
+                 gid, umask, concurrency, pool_cls, autoscale):
+    """Start a worker.
+
+    This will take in the requested arguments and start a Celery worker,
+    running either in the current process or in a detached process.
+
+    This also takes care to patch the concurrency module, as per Celery's
+    requirements, and to drop privileges if needed.
 
     Version Added:
         3.0
-    """
-    assert celery is not None
 
-    return worker(celery)
+    Args:
+        broker (unicode):
+            The broker URI.
+
+        hostname (unicode):
+            The local hostname Review Bot will identify with when talking to
+            the broker.
+
+        loglevel (unicode):
+            The minimum log level.
+
+        logfile (unicode):
+            The path to a log file to write to.
+
+        detach (bool):
+            Whether to run the worker in a detached process.
+
+        pidfile (unicode):
+            The path to a PID file to write to when detaching.
+
+        uid (unicode):
+            The user ID to use when detaching.
+
+        gid (unicode):
+            The group ID to use when detaching.
+
+        umask (unicode):
+            The umask (in octal string format) to use for the process when
+            detaching.
+
+        concurrency (int):
+            The number of concurrent processes to run.
+
+        pool_cls (unicode):
+            The pool implementation.
+
+        autoscale (unicode):
+            The autoscale settings, in the form of
+            ``max_concurrency,min_concurrency``.
+
+    Returns:
+        int:
+        The worker's exit code.
+    """
+    # We're running in modern (Review Bot 3+) mode.
+    #
+    # First thing to do is trigger a patch to the concurrency modules.
+    # Normally, Celery will do this but ONLY if executing from the main
+    # 'celery' command or through 'execute_from_commandline' (which we can't
+    # use -- see below).
+    maybe_patch_concurrency()
+
+    # Check if we need to/can drop privileges, and do so.
+    maybe_drop_privileges(uid=uid,
+                          gid=gid)
+
+    # The broker is configured through the environment, not through a setting.
+    #
+    # The way Celery command classes normally handle this is through a
+    # separate argument parsing step, before the main one. It assumes a lot
+    # about how things are invoked, and handles setting a lot of options. We
+    # don't care about any of those, and want to avoid the assumptions, so
+    # we'll just set what we need here.
+    # do that, so
+    os.environ['CELERY_BROKER_URL'] = broker
+
+    if detach:
+        detach_argv = [sys.argv[0]]
+
+        # Some options are passed to detach() directly. Some are passed as
+        # command line arguments. Some are both.
+        for name, value in (('autoscale', autoscale),
+                            ('broker', broker),
+                            ('concurrency', concurrency),
+                            ('hostname', hostname),
+                            ('logfile', logfile),
+                            ('loglevel', loglevel),
+                            ('pidfile', pidfile),
+                            ('pool', pool_cls)):
+            if value is not None:
+                detach_argv.append('--%s=%s' % (name, value))
+
+        return detach_process(
+            app=celery,
+            path=sys.executable,
+            argv=detach_argv,
+            logfile=logfile,
+            pidfile=pidfile,
+            uid=uid,
+            gid=gid,
+            umask=umask,
+            executable=sys.executable,
+            hostname=hostname)
+    else:
+        pool_cls = (celery_concurrency.get_implementation(pool_cls) or
+                    celery.conf.CELERYD_POOL)
+
+        worker = celery.Worker(
+            hostname=hostname,
+            loglevel=loglevel,
+            logfile=logfile,
+            detach=detach,
+            pidfile=pidfile,
+            uid=uid,
+            gid=gid,
+            umask=umask,
+            concurrency=concurrency,
+            pool_cls=pool_cls,
+            autoscale=autoscale,
+            quiet=True)
+
+        if CELERY_VERSION >= (5, 0):
+            worker.start()
+            return worker.exitcode
+        else:
+            return worker.start()

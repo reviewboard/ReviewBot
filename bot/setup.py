@@ -49,8 +49,8 @@ setup(
     },
     install_requires=[
         'appdirs>=1.4.4',
-        'celery>=3.1.25,<4.0; python_version=="2.7"',
-        'celery>=4.4,<5.0; python_version>="3.6"',
+        'celery>=3.1.25,<4.0; python_version == "2.7"',
+        'celery>=5.2.3,<6.0; python_version >= "3.6"',
         'enum; python_version == "2.7"',
         'RBTools>=1.0',
 
