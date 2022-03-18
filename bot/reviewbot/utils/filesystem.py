@@ -93,8 +93,8 @@ def cleanup_tempfiles():
         except:
             pass
 
-    tmpdirs = []
-    tmpfiles = []
+    tmpdirs[:] = []
+    tmpfiles[:] = []
 
 
 def make_tempfile(content=None, extension=''):

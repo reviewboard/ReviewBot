@@ -162,7 +162,7 @@ class CPPLintToolTests(BaseToolTestCase):
         '/path/to/test.cc:0:  No copyright message found.  You should have '
         'a line: "Copyright [year] <Copyright Owner>"  [legal/copyright] [5]\n'
 
-        '/path/to/test.cc:1:  Include the directory when naming .h files  '
+        '/path/to/test.cc:1:  Include the directory when naming header files  '
         '[build/include_subdir] [4]\n'
 
         '/path/to/test.cc:3:  Do not use namespace using-directives.  Use '
@@ -209,7 +209,7 @@ class CPPLintToolTests(BaseToolTestCase):
                 'first_line': 1,
                 'num_lines': 1,
                 'text': (
-                    'Include the directory when naming .h files\n'
+                    'Include the directory when naming header files\n'
                     '\n'
                     'Error code: build/include_subdir'
                 ),
