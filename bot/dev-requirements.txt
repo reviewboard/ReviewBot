@@ -1,2 +1,2 @@
-kgb>=6.0
-nose
+kgb>=7.0
+reviewbot-worker[all]

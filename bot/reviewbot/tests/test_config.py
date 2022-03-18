@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals
 
+import json
 import os
 import shutil
 import tempfile
@@ -115,8 +116,7 @@ class ConfigTests(kgb.SpyAgency, TestCase):
 
         self.assertSpyCalledWith(
             logger.warning,
-            ('Review Bot configuration was not found at %s. Using the '
-             'defaults.'),
+            'Configuration was not found at %s. Using the defaults.',
             os.path.join(tempdir, 'config.py'))
 
         self.assertSpyNotCalled(logger.info)
@@ -227,7 +227,9 @@ class ConfigTests(kgb.SpyAgency, TestCase):
         self.assertSpyCalledWith(
             logger.warning,
             'review_board_servers in %s is deprecated and will be removed '
-            'in Review Bot 4.0. Please rename it to reviewboard_servers.',
+            'in Review Bot 4.0. Please rename it to reviewboard_servers or '
+            'set reviewboard_servers_config_path to the location of a JSON '
+            'file.',
             config_file)
         self.assertSpyNotCalled(logger.error)
 
@@ -299,6 +301,396 @@ class ConfigTests(kgb.SpyAgency, TestCase):
             './cookies/',
             config_file,
             default_cookie_dir)
+
+    def test_load_config_with_reviewboard_servers_config_path(self):
+        """Testing load_config with reviewboard_servers_config_path"""
+        fd, servers_path = tempfile.mkstemp()
+
+        with os.fdopen(fd, 'w') as fp:
+            json.dump(
+                [
+                    {
+                        'url': 'https://rb1.example.com/',
+                    },
+                    {
+                        'url': 'https://rb2.example.com/',
+                        'user': 'my-user',
+                        'token': 'abc123',
+                    },
+                ],
+                fp)
+
+        self._load_custom_config(
+            'reviewboard_servers_config_path = "%(servers_path)s"\n'
+            % {
+                'servers_path': servers_path,
+            }
+        )
+
+        os.remove(servers_path)
+
+        self.assertEqual(
+            config['reviewboard_servers'],
+            [
+                {
+                    'url': 'https://rb1.example.com/',
+                },
+                {
+                    'url': 'https://rb2.example.com/',
+                    'user': 'my-user',
+                    'token': 'abc123',
+                },
+            ])
+
+        self.assertSpyNotCalled(logger.error)
+        self.assertSpyNotCalled(logger.warning)
+
+    def test_load_config_with_reviewboard_servers_config_path_merge(self):
+        """Testing load_config with reviewboard_servers_config_path merges with
+        reviewboard_servers
+        """
+        fd, servers_path = tempfile.mkstemp()
+
+        with os.fdopen(fd, 'w') as fp:
+            json.dump(
+                [
+                    {
+                        'url': 'https://rb2.example.com/',
+                    },
+                    {
+                        'url': 'https://rb3.example.com/',
+                        'user': 'my-user',
+                        'token': 'abc123',
+                    },
+                ],
+                fp)
+
+        self._load_custom_config(
+            'reviewboard_servers = [{\n'
+            '    "url": "https://rb1.example.com/",\n'
+            '}]\n'
+            '\n'
+            'reviewboard_servers_config_path = "%(servers_path)s"\n'
+            % {
+                'servers_path': servers_path,
+            }
+        )
+
+        os.remove(servers_path)
+
+        self.assertEqual(
+            config['reviewboard_servers'],
+            [
+                {
+                    'url': 'https://rb1.example.com/',
+                },
+                {
+                    'url': 'https://rb2.example.com/',
+                },
+                {
+                    'url': 'https://rb3.example.com/',
+                    'user': 'my-user',
+                    'token': 'abc123',
+                },
+            ])
+
+        self.assertSpyNotCalled(logger.error)
+        self.assertSpyNotCalled(logger.warning)
+
+    def test_load_config_with_reviewboard_servers_config_path_with_empty(self):
+        """Testing load_config with reviewboard_servers_config_path with empty
+        file
+        """
+        fd, servers_path = tempfile.mkstemp()
+
+        with os.fdopen(fd, 'w') as fp:
+            json.dump([], fp)
+
+        self._load_custom_config(
+            'reviewboard_servers = [{\n'
+            '    "url": "https://rb1.example.com/",\n'
+            '}]\n'
+            '\n'
+            'reviewboard_servers_config_path = "%(servers_path)s"\n'
+            % {
+                'servers_path': servers_path,
+            }
+        )
+
+        os.remove(servers_path)
+
+        self.assertEqual(
+            config['reviewboard_servers'],
+            [
+                {
+                    'url': 'https://rb1.example.com/',
+                },
+            ])
+
+        self.assertSpyNotCalled(logger.error)
+        self.assertSpyNotCalled(logger.warning)
+
+    def test_load_config_with_reviewboard_servers_config_path_not_found(self):
+        """Testing load_config with reviewboard_servers_config_path file not
+        found
+        """
+        self._load_custom_config(
+            'reviewboard_servers = [{\n'
+            '    "url": "https://rb1.example.com/",\n'
+            '}]\n'
+            '\n'
+            'reviewboard_servers_config_path = "/xxx/rb-servers"\n'
+        )
+
+        self.assertEqual(
+            config['reviewboard_servers'],
+            [
+                {
+                    'url': 'https://rb1.example.com/',
+                },
+            ])
+
+        self.assertSpyCalledWith(
+            logger.warning,
+            'The Review Board servers configuration file "%s" was not found. '
+            'If you aren\'t using tools that require full-repository access, '
+            'you can ignore this.',
+            '/xxx/rb-servers')
+        self.assertSpyNotCalled(logger.error)
+
+    def test_load_config_with_reviewboard_servers_config_path_bad_format(self):
+        """Testing load_config with reviewboard_servers_config_path file with
+        a bad format
+        """
+        fd, servers_path = tempfile.mkstemp()
+
+        with os.fdopen(fd, 'w') as fp:
+            json.dump({}, fp)
+
+        self._load_custom_config(
+            'reviewboard_servers = [{\n'
+            '    "url": "https://rb1.example.com/",\n'
+            '}]\n'
+            '\n'
+            'reviewboard_servers_config_path = "%(servers_path)s"\n'
+            % {
+                'servers_path': servers_path,
+            }
+        )
+
+        self.assertEqual(
+            config['reviewboard_servers'],
+            [
+                {
+                    'url': 'https://rb1.example.com/',
+                },
+            ])
+
+        self.assertSpyCalledWith(
+            logger.error,
+            'The configuration file at %s must contain a list, not a %s.',
+            servers_path,
+            'dict')
+        self.assertSpyNotCalled(logger.warning)
+
+    def test_load_config_with_repositories_config_path(self):
+        """Testing load_config with repositories_config_path"""
+        fd, repos_path = tempfile.mkstemp()
+
+        with os.fdopen(fd, 'w') as fp:
+            json.dump(
+                [
+                    {
+                        'clone_path': 'git@example.com:/repo1.git',
+                        'name': 'repo1',
+                    },
+                    {
+                        'clone_path': 'git@example.com:/repo2.git',
+                        'name': 'repo2',
+                        'type': 'git',
+                    },
+                ],
+                fp)
+
+        self._load_custom_config(
+            'repositories_config_path = "%(repos_path)s"\n'
+            % {
+                'repos_path': repos_path,
+            }
+        )
+
+        os.remove(repos_path)
+
+        self.assertEqual(
+            config['repositories'],
+            [
+                {
+                    'clone_path': 'git@example.com:/repo1.git',
+                    'name': 'repo1',
+                },
+                {
+                    'clone_path': 'git@example.com:/repo2.git',
+                    'name': 'repo2',
+                    'type': 'git',
+                },
+            ])
+
+        self.assertSpyNotCalled(logger.error)
+        self.assertSpyNotCalled(logger.warning)
+
+    def test_load_config_with_repositories_config_path_merge(self):
+        """Testing load_config with repositories_config_path merges with
+        repositories
+        """
+        fd, repos_path = tempfile.mkstemp()
+
+        with os.fdopen(fd, 'w') as fp:
+            json.dump(
+                [
+                    {
+                        'clone_path': 'git@example.com:/repo2.git',
+                        'name': 'repo2',
+                    },
+                    {
+                        'clone_path': 'git@example.com:/repo3.git',
+                        'name': 'repo3',
+                        'type': 'git',
+                    },
+                ],
+                fp)
+
+        self._load_custom_config(
+            'repositories = [{\n'
+            '    "clone_path": "git@example.com:/repo1.git",\n'
+            '    "name": "repo1",\n'
+            '}]\n'
+            '\n'
+            'repositories_config_path = "%(repos_path)s"\n'
+            % {
+                'repos_path': repos_path,
+            }
+        )
+
+        os.remove(repos_path)
+
+        self.assertEqual(
+            config['repositories'],
+            [
+                {
+                    'clone_path': 'git@example.com:/repo1.git',
+                    'name': 'repo1',
+                },
+                {
+                    'clone_path': 'git@example.com:/repo2.git',
+                    'name': 'repo2',
+                },
+                {
+                    'clone_path': 'git@example.com:/repo3.git',
+                    'name': 'repo3',
+                    'type': 'git',
+                },
+            ])
+
+        self.assertSpyNotCalled(logger.error)
+        self.assertSpyNotCalled(logger.warning)
+
+    def test_load_config_with_repositories_config_path_with_empty(self):
+        """Testing load_config with repositories_config_path with empty file"""
+        fd, repos_path = tempfile.mkstemp()
+
+        with os.fdopen(fd, 'w') as fp:
+            json.dump([], fp)
+
+        self._load_custom_config(
+            'repositories = [{\n'
+            '    "clone_path": "git@example.com:/repo1.git",\n'
+            '    "name": "repo1",\n'
+            '}]\n'
+            '\n'
+            'repositories_config_path = "%(repos_path)s"\n'
+            % {
+                'repos_path': repos_path,
+            }
+        )
+
+        os.remove(repos_path)
+
+        self.assertEqual(
+            config['repositories'],
+            [
+                {
+                    'clone_path': 'git@example.com:/repo1.git',
+                    'name': 'repo1',
+                },
+            ])
+
+        self.assertSpyNotCalled(logger.error)
+        self.assertSpyNotCalled(logger.warning)
+
+    def test_load_config_with_repositories_config_path_not_found(self):
+        """Testing load_config with repositories_config_path file not found"""
+        self._load_custom_config(
+            'repositories = [{\n'
+            '    "clone_path": "git@example.com:/repo1.git",\n'
+            '    "name": "repo1",\n'
+            '}]\n'
+            '\n'
+            'repositories_config_path = "/xxx/repos"\n'
+        )
+
+        self.assertEqual(
+            config['repositories'],
+            [
+                {
+                    'clone_path': 'git@example.com:/repo1.git',
+                    'name': 'repo1',
+                },
+            ])
+
+        self.assertSpyCalledWith(
+            logger.warning,
+            'The repository configuration file "%s" was not found. If you '
+            'aren\'t using tools that require full-repository access, you '
+            'can ignore this.',
+            '/xxx/repos')
+        self.assertSpyNotCalled(logger.error)
+
+    def test_load_config_with_repositories_config_path_bad_format(self):
+        """Testing load_config with repositories_config_path file with a bad
+        format
+        """
+        fd, repos_path = tempfile.mkstemp()
+
+        with os.fdopen(fd, 'w') as fp:
+            json.dump({}, fp)
+
+        self._load_custom_config(
+            'repositories = [{\n'
+            '    "clone_path": "git@example.com:/repo1.git",\n'
+            '    "name": "repo1",\n'
+            '}]\n'
+            '\n'
+            'repositories_config_path = "%(repos_path)s"\n'
+            % {
+                'repos_path': repos_path,
+            }
+        )
+
+        self.assertEqual(
+            config['repositories'],
+            [
+                {
+                    'clone_path': 'git@example.com:/repo1.git',
+                    'name': 'repo1',
+                },
+            ])
+
+        self.assertSpyCalledWith(
+            logger.error,
+            'The configuration file at %s must contain a list, not a %s.',
+            repos_path,
+            'dict')
+        self.assertSpyNotCalled(logger.warning)
 
     def _load_custom_config(self, config_contents):
         """Load a custom configuration file.

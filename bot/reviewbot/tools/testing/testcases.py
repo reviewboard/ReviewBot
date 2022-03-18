@@ -87,7 +87,7 @@ class ToolTestCaseMetaclass(type):
     def tag_func_name(meta, func_name, tag):
         """Return a function name tagged with an identifier.
 
-        This will convert a ``test_*` function name into a
+        This will convert a ``test_*`` function name into a
         :samp:`test_{tag}_*`.
 
         Args:

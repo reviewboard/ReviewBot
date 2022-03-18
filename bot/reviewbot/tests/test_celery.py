@@ -12,11 +12,10 @@ import kgb
 from reviewbot.celery import setup_cookies
 from reviewbot.config import config
 from reviewbot.testing import TestCase
-from reviewbot.utils.log import get_logger
+from reviewbot.utils.log import get_root_logger
 
 
-celery_logger = get_logger('reviewbot.celery',
-                           is_task_logger=False)
+root_logger = get_root_logger()
 
 
 class SetupCookiesTests(kgb.SpyAgency, TestCase):
@@ -37,7 +36,7 @@ class SetupCookiesTests(kgb.SpyAgency, TestCase):
             'cookie_path': self.cookie_path,
         }
 
-        self.spy_on(celery_logger.debug)
+        self.spy_on(root_logger.debug)
 
     def tearDown(self):
         super(SetupCookiesTests, self).tearDown()
@@ -54,11 +53,11 @@ class SetupCookiesTests(kgb.SpyAgency, TestCase):
         self.assertTrue(os.path.exists(self.cookie_dir))
         self.assertTrue(os.path.exists(self.cookie_path))
         self.assertSpyCalledWith(
-            celery_logger.debug,
+            root_logger.debug,
             'Checking cookie storage at %s',
             self.cookie_path)
         self.assertSpyCalledWith(
-            celery_logger.debug,
+            root_logger.debug,
             'Cookies can be stored at %s',
             self.cookie_path)
 
@@ -82,11 +81,11 @@ class SetupCookiesTests(kgb.SpyAgency, TestCase):
                 setup_cookies()
 
         self.assertSpyCalledWith(
-            celery_logger.debug,
+            root_logger.debug,
             'Checking cookie storage at %s',
             cookie_path)
         self.assertSpyNotCalledWith(
-            celery_logger.debug,
+            root_logger.debug,
             'Cookies can be stored at %s',
             cookie_path)
 
@@ -112,11 +111,11 @@ class SetupCookiesTests(kgb.SpyAgency, TestCase):
                 setup_cookies()
 
         self.assertSpyCalledWith(
-            celery_logger.debug,
+            root_logger.debug,
             'Checking cookie storage at %s',
             cookie_path)
         self.assertSpyNotCalledWith(
-            celery_logger.debug,
+            root_logger.debug,
             'Cookies can be stored at %s',
             cookie_path)
 
@@ -139,10 +138,10 @@ class SetupCookiesTests(kgb.SpyAgency, TestCase):
                 setup_cookies()
 
         self.assertSpyCalledWith(
-            celery_logger.debug,
+            root_logger.debug,
             'Checking cookie storage at %s',
             cookie_path)
         self.assertSpyNotCalledWith(
-            celery_logger.debug,
+            root_logger.debug,
             'Cookies can be stored at %s',
             cookie_path)

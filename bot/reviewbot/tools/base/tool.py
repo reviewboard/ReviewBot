@@ -166,11 +166,11 @@ class BaseTool(object):
             logging.Logger
         """
         if self._logger is None:
-            from reviewbot.celery import celery
+            from reviewbot.celery import get_celery
 
             self._logger = get_logger(
                 self.name,
-                is_task_logger=celery.current_task is not None)
+                is_task_logger=get_celery().current_task is not None)
 
         return self._logger
 
@@ -343,7 +343,7 @@ class BaseTool(object):
             :py:meth:`~reviewbot.processing.File.get_patched_file_path`
             command, and must be valid for this method to be called.
 
-            ``base_command` is added, which would be the result of
+            ``base_command`` is added, which would be the result of
             :py:meth:`build_base_command`.
 
             ``**kwargs`` is now expected.

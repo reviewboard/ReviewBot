@@ -1,22 +1,40 @@
+"""Celery and Review Bot worker setup and management."""
+
 from __future__ import absolute_import, unicode_literals
 
 import os
 import sys
+import textwrap
 
-from celery import Celery, VERSION as CELERY_VERSION
-from celery.bin.worker import worker
+from celery import (Celery,
+                    VERSION as CELERY_VERSION,
+                    __version__ as celery_version_str,
+                    concurrency as celery_concurrency,
+                    maybe_patch_concurrency)
+from celery.platforms import maybe_drop_privileges
 from celery.signals import celeryd_after_setup, celeryd_init
 from kombu import Exchange, Queue
 
-from reviewbot.config import config, load_config
+try:
+    # Celery 5, Python 3+
+    from celery.bin.worker import detach as detach_process
+except ImportError:
+    # Celery 3, Python 2.7
+    from celery.bin.celeryd_detach import detach as detach_process
+
+from reviewbot import VERSION
+from reviewbot.config import config, get_config_file_path, load_config
 from reviewbot.repositories import repositories, init_repositories
 from reviewbot.tools.base.registry import (get_tool_classes,
                                            load_tool_classes)
-from reviewbot.utils.log import get_logger
+from reviewbot.utils.log import get_root_logger
 
 
 celery = None
-logger = get_logger(__name__)
+logger = get_root_logger()
+
+
+_manual_url = 'https://www.reviewboard.org/docs/reviewbot/%s.%s/' % VERSION[:2]
 
 
 class ReviewBotCelery(Celery):
@@ -35,7 +53,7 @@ class ReviewBotCelery(Celery):
             include=['reviewbot.tasks'])
 
 
-def create_queues():
+def create_queues(hostname):
     """Create the celery queues.
 
     Returns:
@@ -47,6 +65,10 @@ def create_queues():
         Queue('celery', default_exchange, routing_key='celery'),
     ]
 
+    found_tools = []
+    missing_dep_tools = []
+    working_dir_tools = []
+
     # Detect the installed tools and select the corresponding queues to
     # consume from.
     for tool_class in get_tool_classes():
@@ -55,10 +77,14 @@ def create_queues():
         queue_name = '%s.%s' % (tool_id, tool_class.version)
 
         if tool.check_dependencies():
+            found_tools.append(tool_id)
+
             if tool.working_directory_required:
                 # Set up a queue for each configured repository. This way only
                 # workers which have the relevant repository configured will
                 # pick up applicable tasks.
+                working_dir_tools.append(tool_id)
+
                 for repo_name in repositories:
                     repo_queue_name = '%s.%s' % (queue_name, repo_name)
 
@@ -72,7 +98,110 @@ def create_queues():
                     Exchange(queue_name, type='direct'),
                     routing_key=queue_name))
         else:
-            tool.logger.warning('dependency checks failed.')
+            missing_dep_tools.append(tool_id)
+
+    s = [
+        'Welcome!',
+        '',
+        'Review Bot will connect to %s' % celery.connection().as_uri(),
+        'as %s.' % hostname,
+        '',
+    ]
+
+    python_version_str = '%s.%s' % sys.version_info[:2]
+
+    if sys.version_info[0] == 2:
+        compat_text = (
+            'Note that you are running Review Bot using Python '
+            '%(python_version)s and Celery %(celery_version)s, both of '
+            'which are out-of-date and are no longer receiving security '
+            'fixes. We recommend upgrading to a modern Python 3. '
+            'Review Bot 3 is the last release that will support these '
+            'versions.'
+            % {
+                'python_version': python_version_str,
+                'celery_version': celery_version_str,
+            })
+    else:
+        compat_text = (
+            'You are running Review Bot using Python %(python_version)s '
+            'and Celery %(celery_version)s. Make sure to keep up on the '
+            'latest supported versions of Python 3 and Celery '
+            '%(celery_major_version)s in order to stay nice and secure.'
+            % {
+                'python_version': python_version_str,
+                'celery_version': celery_version_str,
+                'celery_major_version': CELERY_VERSION[0],
+            })
+
+    s += [
+        textwrap.fill(compat_text,
+                      width=75),
+        '',
+    ]
+
+    if found_tools:
+        s += [
+            'The following tools are available:',
+            '',
+        ] + [
+            '  * %s' % _tool_id
+            for _tool_id in found_tools
+        ] + ['']
+
+    if missing_dep_tools:
+        s += [
+            'The following tools are missing dependencies:',
+            '',
+        ] + [
+            '  * %s' % _tool_id
+            for _tool_id in missing_dep_tools
+        ] + [
+            '',
+            'See %stools/ for help on installing tools.'
+            % _manual_url,
+            '',
+        ]
+
+    if working_dir_tools:
+        if not repositories:
+            s += [
+                'The following tools cannot be used without one or more '
+                'configured repositories in %s:'
+                % get_config_file_path(),
+                '',
+            ] + [
+                '  * %s' % _tool_id
+                for _tool_id in working_dir_tools
+            ]
+        else:
+            s += [
+                'The following tools require a configured repository in %s:'
+                % get_config_file_path(),
+                '',
+            ] + [
+                '  * %s' % _tool_id
+                for _tool_id in working_dir_tools
+            ]
+
+            s += [
+                '',
+                'Configured repositories include:',
+                '',
+            ] + [
+                '  * %s' % _repository
+                for _repository in repositories
+            ]
+
+        s += [
+            '',
+            'See %sconfiguration/#worker-configuration-repositories for '
+            'help on configuring repositories.'
+            % _manual_url,
+            '',
+        ]
+
+    logger.info('\n'.join(s))
 
     return queues
 
@@ -146,7 +275,7 @@ def setup_logging(instance, conf, **kwargs):
             Additional keyword arguments passed to the signal.
     """
     log_format = (
-        '%(asctime)s - %(processName)s - [%(levelname)s] %(name)s: %(message)s'
+        '%(asctime)s - [%(levelname)s] %(name)s: %(message)s'
     )
 
     task_log_format = (
@@ -154,7 +283,7 @@ def setup_logging(instance, conf, **kwargs):
         '[%(levelname)s] %(name)s: %(message)s'
     )
 
-    if CELERY_VERSION >= (4, 0):
+    if CELERY_VERSION >= (5, 0):
         conf.update({
             'worker_log_format': log_format,
             'worker_task_log_format': task_log_format,
@@ -194,12 +323,12 @@ def setup_reviewbot(instance, conf, **kwargs):
     load_tool_classes()
     init_repositories()
 
-    if CELERY_VERSION >= (4, 0):
+    if CELERY_VERSION >= (5, 0):
         conf.accept_content = ['json']
     else:
         conf.CELERY_ACCEPT_CONTENT = ['json']
 
-    instance.app.amqp.queues = create_queues()
+    instance.app.amqp.queues = create_queues(hostname=instance.hostname)
 
 
 def get_celery():
@@ -223,12 +352,132 @@ def get_celery():
     return celery
 
 
-def create_worker_command():
-    """Create and return the command instance for starting a worker.
+def start_worker(broker, hostname, loglevel, logfile, detach, pidfile, uid,
+                 gid, umask, concurrency, pool_cls, autoscale):
+    """Start a worker.
+
+    This will take in the requested arguments and start a Celery worker,
+    running either in the current process or in a detached process.
+
+    This also takes care to patch the concurrency module, as per Celery's
+    requirements, and to drop privileges if needed.
 
     Version Added:
         3.0
-    """
-    assert celery is not None
 
-    return worker(celery)
+    Args:
+        broker (unicode):
+            The broker URI.
+
+        hostname (unicode):
+            The local hostname Review Bot will identify with when talking to
+            the broker.
+
+        loglevel (unicode):
+            The minimum log level.
+
+        logfile (unicode):
+            The path to a log file to write to.
+
+        detach (bool):
+            Whether to run the worker in a detached process.
+
+        pidfile (unicode):
+            The path to a PID file to write to when detaching.
+
+        uid (unicode):
+            The user ID to use when detaching.
+
+        gid (unicode):
+            The group ID to use when detaching.
+
+        umask (unicode):
+            The umask (in octal string format) to use for the process when
+            detaching.
+
+        concurrency (int):
+            The number of concurrent processes to run.
+
+        pool_cls (unicode):
+            The pool implementation.
+
+        autoscale (unicode):
+            The autoscale settings, in the form of
+            ``max_concurrency,min_concurrency``.
+
+    Returns:
+        int:
+        The worker's exit code.
+    """
+    # We're running in modern (Review Bot 3+) mode.
+    #
+    # First thing to do is trigger a patch to the concurrency modules.
+    # Normally, Celery will do this but ONLY if executing from the main
+    # 'celery' command or through 'execute_from_commandline' (which we can't
+    # use -- see below).
+    maybe_patch_concurrency()
+
+    # Check if we need to/can drop privileges, and do so.
+    maybe_drop_privileges(uid=uid,
+                          gid=gid)
+
+    # The broker is configured through the environment, not through a setting.
+    #
+    # The way Celery command classes normally handle this is through a
+    # separate argument parsing step, before the main one. It assumes a lot
+    # about how things are invoked, and handles setting a lot of options. We
+    # don't care about any of those, and want to avoid the assumptions, so
+    # we'll just set what we need here.
+    # do that, so
+    os.environ['CELERY_BROKER_URL'] = broker
+
+    if detach:
+        detach_argv = [sys.argv[0]]
+
+        # Some options are passed to detach() directly. Some are passed as
+        # command line arguments. Some are both.
+        for name, value in (('autoscale', autoscale),
+                            ('broker', broker),
+                            ('concurrency', concurrency),
+                            ('hostname', hostname),
+                            ('logfile', logfile),
+                            ('loglevel', loglevel),
+                            ('pidfile', pidfile),
+                            ('pool', pool_cls)):
+            if value is not None:
+                detach_argv.append('--%s=%s' % (name, value))
+
+        return detach_process(
+            app=celery,
+            path=sys.executable,
+            argv=detach_argv,
+            logfile=logfile,
+            pidfile=pidfile,
+            uid=uid,
+            gid=gid,
+            umask=umask,
+            executable=sys.executable,
+            hostname=hostname)
+    else:
+        pool_cls = (celery_concurrency.get_implementation(pool_cls) or
+                    celery.conf.CELERYD_POOL)
+
+        worker = celery.Worker(
+            hostname=hostname,
+            loglevel=loglevel,
+            logfile=logfile,
+            detach=detach,
+            pidfile=pidfile,
+            uid=uid,
+            gid=gid,
+            umask=umask,
+            concurrency=concurrency,
+            pool_cls=pool_cls,
+            autoscale=autoscale,
+            quiet=True)
+
+        if CELERY_VERSION >= (5, 0):
+            worker.start()
+            return worker.exitcode
+        else:
+            return worker.start()

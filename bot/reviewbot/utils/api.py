@@ -18,6 +18,9 @@ def get_api_root(url, username=None, api_token=None, session=None):
     Either ``session`` or both ``username`` and ``api_token`` must be
     provided.
 
+    Version Added:
+        3.0
+
     Args:
         url (unicode):
             The path to the Review Board server.

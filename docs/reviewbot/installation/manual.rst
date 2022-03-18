@@ -1,25 +1,11 @@
-.. _installation:
+.. _installation-manual:
 
-============
-Installation
-============
+==============================
+Manually Installing Review Bot
+==============================
 
 If you're upgrading from a previous release, see the instructions on
 :ref:`upgrading Review Bot <upgrading>`.
-
-
-Overview
-========
-
-Review Bot |version| supports Review Board 3.0 or 4.0, and Python 2.7 or
-3.6 through 3.9.
-
-A Review Bot setup consists of three pieces:
-
-1. The Review Bot extension for Review Board
-2. A message broker (such as RabbitMQ_)
-3. At least one Review Bot worker (either on the Review Board server or
-   somewhere else in your network)
 
 
 Installing the Review Board Extension
@@ -44,6 +30,8 @@ in the top bar. You should see a new extension called "Review Bot". Click
 Once installed, the Review Bot extension requires some
 :ref:`configuration <extension-configuration>`.
 
+
+.. _installation-manual-message-broker:
 
 Install a Message Broker
 ========================
@@ -89,9 +77,9 @@ Once the worker is installed and your message broker is running, you can start
 the worker node. This is done via the following command (replacing
 :samp:`<broker_url>` with the URL to your message broker)::
 
-    $ reviewbot worker -b <broker_url>
+    $ reviewbot -b <broker_url>
 
 It's recommended to set this up to run as a service when the server boots. See
-the documentation on `daemonizing celery`_ for more details.
+the documentation on `daemonizing Celery`_ for more details.
 
-.. _daemonizing celery: https://docs.celeryproject.org/en/latest/userguide/daemonizing.html
+.. _daemonizing Celery: https://docs.celeryproject.org/en/latest/userguide/daemonizing.html

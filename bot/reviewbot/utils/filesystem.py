@@ -1,3 +1,5 @@
+"""Utilities for filesystem operations and path normalization."""
+
 from __future__ import unicode_literals
 
 import ntpath
@@ -91,8 +93,8 @@ def cleanup_tempfiles():
         except:
             pass
 
-    tmpdirs = []
-    tmpfiles = []
+    tmpdirs[:] = []
+    tmpfiles[:] = []
 
 
 def make_tempfile(content=None, extension=''):

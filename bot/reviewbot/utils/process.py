@@ -1,3 +1,5 @@
+"""Utility functions for Process invocation and management."""
+
 from __future__ import unicode_literals
 
 import os

@@ -8,12 +8,11 @@ from __future__ import absolute_import, unicode_literals
 
 import argparse
 import os
+import socket
 import sys
 
-from celery.bin.celeryd_detach import detach
-
 from reviewbot import get_version_string
-from reviewbot.celery import get_celery, create_worker_command
+from reviewbot.celery import get_celery, start_worker
 
 
 def create_arg_parser():
@@ -52,6 +51,7 @@ def create_arg_parser():
     arg_parser.add_argument(
         '-n',
         '--hostname',
+        default='reviewbot@%s' % socket.gethostname(),
         help=(
             'A custom hostname to set when communicating with the message '
             'queue. This can be a format string with: %%h (fully-qualified '
@@ -160,15 +160,6 @@ def main(argv=sys.argv[1:]):
                          'options.\n\n')
         sys.exit(celery.worker_main([sys.argv[0]] + argv[1:]))
 
-    # We're running in modern (Review Bot 3+) mode.
-    #
-    # First thing to do is trigger a patch to the concurrency modules.
-    # Normally, Celery will do this but ONLY if executing from the main
-    # 'celery' command or through 'execute_from_commandline' (which we can't
-    # use -- see below).
-    worker = create_worker_command()
-    worker.maybe_patch_concurrency(argv)
-
     # Now that we're set up, start parsing arguments and then handle them.
     #
     # Ideally, we would just subclass the worker command and take advantage
@@ -189,60 +180,18 @@ def main(argv=sys.argv[1:]):
     arg_parser = create_arg_parser()
     options = arg_parser.parse_args(argv)
 
-    # The broker is configured through the environment, not through a setting.
-    #
-    # The way Celery command classes normally handle this is through a
-    # separate argument parsing step, before the main one. It assumes a lot
-    # about how things are invoked, and handles setting a lot of options. We
-    # don't care about any of those, and want to avoid the assumptions, so
-    # we'll just set what we need here.
-    # do that, so
-    os.environ['CELERY_BROKER_URL'] = options.broker
-
-    if options.detach:
-        detach_argv = [sys.argv[0]]
-
-        # Some options are passed to detach() directly. Some are passed as
-        # command line arguments. Some are both.
-        for name in ('autoscale',
-                     'broker',
-                     'concurrency',
-                     'hostname',
-                     'logfile',
-                     'loglevel',
-                     'pidfile',
-                     'pool'):
-            value = getattr(options, name, None)
-
-            if value is not None:
-                detach_argv.append('--%s=%s' % (name, value))
-
-        exit_code = detach(
-            app=celery,
-            path=sys.executable,
-            argv=detach_argv,
-            logfile=options.logfile,
-            pidfile=options.pidfile,
-            uid=options.uid,
-            gid=options.gid,
-            umask=options.umask,
-            executable=sys.executable,
-            hostname=options.hostname)
-    else:
-        exit_code = worker.run(
-            hostname=options.hostname,
-            loglevel=options.loglevel,
-            logfile=options.logfile,
-            detach=options.detach,
-            pidfile=options.pidfile,
-            uid=options.uid,
-            gid=options.gid,
-            umask=options.umask,
-            concurrency=options.concurrency,
-            pool_cls=options.pool_cls,
-            autoscale=options.autoscale)
-
-    sys.exit(exit_code)
+    sys.exit(start_worker(broker=options.broker,
+                          hostname=options.hostname,
+                          loglevel=options.loglevel,
+                          logfile=options.logfile,
+                          detach=options.detach,
+                          pidfile=options.pidfile,
+                          uid=options.uid,
+                          gid=options.gid,
+                          umask=options.umask,
+                          concurrency=options.concurrency,
+                          pool_cls=options.pool_cls,
+                          autoscale=options.autoscale))
 
 
 if __name__ == '__main__':

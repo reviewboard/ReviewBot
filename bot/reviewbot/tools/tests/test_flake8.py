@@ -217,11 +217,11 @@ class Flake8ToolTests(BaseToolTestCase):
                     'path': './test.py',
                     'positions': {
                         'begin': {
-                            'column': 5,
+                            'column': 1,
                             'line': 1,
                         },
                         'end': {
-                            'column': 5,
+                            'column': 1,
                             'line': 1,
                         },
                     },
@@ -235,7 +235,7 @@ class Flake8ToolTests(BaseToolTestCase):
         review, review_file = self.run_tool_execute(
             filename='test.py',
             file_contents=(
-                b'a = => == !!()\n'
+                b'*\n'
             ),
             tool_settings={
                 'max_line_length': 79,
@@ -249,7 +249,7 @@ class Flake8ToolTests(BaseToolTestCase):
                 'text': (
                     'SyntaxError: invalid syntax\n'
                     '\n'
-                    'Column: 5\n'
+                    'Column: 1\n'
                     'Error code: E999'
                 ),
                 'issue_opened': True,

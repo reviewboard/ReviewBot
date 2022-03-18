@@ -12,3 +12,4 @@ reviewbot-cookies.txt
 _build
 build
 dist
+docs/reviewbot/coderef/worker

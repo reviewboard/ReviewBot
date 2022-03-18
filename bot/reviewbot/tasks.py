@@ -1,10 +1,12 @@
+"""Core task handling."""
+
 from __future__ import absolute_import, unicode_literals
 
 import json
 
 from celery.worker.control import Panel
-from reviewbot.celery import celery
 
+from reviewbot.celery import get_celery
 from reviewbot.processing.review import Review
 from reviewbot.repositories import repositories
 from reviewbot.tools.base.registry import get_tool_class, get_tool_classes
@@ -20,6 +22,7 @@ DONE_FAILURE = 'done-failure'
 ERROR = 'error'
 
 
+celery = get_celery()
 logger = get_logger(__name__)
 
 
