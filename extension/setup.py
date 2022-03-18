@@ -31,6 +31,15 @@ setup(
         'celery>=3.1.25,<4.0; python_version == "2.7"',
         'celery>=5.2.3,<6.0; python_version >= "3.6"',
     ],
+    python_requires=','.join([
+        '>=2.7',
+        '!=3.0.*',
+        '!=3.1.*',
+        '!=3.2.*',
+        '!=3.3.*',
+        '!=3.4.*',
+        '!=3.5.*',
+    ]),
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
@@ -48,6 +57,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Software Development',
         'Topic :: Software Development :: Quality Assurance',
     ],
