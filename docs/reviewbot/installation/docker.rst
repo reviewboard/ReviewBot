@@ -100,7 +100,7 @@ You can choose any of the following tool pack images:
 
   * :ref:`tool-rubocop`
 
-* :docker:`beanbag/reviewbot-ruby`
+* :docker:`beanbag/reviewbot-rust`
 
   * :ref:`tool-cargotool`
   * :ref:`tool-rustfmt`
