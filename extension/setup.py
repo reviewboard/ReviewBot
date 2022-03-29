@@ -44,8 +44,6 @@ setup(
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Framework :: Review Board',
-        'Framework :: Review Board :: 3.0',
-        'Framework :: Review Board :: 4.0',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
