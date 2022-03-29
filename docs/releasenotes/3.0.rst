@@ -5,14 +5,14 @@
 Review Bot 3.0 Release Notes
 ============================
 
-**Release date**: TBD
+**Release date**: March 29, 2022
 
 
 Compatibility
 =============
 
 Review Bot 3.0 includes full support for Review Board 3.0 and 4.0, and
-Python 2.7 and 3.6 through 3.9.
+Python 2.7 and 3.6 through 3.10.
 
 
 New Features
