@@ -27,7 +27,9 @@ Installation
 
 This tool requires a Node.js_ install.
 
-Once installed, you can install JSHint by running::
+Once installed, you can install JSHint by running:
+
+.. code-block:: console
 
     $ sudo npm install -g jshint
 

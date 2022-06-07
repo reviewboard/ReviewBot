@@ -127,7 +127,7 @@ configured and ready for Review Bot. You can use an existing Docker image or
 
 To start a new container, run:
 
-.. code-block:: shell
+.. code-block:: console
 
    $ docker pull beanbag/reviewbot-<pack>:X.Y.Z
    $ docker run -P \
@@ -140,7 +140,7 @@ To start a new container, run:
 
 For example:
 
-.. code-block:: shell
+.. code-block:: console
 
    $ docker pull beanbag/reviewbot-python:3.0
    $ docker run -P \
@@ -221,7 +221,7 @@ This is purely for demonstrative purposes.
 
 To bring up the environment, run:
 
-.. code-block:: shell
+.. code-block:: console
 
    $ docker-compose up
 
@@ -309,15 +309,15 @@ you need to install:
 
 3. Build the image:
 
-  .. code-block:: shell
+   .. code-block:: console
 
-     $ docker build -t my-reviewbot .
+      $ docker build -t my-reviewbot .
 
-  See the `docker build documentation`_ for more information on this command.
+   See the `docker build documentation`_ for more information on this command.
 
 4. Launch a container from your new image:
 
-   .. code-block:: shell
+   .. code-block:: console
 
       $ docker run \
           -P \

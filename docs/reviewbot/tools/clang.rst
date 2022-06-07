@@ -26,9 +26,11 @@ Installation
 This tool requires a modern version of the Clang_ compiler to be installed on
 the system running the Review Bot worker.
 
-On Ubuntu/Debian::
+On Ubuntu/Debian:
 
-    sudo apt-get install clang clang-tools
+.. code-block:: console
+
+    $ sudo apt-get install clang clang-tools
 
 On macOS, install the XCode command line tools.
 

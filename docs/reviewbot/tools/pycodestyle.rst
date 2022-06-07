@@ -24,7 +24,9 @@ The following are supported by this tool:
 Installation
 ============
 
-:command:`pycodestyle` can be installed on most systems by running::
+:command:`pycodestyle` can be installed on most systems by running:
+
+.. code-block:: console
 
     $ pip install pycodestyle
 

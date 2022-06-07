@@ -28,7 +28,9 @@ Installation
 This tool requires that both Ruby_ and the :command:`rubocop` command line
 tool are installed on the system running the Review Bot worker.
 
-If Ruby is installed, :command:`rubocop` can be installed by running::
+If Ruby is installed, :command:`rubocop` can be installed by running:
+
+.. code-block:: console
 
     $ gem install rubocop
 

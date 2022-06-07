@@ -37,7 +37,9 @@ Broker URL
 
 For the broker URL, put in the URL of your RabbitMQ or other Celery broker. For
 example, if your broker is running on the same system as your Review Board
-server, this might look something like::
+server, this might look something like:
+
+.. code-block:: text
 
     amqp://guest:guest@localhost:5672//
 
