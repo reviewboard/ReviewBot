@@ -21,7 +21,9 @@ The following are supported by this tool:
 Installation
 ============
 
-:command:`pyflakes` can be installed on most systems by running::
+:command:`pyflakes` can be installed on most systems by running:
+
+.. code-block:: console
 
     $ pip install pyflakes
 

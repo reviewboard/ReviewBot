@@ -25,15 +25,21 @@ Installation
 
 The :command:`cppcheck` tool is available in most system package managers.
 
-On Ubuntu/Debian::
+On Ubuntu/Debian:
+
+.. code-block:: console
 
     $ sudo apt-get install cppcheck
 
-On RHEL/CentOS/Fedora::
+On RHEL/CentOS/Fedora:
+
+.. code-block:: console
 
     $ sudo yum install cppcheck
 
-On macOS using Homebrew_::
+On macOS using Homebrew_:
+
+.. code-block:: console
 
     $ brew install cppcheck
 

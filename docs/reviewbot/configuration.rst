@@ -17,7 +17,9 @@ set up the extension.
 
 There are two items that need to be set here: the user, and the broker URL.
 
-.. image:: extension-configuration.png
+.. image:: extension-configuration@2x.png
+   :width: 792
+   :height: 556
 
 
 Review Bot User
@@ -35,7 +37,9 @@ Broker URL
 
 For the broker URL, put in the URL of your RabbitMQ or other Celery broker. For
 example, if your broker is running on the same system as your Review Board
-server, this might look something like::
+server, this might look something like:
+
+.. code-block:: text
 
     amqp://guest:guest@localhost:5672//
 
@@ -58,7 +62,9 @@ To set up a tool to run, open the Review Board administration page and click
 :guilabel:`Integrations` in the top bar. Under the Review Bot section, click
 :guilabel:`Add a new configuration`.
 
-.. image:: integrations-list.png
+.. image:: integrations-list@2x.png
+   :width: 795
+   :height: 355
 
 Each tool configuration allows you to specify a tool to run, the conditions for
 when that tool is run, and some options for how it is run.
@@ -72,7 +78,10 @@ Next, choose which tool to run. Once a tool is selected, additional
 tool-specific options may appear. See the documentation for the :ref:`tool
 <tools>` you want to configure for more information.
 
-.. image:: tool-configuration.png
+.. image:: tool-configuration@2x.png
+   :width: 807
+   :height: 905
+
 
 .. note:: It's important to be aware that tools will only run if they're
           currently available on a running worker node. If your worker dies,

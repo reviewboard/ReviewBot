@@ -11,7 +11,9 @@ If you're upgrading from a previous release, see the instructions on
 Installing the Review Board Extension
 =====================================
 
-To install the Review Bot extension for Review Board, run::
+To install the Review Bot extension for Review Board, run:
+
+.. code-block:: console
 
     $ sudo pip install reviewbot-extension
 
@@ -19,7 +21,9 @@ To install the Review Bot extension for Review Board, run::
 
 Depending on your configuration, you may need to restart or reload your web
 server. The specific command depends on your individual setup, but is usually
-something like the following::
+something like the following:
+
+.. code-block:: console
 
     $ sudo service httpd reload
 
@@ -54,7 +58,9 @@ A Review Bot worker can be installed on the Review Board server or on
 another system, depending on your needs. You can even install multiple workers
 on different systems, if you need to scale out further.
 
-To install the main worker package on a server, run::
+To install the main worker package on a server, run:
+
+.. code-block:: console
 
     $ sudo pip install reviewbot-worker
 
@@ -65,7 +71,9 @@ or Python packages. Refer to the :ref:`list of tools <tools>` for further
 information on setting these up.
 
 As a shortcut, all built-in Python code/doc checking tools can be installed by
-running::
+running:
+
+.. code-block:: console
 
     $ sudo pip install reviewbot-worker[all]
 
@@ -75,7 +83,9 @@ Starting the Worker
 
 Once the worker is installed and your message broker is running, you can start
 the worker node. This is done via the following command (replacing
-:samp:`<broker_url>` with the URL to your message broker)::
+:samp:`<broker_url>` with the URL to your message broker):
+
+.. code-block:: console
 
     $ reviewbot -b <broker_url>
 

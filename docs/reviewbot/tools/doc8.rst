@@ -29,7 +29,9 @@ The following are supported by this tool:
 Installation
 ============
 
-:command:`doc8` can be installed on most systems by running::
+:command:`doc8` can be installed on most systems by running:
+
+.. code-block:: console
 
     $ pip install doc8
 

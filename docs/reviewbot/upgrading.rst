@@ -19,14 +19,18 @@ workers, and then make any necessary configuration changes.
 Upgrade the Extension
 ~~~~~~~~~~~~~~~~~~~~~
 
-To start, upgrade the extension on the Review Board server::
+To start, upgrade the extension on the Review Board server:
+
+.. code-block:: console
 
     $ sudo pip install -U reviewbot-extension
 
 
 Depending on your configuration, you may need to restart or reload your web
 server. The specific command depends on your individual setup, but is usually
-something like the following::
+something like the following:
+
+.. code-block:: console
 
     $ sudo service httpd reload
 
@@ -39,7 +43,9 @@ Upgrade the Workers
 
 You can now upgrade each worker.
 
-If you have a :ref:`manual installation <installation-manual>`, run::
+If you have a :ref:`manual installation <installation-manual>`, run:
+
+.. code-block:: console
 
     $ sudo pip install -U reviewbot-worker
 
@@ -58,11 +64,15 @@ From Review Bot 0.1 or 0.2
 The configuration of Review Bot 0.1 and 0.2 worked differently than modern
 versions, so to start, make a note of all your settings.
 
-Then you'll need to uninstall the old extension on the Review Board server::
+Then you'll need to uninstall the old extension on the Review Board server:
+
+.. code-block:: console
 
     $ sudo pip uninstall Review_Bot_Extension
 
-And then uninstall each worker::
+And then uninstall each worker:
+
+.. code-block:: console
 
     $ sudo pip uninstall ReviewBot
 

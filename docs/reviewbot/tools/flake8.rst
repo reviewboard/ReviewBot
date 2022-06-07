@@ -23,7 +23,9 @@ The following are supported by this tool:
 Installation
 ============
 
-:command:`flake8` can be installed on most systems by running::
+:command:`flake8` can be installed on most systems by running:
+
+.. code-block:: console
 
     $ pip install flake8
 
