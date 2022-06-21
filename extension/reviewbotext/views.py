@@ -2,19 +2,20 @@ from __future__ import unicode_literals
 
 import json
 
+import six
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
 from django.http import (HttpResponse,
                          HttpResponseBadRequest,
                          HttpResponseForbidden)
 from django.shortcuts import get_object_or_404, render
-from django.utils import six
-from django.views.generic import View
+from django.views.generic import TemplateView, View
 from djblets.avatars.services import URLAvatarService
 from djblets.db.query import get_object_or_none
 from djblets.siteconfig.models import SiteConfiguration
 from reviewboard.admin.server import get_server_url
 from reviewboard.avatars import avatar_services
+from reviewboard.site.urlresolvers import local_site_reverse
 
 from reviewbotext.extension import ReviewBotExtension
 
@@ -51,7 +52,7 @@ def _serialize_user(request, user):
         return None
 
 
-class ConfigureView(View):
+class ConfigureView(TemplateView):
     """The basic "Configure" page for Review Bot."""
 
     template_name = 'reviewbot/configure.html'
@@ -73,13 +74,7 @@ class ConfigureView(View):
             # below in the other views in this file.
             return HttpResponseForbidden()
 
-        extension = ReviewBotExtension.instance
-        user = get_object_or_none(User, pk=extension.settings.get('user'))
-
-        return render(request, self.template_name, {
-            'extension': extension,
-            'reviewbot_user': user,
-        })
+        return super(ConfigureView, self).get(request)
 
     def post(self, request):
         """Save the extension configuration.
@@ -137,6 +132,49 @@ class ConfigureView(View):
             }),
             content_type='application/json')
 
+    def get_context_data(self, **kwargs):
+        """Return context data for the template.
+
+        This will provide the extension information, broker URL, utility
+        URLs, and the Review Bot user information.
+
+        Args:
+            **kwargs (dict):
+                Additional keyword arguments passed when dispatching.
+
+        Returns:
+            dict:
+            The context data for the page.
+        """
+        request = self.request
+        extension = ReviewBotExtension.instance
+
+        extension_config_attrs = {
+            'brokerURL': extension.settings.get('broker_url'),
+        }
+
+        # Add information on the Review Bot User entry.
+        user = get_object_or_none(User, pk=extension.settings.get('user'))
+
+        if user:
+            extension_config_attrs['user'] = _serialize_user(request, user)
+
+        return dict(super(ConfigureView, self).get_context_data(**kwargs), **{
+            'extension': extension,
+            'extension_config_attrs': extension_config_attrs,
+            'extension_config_options': {
+                'integrationConfigURL': local_site_reverse(
+                    'integration-list',
+                    request=request),
+                'userConfigURL': local_site_reverse(
+                    'reviewbot-configure-user',
+                    request=request),
+                'workerStatusURL': local_site_reverse(
+                    'reviewbot-worker-status',
+                    request=request),
+            },
+        })
+
 
 class ConfigureUserView(View):
     """An endpoint for setting the user for Review Bot."""
@@ -189,7 +227,7 @@ class ConfigureUserView(View):
 
                 profile = user.get_profile()
                 profile.should_send_email = False
-                profile.save()
+                profile.save(update_fields=('should_send_email',))
 
                 avatar_service = avatar_services.get_avatar_service(
                     URLAvatarService.avatar_service_id)
