@@ -425,7 +425,7 @@ def linkcode_resolve(domain, info):
 
 # Cross-referencing.
 intersphinx_mapping = {
-    'celery': ('http://docs.celeryproject.org/en/3.1/', None),
+    'celery': ('https://docs.celeryq.dev/en/3.1/', None),
     'reviewboard': ('%s/docs/manual/latest/' % rbwebsite_url, None),
 }
 

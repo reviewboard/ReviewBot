@@ -92,4 +92,4 @@ the worker node. This is done via the following command (replacing
 It's recommended to set this up to run as a service when the server boots. See
 the documentation on `daemonizing Celery`_ for more details.
 
-.. _daemonizing Celery: https://docs.celeryproject.org/en/latest/userguide/daemonizing.html
+.. _daemonizing Celery: https://docs.celeryq.dev/en/latest/userguide/daemonizing.html

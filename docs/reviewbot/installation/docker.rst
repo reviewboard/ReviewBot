@@ -42,7 +42,7 @@ image`_. This is what we'll use for this guide.
 
 
 .. _compatible message broker:
-   https://docs.celeryproject.org/en/stable/getting-started/backends-and-brokers/index.html
+   https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/index.html
 .. _RabbitMQ: http://www.rabbitmq.com/
 .. _rabbitmq Docker image: https://hub.docker.com/_/rabbitmq
 

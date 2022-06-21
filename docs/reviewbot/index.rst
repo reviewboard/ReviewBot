@@ -29,7 +29,7 @@ Premium support for Review Bot is included with any `Review Board support
 contract`_.
 
 
-.. _Celery: https://www.celeryproject.org/
+.. _Celery: https://docs.celeryq.dev/
 .. _Integrations: https://www.reviewboard.org/docs/manual/latest/admin/integrations/
 .. _Review Board: https://www.reviewboard.org/
 .. _Review Board support contract: https://www.reviewboard.org/support/

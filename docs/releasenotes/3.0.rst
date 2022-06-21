@@ -63,7 +63,7 @@ and repositories that can be used by that particular worker. The old Celery
 information is no longer displayed.
 
 
-.. _Celery: https://www.celeryproject.org/
+.. _Celery: https://docs.celeryq.dev/
 
 
 New Worker Configuration Options
