@@ -1,5 +1,5 @@
 {% extends "admin/change_form.html" %}
-{% load avatars i18n staticfiles %}
+{% load djblets_js i18n %}
 
 {% block title %}
 {%  blocktrans with extension.info.name as name %}Configure {{name}}{%  endblocktrans %}
@@ -16,28 +16,13 @@
 
 <script>
 $(function() {
-    var model = new ReviewBot.ExtensionConfig(
-            {
-{%  if reviewbot_user %}
-            user: {
-                    avatar_url: '{% avatar_url reviewbot_user 48 %}',
-                    id: {{reviewbot_user.pk}},
-                    fullname: '{{reviewbot_user.get_full_name|escapejs}}',
-                    username: '{{reviewbot_user.username|escapejs}}'
-                },
-{%  endif %}
-                brokerURL: '{{extension.settings.broker_url|escapejs}}'
-            },
-            {
-                integrationConfigURL: '{% url "integration-list" %}',
-                userConfigURL: '{% url "reviewbot-configure-user" %}',
-                workerStatusURL: '{% url "reviewbot-worker-status" %}'
-	    }
-        ),
-        view = new ReviewBot.ExtensionConfigView({
-	    model: model,
-            el: $('#content')
-	});
+    var view = new ReviewBot.ExtensionConfigView({
+            el: $('#content'),
+            model: new ReviewBot.ExtensionConfig(
+                {{extension_config_attrs|json_dumps}},
+                {{extension_config_options|json_dumps}}
+            )
+        });
 
     view.render();
 });

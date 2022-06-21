@@ -609,7 +609,7 @@ ReviewBot.ExtensionConfigView = Backbone.View.extend({
          <h1 class="rb-c-content-header__title"><%- configureText %></h1>
         </header>
         <div class="rb-c-page-content-box -is-content-flush"
-	        id="reviewbot-extension-config"></div>
+             id="reviewbot-extension-config"></div>
 
         <header class="rb-c-content-header -is-main">
          <h1 class="rb-c-content-header__title"><%- brokerText %></h1>
@@ -643,13 +643,13 @@ ReviewBot.ExtensionConfigView = Backbone.View.extend({
         }));
 
         this._view = new ConfigView({
-	    model: this.model,
+            model: this.model,
             el: this.$('#reviewbot-extension-config')
-	});
-	this._statusView = new BrokerStatusView({
-	    model: this.model,
-	    el: this.$('#reviewbot-broker-status')
-	});
+        });
+        this._statusView = new BrokerStatusView({
+            model: this.model,
+            el: this.$('#reviewbot-broker-status')
+        });
 
         this._view.render();
         this._statusView.render();
