@@ -73,14 +73,25 @@ class ReviewBotExtension(Extension):
     @property
     def celery(self):
         """The celery instance."""
-        if CELERY_VERSION >= (4, 0):
-            self._celery.conf.broker_url = self.settings['broker_url']
-            self._celery.conf.task_serializer = 'json'
-        else:
-            self._celery.conf.BROKER_URL = self.settings['broker_url']
-            self._celery.conf.CELERY_TASK_SERIALIZER = 'json'
+        stored_broker_url = self.settings['broker_url']
 
-        return self._celery
+        if self._celery is not None and self._broker_url == stored_broker_url:
+            return self._celery
+
+        # Either we're creating the instance for the first, or the broker
+        # URL has changed. Either way, we need a new instance.
+        celery = Celery('reviewbot.tasks')
+
+        if CELERY_VERSION >= (4, 0):
+            celery.conf.broker_url = stored_broker_url
+            celery.conf.task_serializer = 'json'
+        else:
+            celery.conf.BROKER_URL = stored_broker_url
+            celery.conf.CELERY_TASK_SERIALIZER = 'json'
+
+        self._celery = celery
+
+        return celery
 
     @property
     def is_configured(self):
@@ -91,7 +102,8 @@ class ReviewBotExtension(Extension):
         """Initialize the extension."""
         IntegrationHook(self, ReviewBotIntegration)
 
-        self._celery = Celery('reviewbot.tasks')
+        self._celery = None
+        self._broker_url = None
 
     def login_user(self):
         """Log in as the configured user.
