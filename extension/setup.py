@@ -30,6 +30,7 @@ setup(
     install_requires=[
         'celery>=3.1.25,<4.0; python_version == "2.7"',
         'celery>=5.2.3,<6.0; python_version >= "3.6"',
+        'six',
     ],
     python_requires=','.join([
         '>=2.7',

@@ -1,11 +1,11 @@
 from __future__ import unicode_literals
 
+import six
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 from djblets.db.fields import JSONField
 
 
-@python_2_unicode_compatible
+@six.python_2_unicode_compatible
 class Tool(models.Model):
     """Information about a tool installed on a worker.
 

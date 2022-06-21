@@ -2,13 +2,13 @@ from __future__ import unicode_literals
 
 import json
 
+import six
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
 from django.http import (HttpResponse,
                          HttpResponseBadRequest,
                          HttpResponseForbidden)
 from django.shortcuts import get_object_or_404, render
-from django.utils import six
 from django.views.generic import TemplateView, View
 from djblets.avatars.services import URLAvatarService
 from djblets.db.query import get_object_or_none
