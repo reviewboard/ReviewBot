@@ -5,7 +5,7 @@
 Review Bot 3.1 Release Notes
 ============================
 
-**Release date**: TBD
+**Release date**: June 30, 2022
 
 
 New Features
