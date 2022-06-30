@@ -1,0 +1,32 @@
+.. default-intersphinx:: reviewbot3.0
+
+
+============================
+Review Bot 3.1 Release Notes
+============================
+
+**Release date**: June 30, 2022
+
+
+New Features
+============
+
+* Review Bot is now compatible with Review Board 3 through 5.
+
+  We plan to release the first beta of Review Board 5 within weeks of this
+  release. To prepare for the release of Review Board 5, we recommend
+  upgrading to Review Bot 3.1 today.
+
+
+Bug Fixes
+=========
+
+* Fixed a stale cache issue where the Broker URL setting wouldn't necessary
+  take effect until the web server is restarted.
+
+
+Contributors
+============
+
+* Christian Hammond
+* David Trowbridge
