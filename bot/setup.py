@@ -20,6 +20,7 @@ setup(
     maintainer='Beanbag, Inc.',
     maintainer_email='support@beanbaginc.com',
     packages=find_packages(),
+    include_package_data=True,
     entry_points={
         'console_scripts': [
             'reviewbot = reviewbot.main:main'
