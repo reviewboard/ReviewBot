@@ -1,0 +1,10 @@
+graft reviewbot/tools/support
+
+include README.rst
+include setup.cfg
+include *-requirements.txt
+
+include tests/runtests.py
+include tests/deps/README.md
+
+global-exclude .*.sw[op] *.py[co] __pycache__ .DS_Store
