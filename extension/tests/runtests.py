@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import sys
 
 import reviewboard
@@ -16,6 +17,8 @@ def main(argv):
     #     -e reviewbotext.extension.ReviewBotExtension
     sys.exit(RBExt().run([
         'test',
+        '-s', os.path.abspath(os.path.join(__file__, '..',
+                                           'settings_local.py')),
         '-m', 'reviewbotext',
         '--',
     ] + argv))
