@@ -72,7 +72,7 @@ class ToolOptionsWidget(MultiWidget):
         module = import_module(module_name)
         return getattr(module, class_path[-1])
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, *args, **kwargs):
         """Render the widget.
 
         This overrides MultiWidget's rendering to render the sub-fields more
@@ -87,6 +87,12 @@ class ToolOptionsWidget(MultiWidget):
 
             attrs (dict, optional):
                 Any attributes to include on the HTML element.
+
+            *args (tuple, optional):
+                Additional arguments to pass through to contained widgets.
+
+            **kwargs (dict, optional):
+                Additional arguments to pass through to contained widgets.
 
         Returns:
             django.utils.safestring.SafeText:
@@ -142,7 +148,8 @@ class ToolOptionsWidget(MultiWidget):
                 help_text=help_text,
                 label_class=label_class,
                 widget_name=widget_name,
-                widget=widget.render(widget_name, widget_value, final_attrs)))
+                widget=widget.render(widget_name, widget_value, final_attrs,
+                                     *args, **kwargs)))
 
         return mark_safe(''.join(output))
 

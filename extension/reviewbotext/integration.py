@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from djblets.extensions.hooks import SignalHook
 from reviewboard.admin.server import get_server_url
 from reviewboard.diffviewer.models import DiffSet
-from reviewboard.integrations import Integration
+from reviewboard.integrations.base import Integration
 from reviewboard.reviews.models import StatusUpdate
 from reviewboard.reviews.signals import review_request_published
 
