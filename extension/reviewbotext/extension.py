@@ -89,6 +89,7 @@ class ReviewBotExtension(Extension):
             celery.conf.BROKER_URL = stored_broker_url
             celery.conf.CELERY_TASK_SERIALIZER = 'json'
 
+        self._broker_url = stored_broker_url
         self._celery = celery
 
         return celery
