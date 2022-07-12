@@ -212,16 +212,16 @@ class Flake8ToolTests(BaseToolTestCase):
                 'categories': ['Style'],
                 'check_name': 'E999',
                 'description': 'SyntaxError: invalid syntax',
-                'fingerprint': '37deaafafa535ded31b8633801560d76',
+                'fingerprint': 'aba25bd3d9aa80e17f5d6c924cf051bb',
                 'location': {
                     'path': './test.py',
                     'positions': {
                         'begin': {
-                            'column': 1,
+                            'column': 9,
                             'line': 1,
                         },
                         'end': {
-                            'column': 1,
+                            'column': 9,
                             'line': 1,
                         },
                     },
@@ -235,27 +235,32 @@ class Flake8ToolTests(BaseToolTestCase):
         review, review_file = self.run_tool_execute(
             filename='test.py',
             file_contents=(
-                b'*\n'
+                b'def test:\n'
             ),
             tool_settings={
                 'max_line_length': 79,
             })
 
-        self.assertEqual(review.comments, [
-            {
-                'filediff_id': review_file.id,
-                'first_line': 1,
-                'num_lines': 1,
-                'text': (
-                    'SyntaxError: invalid syntax\n'
-                    '\n'
-                    'Column: 1\n'
-                    'Error code: E999'
-                ),
-                'issue_opened': True,
-                'rich_text': False,
-            },
-        ])
+        self.assertEqual(len(review.comments), 1)
+        comment = review.comments[0]
+
+        # Depending on the version of flake8, column indexes may be offset.
+        # For wide version compatibility (given current support for Python 2
+        # and compatible versions of flake8), this test needs to check both.
+        self.assertRegex(
+            comment.pop('text'),
+            'SyntaxError: invalid syntax\n'
+            '\n'
+            'Column: (9|10)\n'
+            'Error code: E999')
+
+        self.assertEqual(comment, {
+            'filediff_id': review_file.id,
+            'first_line': 1,
+            'num_lines': 1,
+            'issue_opened': True,
+            'rich_text': False,
+        })
 
     @integration_test()
     @simulation_test(payload={

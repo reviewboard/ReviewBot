@@ -9,9 +9,15 @@ from __future__ import unicode_literals
 import os
 import pprint
 import re
-import unittest
 from contextlib import contextmanager
 from copy import deepcopy
+
+try:
+    # Python 2
+    import unittest2 as unittest
+except ImportError:
+    # Python 3
+    import unittest
 
 import six
 from rbtools.api.resource import (FileAttachmentListResource,
