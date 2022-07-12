@@ -531,8 +531,10 @@ class UpdateToolsListTests(BaseTaskTestCase):
 
         # This should not include FailedDepCheckTool.
         self.assertEqual(result, {
-            'error': ('Could not reach Review Board server: HTTP 401, API '
-                      'Error 103'),
+            'error': (
+                'Could not reach Review Board server: Error authenticating '
+                'to Review Board. (API Error 103: Not Logged In)'
+            ),
             'status': 'error',
         })
 
@@ -552,6 +554,10 @@ class UpdateToolsListTests(BaseTaskTestCase):
 
         # This should not include FailedDepCheckTool.
         self.assertEqual(result, {
-            'error': 'Problem uploading tools: HTTP 404, API Error 100',
+            'error': (
+                'Problem uploading tools: An error occurred when '
+                'communicating with Review Board. (API Error 100: Does Not '
+                'Exist)'
+            ),
             'status': 'error',
         })

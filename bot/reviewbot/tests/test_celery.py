@@ -65,16 +65,16 @@ class SetupCookiesTests(kgb.SpyAgency, TestCase):
         """Testing setup_cookies with non-existant cookie directory that
         can't be created
         """
-        cookie_path = '/xxx-reviewbot/cookies/reviewbot-cookies.txt'
+        cookie_path = '/dev/null/cookies/reviewbot-cookies.txt'
 
         new_config = {
-            'cookie_dir': '/xxx-reviewbot/cookies/',
+            'cookie_dir': '/dev/null/cookies/',
             'cookie_path': cookie_path,
         }
 
         with self.override_config(new_config):
             expected_message = re.escape(
-                'Unable to create cookies directory "/xxx-reviewbot/cookies/":'
+                'Unable to create cookies directory "/dev/null/cookies/":'
             )
 
             with self.assertRaisesRegexp(IOError, expected_message):
