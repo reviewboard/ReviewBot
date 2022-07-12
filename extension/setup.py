@@ -29,7 +29,8 @@ setup(
     },
     install_requires=[
         'celery>=3.1.25,<4.0; python_version == "2.7"',
-        'celery>=5.2.3,<6.0; python_version >= "3.6"',
+        'celery>=5.1.2,<=5.1.999; python_version == "3.6"',
+        'celery>=5.2.7,<=5.2.999; python_version >= "3.7"',
         'six',
     ],
     python_requires=','.join([
