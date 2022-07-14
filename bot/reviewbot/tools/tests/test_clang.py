@@ -395,7 +395,7 @@ class ClangToolTests(BaseToolTestCase):
     @integration_test()
     @simulation_test(output=(
         "test.mm:5:6: error: use of undeclared identifier 'badcode'\n"
-        "    [badcode]\n"
+        "    {badcode}\n"
         "     ^\n"
         "1 error generated.\n"
     ))
@@ -408,7 +408,7 @@ class ClangToolTests(BaseToolTestCase):
                 b'\n'
                 b'int main()\n'
                 b'{\n'
-                b'    [badcode]\n'
+                b'    {badcode}\n'
                 b'\n'
                 b'    return 0;\n'
                 b'}\n'
@@ -426,7 +426,7 @@ class ClangToolTests(BaseToolTestCase):
                     "```\n"
                     "test.mm:5:6: error: use of undeclared identifier "
                     "'badcode'\n"
-                    "    [badcode]\n"
+                    "    {badcode}\n"
                     "     ^\n"
                     "1 error generated.\n"
                     "```"

@@ -801,62 +801,82 @@ class CargoToolTests(BaseToolTestCase):
     @integration_test()
     @simulation_test(output=[
         json.dumps({
-           'message': {
-              'code': None,
-              'level': 'error',
-              'message': 'this file contains an unclosed delimiter',
-              'spans': [
-                 {
-                    'column_end': 12,
-                    'column_start': 11,
-                    'line_end': 1,
-                    'line_start': 1,
-                 },
-              ],
-           },
-           'reason': 'compiler-message',
-           'target': {
-              'name': 'test',
-              'src_path': '%(checkout_dir)s/tests/test.rs',
-           },
+            'message': {
+                'code': None,
+                'level': 'error',
+                'message': 'this file contains an unclosed delimiter',
+                'spans': [
+                    {
+                        'column_end': 12,
+                        'column_start': 11,
+                        'line_end': 1,
+                        'line_start': 1,
+                        'is_primary': False,
+                    },
+                    {
+                        'column_end': 17,
+                        'column_start': 16,
+                        'line_end': 3,
+                        'line_start': 3,
+                        'is_primary': False,
+                    },
+                    {
+                        'column_end': 7,
+                        'column_start': 7,
+                        'line_end': 9,
+                        'line_start': 9,
+                        'is_primary': True,
+                    },
+                ],
+            },
+            'reason': 'compiler-message',
+            'target': {
+                'name': 'test',
+                'src_path': '%(checkout_dir)s/tests/test.rs',
+            },
         }),
         '\n',
         json.dumps({
-           'message': {
-              'code': None,
-              'level': 'error',
-              'message': (
-                  'expected one of `.`, `;`, `?`, `}`, or an operator, '
-                  'found `#`'
-              ),
-              'spans': [
-                 {
-                    'column_end': 12,
-                    'column_start': 11,
-                    'line_end': 1,
-                    'line_start': 1,
-                 },
+            'message': {
+                'code': None,
+                'level': 'error',
+                'message': 'expected `;`, found `#`',
+                'spans': [
+                    {
+                        'column_end': 6,
+                        'column_start': 5,
+                        'line_end': 6,
+                        'line_start': 6,
+                        'is_primary': False,
+                    },
+                    {
+                        'column_end': 25,
+                        'column_start': 25,
+                        'line_end': 4,
+                        'line_start': 4,
+                        'is_primary': True,
+                    },
               ],
-           },
-           'reason': 'compiler-message',
-           'target': {
-              'name': 'test',
-              'src_path': '%(checkout_dir)s/tests/test.rs',
-           },
+            },
+            'reason': 'compiler-message',
+            'target': {
+                'name': 'test',
+                'src_path': '%(checkout_dir)s/tests/test.rs',
+            },
         }),
         '\n',
         json.dumps({
-           'message': {
-              'code': None,
-              'level': 'error',
-              'message': 'aborting due to 2 previous errors',
-              'spans': [],
-           },
-           'reason': 'compiler-message',
-           'target': {
-              'name': 'test',
-              'src_path': '%(checkout_dir)s/tests/test.rs',
-           },
+            'message': {
+                'code': None,
+                'level': 'error',
+                'message': 'aborting due to 2 previous errors',
+                'spans': [],
+            },
+            'reason': 'compiler-message',
+            'target': {
+                'name': 'test',
+                'src_path': '%(checkout_dir)s/tests/test.rs',
+            },
         }),
         '\n',
         json.dumps({
@@ -897,13 +917,12 @@ class CargoToolTests(BaseToolTestCase):
             },
             {
                 'filediff_id': review_files['tests/test.rs'].id,
-                'first_line': 1,
+                'first_line': 6,
                 'num_lines': 1,
                 'text': (
-                    'expected one of `.`, `;`, `?`, `}`, or an operator, '
-                    'found `#`\n'
+                    'expected `;`, found `#`\n'
                     '\n'
-                    'Column: 11\n'
+                    'Column: 5\n'
                     'Severity: error'
                 ),
                 'issue_opened': True,

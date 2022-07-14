@@ -147,7 +147,14 @@ class CargoTool(FullRepositoryToolMixin, BaseTool):
                 error_code = None
 
             try:
-                span = message_data['spans'][0]
+                spans = sorted(
+                    message_data['spans'],
+                    key=lambda _span: (_span.get('is_primary'),
+                                       _span['line_start'],
+                                       _span['column_start'],
+                                       _span['column_end'],
+                                       _span['line_end']))
+                span = spans[0]
                 first_line = span.get('line_start')
                 start_column = span.get('column_start')
 
