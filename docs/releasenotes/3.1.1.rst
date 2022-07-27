@@ -1,0 +1,32 @@
+.. default-intersphinx:: reviewbot3.0
+
+
+==============================
+Review Bot 3.1.1 Release Notes
+==============================
+
+**Release date**: July 26, 2022
+
+
+Packaging
+=========
+
+* Capped the :pypi:`celery` dependency on Python 3.6 to 5.1.x.
+
+* Capped the :pypi:`kombu` dependency on Python 3.6 to 5.1.x.
+
+
+Bug Fixes
+=========
+
+* Fixed a regression with running :ref:`JSHint <tool-jshint>`.
+
+* Fixed compatibility with newer versions of :ref:`Cargo <tool-cargotool>`.
+
+
+Contributors
+============
+
+* Christian Hammond
+* David Trowbridge
+* Michelle Aubin

@@ -369,4 +369,5 @@ intersphinx_mapping = {
 
 extlinks = {
     'docker': ('https://hub.docker.com/r/%s', ''),
+    'pypi': ('https://pypi.org/project/%s/', ''),
 }
