@@ -143,20 +143,21 @@ class GoToolTests(BaseToolTestCase):
                 'test': True,
             })
 
-        self.assertEqual(review.general_comments, [
-            {
-                'text': (
-                    'TestThingie failed in the example.com/myrepo/mypackage '
-                    'package:\n'
-                    '\n'
-                    '```=== RUN   TestThingie\n'
-                    '    test_test.go:8: Fail!%!(EXTRA int=123)\n'
-                    '--- FAIL: TestThingie (0.00s)```'
-                ),
-                'issue_opened': True,
-                'rich_text': True,
-            },
-        ])
+        comments = review.general_comments
+        self.assertEqual(len(comments), 1)
+
+        comment = comments[0]
+        self.assertTrue(comment['issue_opened'])
+        self.assertTrue(comment['rich_text'])
+        self.assertRegex(
+            comment['text'],
+            'TestThingie failed in the example.com/myrepo/mypackage '
+            'package:\n'
+            '\n'
+            '```=== RUN   TestThingie\n'
+            '    test_test.go:8: Fail!%!\\(EXTRA int=123\\)\n'
+            '--- FAIL: TestThingie \\(\\d+\\.\\d+s\\)```')
+
         self.assertEqual(review.comments, [])
 
         self.assertSpyCalledWith(
