@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals
 
+import kgb
 import six
 
 from reviewbot.tools.rbsecretscanner import SecretScannerTool
@@ -12,7 +13,7 @@ from reviewbot.utils.process import execute
 
 
 @six.add_metaclass(ToolTestCaseMetaclass)
-class SecretScannerToolTests(BaseToolTestCase):
+class SecretScannerToolTests(BaseToolTestCase, kgb.SpyAgency):
     """Unit tests for SecretScannerTool."""
 
     tool_class = SecretScannerTool
@@ -210,6 +211,8 @@ class SecretScannerToolTests(BaseToolTestCase):
     @integration_test()
     def test_execute_with_github_oauth_token_gho(self):
         """Testing SecretScannerTool.execute with GitHub token (gho...)"""
+        self.spy_on(self.tool_class._is_github_modern_token_valid)
+
         # Lower bounds of length.
         self._run_token_test(
             'gho_1234567890ABCDEFGabcdefg1234508vKGb')
@@ -234,9 +237,24 @@ class SecretScannerToolTests(BaseToolTestCase):
             'gho_1234567890ABCDEFGabcdefg1234508vKGbZ',
             match=False)
 
+        # No match because checksum does not match.
+        self._run_token_test(
+            'gho_1234567890abcdef1234567890abcdef1234567890abcdef1234567890a'
+            'bcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+            'abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456789'
+            '0abcdef1234567890abcdef1234567890abcdef1234567890abcdef123451X8'
+            '8Ax',
+            match=False)
+
+        self.assert_spy_call_count(
+            self.tool_class._is_github_modern_token_valid,
+            5)
+
     @integration_test()
     def test_execute_with_github_oauth_token_ghp(self):
         """Testing SecretScannerTool.execute with GitHub token (ghp...)"""
+        self.spy_on(self.tool_class._is_github_modern_token_valid)
+
         # Lower bounds of length.
         self._run_token_test(
             'ghp_1234567890ABCDEFGabcdefg1234508vKGb')
@@ -261,9 +279,24 @@ class SecretScannerToolTests(BaseToolTestCase):
             'ghp_1234567890ABCDEFGabcdefg1234508vKGbZ',
             match=False)
 
+        # No match because checksum does not match.
+        self._run_token_test(
+            'ghp_1234567890abcdef1234567890abcdef1234567890abcdef1234567890a'
+            'bcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+            'abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456789'
+            '0abcdef1234567890abcdef1234567890abcdef1234567890abcdef123451X8'
+            '8Ax',
+            match=False)
+
+        self.assert_spy_call_count(
+            self.tool_class._is_github_modern_token_valid,
+            5)
+
     @integration_test()
     def test_execute_with_github_oauth_token_ghr(self):
         """Testing SecretScannerTool.execute with GitHub token (ghr...)"""
+        self.spy_on(self.tool_class._is_github_modern_token_valid)
+
         # Lower bounds of length.
         self._run_token_test(
             'ghr_1234567890ABCDEFGabcdefg1234508vKGb')
@@ -288,9 +321,24 @@ class SecretScannerToolTests(BaseToolTestCase):
             'ghr_1234567890ABCDEFGabcdefg1234508vKGbZ',
             match=False)
 
+        # No match because checksum does not match.
+        self._run_token_test(
+            'ghr_1234567890abcdef1234567890abcdef1234567890abcdef1234567890a'
+            'bcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+            'abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456789'
+            '0abcdef1234567890abcdef1234567890abcdef1234567890abcdef123451X8'
+            '8Ax',
+            match=False)
+
+        self.assert_spy_call_count(
+            self.tool_class._is_github_modern_token_valid,
+            5)
+
     @integration_test()
     def test_execute_with_github_oauth_token_ghs(self):
         """Testing SecretScannerTool.execute with GitHub token (ghs...)"""
+        self.spy_on(self.tool_class._is_github_modern_token_valid)
+
         # Lower bounds of length.
         self._run_token_test(
             'ghs_1234567890ABCDEFGabcdefg1234508vKGb')
@@ -315,9 +363,24 @@ class SecretScannerToolTests(BaseToolTestCase):
             'ghs_1234567890ABCDEFGabcdefg1234508vKGbZ',
             match=False)
 
+        # No match because checksum does not match.
+        self._run_token_test(
+            'ghs_1234567890abcdef1234567890abcdef1234567890abcdef1234567890a'
+            'bcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+            'abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456789'
+            '0abcdef1234567890abcdef1234567890abcdef1234567890abcdef123451X8'
+            '8Ax',
+            match=False)
+
+        self.assert_spy_call_count(
+            self.tool_class._is_github_modern_token_valid,
+            5)
+
     @integration_test()
     def test_execute_with_github_oauth_token_ghu(self):
         """Testing SecretScannerTool.execute with GitHub token (ghu...)"""
+        self.spy_on(self.tool_class._is_github_modern_token_valid)
+
         # Lower bounds of length.
         self._run_token_test(
             'ghu_1234567890ABCDEFGabcdefg1234508vKGb')
@@ -341,6 +404,19 @@ class SecretScannerToolTests(BaseToolTestCase):
         self._run_token_test(
             'ghu_1234567890ABCDEFGabcdefg1234508vKGbZ',
             match=False)
+
+        # No match because checksum does not match.
+        self._run_token_test(
+            'ghu_1234567890abcdef1234567890abcdef1234567890abcdef1234567890a'
+            'bcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+            'abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456789'
+            '0abcdef1234567890abcdef1234567890abcdef1234567890abcdef123451X8'
+            '8Ax',
+            match=False)
+
+        self.assert_spy_call_count(
+            self.tool_class._is_github_modern_token_valid,
+            5)
 
     @integration_test()
     def test_execute_with_google_gcp_api_key(self):
@@ -383,6 +459,8 @@ class SecretScannerToolTests(BaseToolTestCase):
     @integration_test()
     def test_execute_with_json_web_token(self):
         """Testing SecretScannerTool.execute with JSON Web Token"""
+        self.spy_on(self.tool_class._is_json_web_token_valid)
+
         self._run_token_test(
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXkiOiJ2YWx1ZSJ9.'
             '5pps1XMxciBCpOhezqTk9XuGny-4_HZ9aEKp3AqgekA')
@@ -397,6 +475,10 @@ class SecretScannerToolTests(BaseToolTestCase):
         self._run_token_test(
             'foo.bar.baz',
             match=False)
+
+        self.assert_spy_call_count(
+            self.tool_class._is_json_web_token_valid,
+            4)
 
     @integration_test()
     def test_execute_with_mailchimp_api_key(self):
@@ -442,6 +524,50 @@ class SecretScannerToolTests(BaseToolTestCase):
             'pypi:abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ_'
             '0123456789_abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRST'
             'UVWXYZ_0123456789_abcdefghijklmnopqrstuvwxyz')
+
+    @integration_test()
+    def test_execute_with_reviewboard_api_token(self):
+        """Testing SecretScannerTool.execute with Review Board API Token"""
+        self.spy_on(self.tool_class._is_reviewboard_api_token_valid)
+
+        self._run_token_test(
+            'rbp_eVZF8sv33KEWtMuupDJeipmW566fRZHveuAC7MchaktaJNTBQ4eNqhBQJKIv'
+            '6iKQJL64s8yMWfzp1Buc8p9m9ItCnkvNKTVuMJM299H7zffcrUJ0PQaSVSG0aUhg'
+            'zzwIZ0MtK9spxYTLtu8bBVoQEiAsbDSfYICdKx23PfphGGqHyTwZRvYaebe1gGbv'
+            'KgZ3PT8HqNQRAnAbUsDjwm4oiXXlmNOSM84a1uACZ2DCm9frU9z32pzHs4Ss9cI')
+
+        # A Review Board 5.0.0 token whose checksum has the incorrect
+        # base62-encoding.
+        self._run_token_test(
+            'rbp_eVZF8sv33KEWtMuupDJeipmW566fRZHveuAC7MchaktaJNTBQ4eNqhBQJKIv'
+            '6iKQJL64s8yMWfzp1Buc8p9m9ItCnkvNKTVuMJM299H7zffcrUJ0PQaSVSG0aUhg'
+            'zzwIZ0MtK9spxYTLtu8bBVoQEiAsbDSfYICdKx23PfphGGqHyTwZRvYaebe1gGbv'
+            'KgZ3PT8HqNQRAnAbUsDjwm4oiXXlmNOSM84a1uACZ2DCm9frU9z32pzHs4sS9Ci')
+
+        self._run_token_test(
+            '!rbp_eVZF8sv33KEWtMuupDJeipmW566fRZHveuAC7MchaktaJNTBQ4eNqhBQJKI'
+            '6iKQJL64s8yMWfzp1Buc8p9m9ItCnkvNKTVuMJM299H7zffcrUJ0PQaSVSG0aUhg'
+            'zzwIZ0MtK9spxYTLtu8bBVoQEiAsbDSfYICdKx23PfphGGqHyTwZRvYaebe1gGbv'
+            'KgZ3PT8HqNQRAnAbUsDjwm4oiXXlmNOSM84a1uACZ2DCm9frU9z32pzHs4sS9Ci',
+            match=False)
+        self._run_token_test(
+            'rbp_eVZF8sv33KEWtMuupDJeipmW566fRZHveuAC7MchaktaJNTBQ4eNqhBQJKIv'
+            '6iKQJL64s8yMWfzp1Buc8p9m9ItCnkvNKTVuMJM299H7zffcrUJ0PQaSVSG0aUhg'
+            'zzwIZ0MtK9spxYTLtu8bBVoQEiAsbDSfYICdKx23PfphGGqHyTwZRvYaebe1gGbv'
+            'KgZ3PT8HqNQRAnAbUsDjwm4oiXXlmNOSM84a1uACZ2DCm9frU9z32pzHs4sS9C!',
+            match=False)
+
+        # No match because checksum does not match.
+        self._run_token_test(
+            'rbp_eVZF8sv33KEWtMuupDJeipmW566fRZHveuAC7MchaktaJNTBQ4eNqhBQJKIv'
+            '6iKQJL64s8yMWfzp1Buc8p9m9ItCnkvNKTVuMJM299H7zffcrUJ0PQaSVSG0aUhg'
+            'zzwIZ0MtK9spxYTLtu8bBVoQEiAsbDSfYICdKx23PfphGGqHyTwZRvYaebe1gGbv'
+            'KgZ3PT8HqNQRAnAbUsDjwm4oiXXlmNOSM84a1uACZ2DCm9frU9z32pzHs4sS9Cb',
+            match=False)
+
+        self.assert_spy_call_count(
+            self.tool_class._is_reviewboard_api_token_valid,
+            3)
 
     @integration_test()
     def test_execute_with_rsa_private_key(self):
