@@ -127,7 +127,7 @@ Shell Scripts
 -------------
 
 * `ShellCheck
-  <https://www.reviewboard.org/docs/reviewbot/latest/tools/rustfmt/>`_
+  <https://www.reviewboard.org/docs/reviewbot/latest/tools/shellcheck/>`_
   - Checks Bash/sh scripts for common problems and misused commands
 
 
