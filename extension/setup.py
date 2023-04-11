@@ -82,29 +82,10 @@ setup(
             'reviewbot = reviewbotext.extension:ReviewBotExtension',
     },
     install_requires=[
-        'celery>=3.1.25,<4.0; python_version == "2.7"',
-        'celery>=5.1.2,<=5.1.999; python_version == "3.6"',
-        'celery>=5.2.7,<=5.2.999; python_version >= "3.7"',
-
-        # importlib-metadata >= 5.0 on Celery 5.2.x breaks the celery.Celery
-        # import. See https://github.com/celery/celery/issues/7783
-        'importlib-metadata<=4.999; python_version == "3.7"',
-
-        # We have to cap kombu for Python 3.6, as celery 5.1.x covers too
-        # broad a range of versions, resulting in a Python 3.6-incompatible
-        # kombu to be installed.
-        #
-        # Kombu 5.3 also drops Python 3.7 support.
-        'kombu>=5.1.0,<=5.2.999; python_version == "3.7"',
+        'celery~=5.3',
     ],
     python_requires=','.join([
-        '>=2.7',
-        '!=3.0.*',
-        '!=3.1.*',
-        '!=3.2.*',
-        '!=3.3.*',
-        '!=3.4.*',
-        '!=3.5.*',
+        '>=3.8',
     ]),
     cmdclass={
         'develop': DevelopCommand,
