@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import six
 from django.db import models
 from djblets.db.fields import JSONField

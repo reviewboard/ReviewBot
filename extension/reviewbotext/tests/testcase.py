@@ -4,8 +4,6 @@ Version Added:
     3.0
 """
 
-from __future__ import unicode_literals
-
 from reviewboard.extensions.testing import ExtensionTestCase
 
 from reviewbotext.extension import ReviewBotExtension

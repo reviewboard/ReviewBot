@@ -1,7 +1,5 @@
 """Special form widgets used in Review Bot."""
 
-from __future__ import unicode_literals
-
 import json
 from importlib import import_module
 

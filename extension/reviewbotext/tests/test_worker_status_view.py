@@ -1,7 +1,5 @@
 """Unit tests for reviewbotext.views.WorkerStatusView."""
 
-from __future__ import unicode_literals
-
 import json
 from collections import OrderedDict
 
