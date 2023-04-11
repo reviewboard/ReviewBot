@@ -95,10 +95,7 @@ setup(
         # kombu to be installed.
         #
         # Kombu 5.3 also drops Python 3.7 support.
-        'kombu>=5.1.0,<=5.1.999; python_version == "3.6"',
         'kombu>=5.1.0,<=5.2.999; python_version == "3.7"',
-
-        'six',
     ],
     python_requires=','.join([
         '>=2.7',

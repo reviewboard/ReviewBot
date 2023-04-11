@@ -1,9 +1,7 @@
-import six
 from django.db import models
 from djblets.db.fields import JSONField
 
 
-@six.python_2_unicode_compatible
 class Tool(models.Model):
     """Information about a tool installed on a worker.
 

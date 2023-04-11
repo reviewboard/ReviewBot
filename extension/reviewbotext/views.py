@@ -1,6 +1,5 @@
 import json
 
-import six
 from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
 from django.http import (HttpResponse,
@@ -284,7 +283,7 @@ class WorkerStatusView(View):
                 hosts = []
 
                 for item in reply:
-                    for worker_host, data in six.iteritems(item):
+                    for worker_host, data in item.items():
                         worker_status = data.get('status')
 
                         if worker_status == 'ok':
