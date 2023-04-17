@@ -26,20 +26,19 @@ class BasePycodestyleToolTests(BaseToolTestCase):
 
     @integration_test()
     @simulation_test(output_payload=[
-        "E722:3:1:do not use bare 'except'",
-        "W601:6:5:.has_key() is deprecated, use 'in'",
+        "E401:1:10:multiple imports on one line",
+        "E722:5:1:do not use bare 'except'",
     ])
     def test_execute(self):
         """Testing PycodestyleTool.execute"""
         review, review_file = self.run_tool_execute(
             filename='test.py',
             file_contents=(
+                b'import os, sys\n'
+                b'\n'
                 b'try:\n'
                 b'    func()\n'
                 b'except:\n'
-                b'    pass\n'
-                b'\n'
-                b'if d.has_key():\n'
                 b'    pass\n'
             ),
             tool_settings={
@@ -49,26 +48,26 @@ class BasePycodestyleToolTests(BaseToolTestCase):
         self.assertEqual(review.comments, [
             {
                 'filediff_id': review_file.id,
-                'first_line': 3,
+                'first_line': 1,
                 'num_lines': 1,
                 'text': (
-                    "do not use bare 'except'\n"
-                    "\n"
-                    "Column: 1\n"
-                    "Error code: E722"
+                    'multiple imports on one line\n'
+                    '\n'
+                    'Column: 10\n'
+                    'Error code: E401'
                 ),
                 'issue_opened': True,
                 'rich_text': False,
             },
             {
                 'filediff_id': review_file.id,
-                'first_line': 6,
+                'first_line': 5,
                 'num_lines': 1,
                 'text': (
-                    ".has_key() is deprecated, use 'in'\n"
+                    "do not use bare 'except'\n"
                     "\n"
-                    "Column: 5\n"
-                    "Error code: W601"
+                    "Column: 1\n"
+                    "Error code: E722"
                 ),
                 'issue_opened': True,
                 'rich_text': False,
@@ -87,19 +86,18 @@ class BasePycodestyleToolTests(BaseToolTestCase):
 
     @integration_test()
     @simulation_test(output_payload=[
-        "W601:6:5:.has_key() is deprecated, use 'in'",
+        "E401:1:10:multiple imports on one line",
     ])
     def test_execute_with_ignore(self):
         """Testing PycodestyleTool.execute with ignore"""
         review, review_file = self.run_tool_execute(
             filename='test.py',
             file_contents=(
+                b'import os, sys\n'
+                b'\n'
                 b'try:\n'
                 b'    func()\n'
                 b'except:\n'
-                b'    pass\n'
-                b'\n'
-                b'if d.has_key():\n'
                 b'    pass\n'
             ),
             tool_settings={
@@ -110,13 +108,13 @@ class BasePycodestyleToolTests(BaseToolTestCase):
         self.assertEqual(review.comments, [
             {
                 'filediff_id': review_file.id,
-                'first_line': 6,
+                'first_line': 1,
                 'num_lines': 1,
                 'text': (
-                    ".has_key() is deprecated, use 'in'\n"
-                    "\n"
-                    "Column: 5\n"
-                    "Error code: W601"
+                    'multiple imports on one line\n'
+                    '\n'
+                    'Column: 10\n'
+                    'Error code: E401'
                 ),
                 'issue_opened': True,
                 'rich_text': False,

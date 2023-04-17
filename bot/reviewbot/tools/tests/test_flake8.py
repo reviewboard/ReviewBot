@@ -247,12 +247,14 @@ class Flake8ToolTests(BaseToolTestCase):
         # Depending on the version of flake8, column indexes may be offset.
         # For wide version compatibility (given current support for Python 2
         # and compatible versions of flake8), this test needs to check both.
+        #
+        # We also may get an older "invalid syntax" or a newer "expected '('.
         self.assertRegex(
             comment.pop('text'),
-            'SyntaxError: invalid syntax\n'
-            '\n'
-            'Column: (9|10)\n'
-            'Error code: E999')
+            "SyntaxError: (invalid syntax|expected '\\(')\n"
+            "\n"
+            "Column: (9|10)\n"
+            "Error code: E999")
 
         self.assertEqual(comment, {
             'filediff_id': review_file.id,
