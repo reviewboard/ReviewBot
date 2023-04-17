@@ -98,6 +98,7 @@ class Doc8ToolTests(BaseToolTestCase):
                 # This is: "*hi 🍎"
                 b'\xff\xfe*\x00h\x00i\x00 \x00<\xd8N\xdf'
             ),
+            file_contents_encoding='utf-16',
             tool_settings={
                 'encoding': 'utf-16',
                 'max_line_length': 79,

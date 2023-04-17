@@ -5,6 +5,7 @@ import os
 from enum import Enum
 from itertools import islice
 
+import six
 from rbtools.api.errors import APIError
 
 from reviewbot.utils.filesystem import (ensure_dirs_exist,
@@ -242,7 +243,7 @@ class File(object):
         else:
             code_index = 5
 
-        return list(islice(
+        result = list(islice(
             (
                 # result[1] is the row information.
                 result[1][code_index]
@@ -250,6 +251,10 @@ class File(object):
                                                original=original)
             ),
             num_lines))
+
+        assert not result or isinstance(result[0], six.text_type)
+
+        return result
 
     def apply_patch(self, root_target_dir):
         """Apply the patch for this file to the filesystem.
