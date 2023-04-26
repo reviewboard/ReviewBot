@@ -67,6 +67,12 @@ class File(object):
     Allows comments to be made to the file in the review.
     """
 
+    #: The maximum number of lines allowed for a comment.
+    #:
+    #: If a comment exceeds this count, it will be capped and a line range
+    #: will be provided in the comment.
+    COMMENT_MAX_LINES = 10
+
     def __init__(self, review, api_filediff):
         """Initialize the File.
 
@@ -380,17 +386,23 @@ class File(object):
                         self._is_modified(first_line, num_lines))
 
         if modified:
+            extra = []
             real_line = self._translate_line_num(first_line)
 
             if num_lines != 1:
+                if num_lines > self.COMMENT_MAX_LINES:
+                    extra.append((
+                        'Lines',
+                        '%s-%s' % (first_line, first_line + num_lines - 1),
+                    ))
+                    num_lines = self.COMMENT_MAX_LINES
+
                 last_line = first_line + num_lines - 1
                 real_last_line = self._translate_line_num(last_line)
                 num_lines = real_last_line - real_line + 1
 
             if issue is None:
                 issue = self.review.settings['open_issues']
-
-            extra = []
 
             if start_column:
                 extra.append(('Column', start_column))
