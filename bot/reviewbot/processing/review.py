@@ -5,6 +5,7 @@ import os
 from enum import Enum
 from itertools import islice
 
+import six
 from rbtools.api.errors import APIError
 
 from reviewbot.utils.filesystem import (ensure_dirs_exist,
@@ -66,6 +67,12 @@ class File(object):
     Allows comments to be made to the file in the review.
     """
 
+    #: The maximum number of lines allowed for a comment.
+    #:
+    #: If a comment exceeds this count, it will be capped and a line range
+    #: will be provided in the comment.
+    COMMENT_MAX_LINES = 10
+
     def __init__(self, review, api_filediff):
         """Initialize the File.
 
@@ -107,7 +114,12 @@ class File(object):
             return None
 
         try:
-            return self._api_filediff.get_patched_file().data
+            contents = self._api_filediff.get_patched_file().data
+
+            if isinstance(contents, six.text_type):
+                contents = contents.encode('utf-8')
+
+            return contents
         except APIError as e:
             if e.http_status == 404:
                 # This was a deleted file, a deleted FileDiff entry,
@@ -137,7 +149,12 @@ class File(object):
             return None
 
         try:
-            return self._api_filediff.get_original_file().data
+            contents = self._api_filediff.get_original_file().data
+
+            if isinstance(contents, six.text_type):
+                contents = contents.encode('utf-8')
+
+            return contents
         except APIError as e:
             if e.http_status == 404:
                 # This was a deleted FileDiff entry, or something has gone
@@ -242,7 +259,7 @@ class File(object):
         else:
             code_index = 5
 
-        return list(islice(
+        result = list(islice(
             (
                 # result[1] is the row information.
                 result[1][code_index]
@@ -250,6 +267,10 @@ class File(object):
                                                original=original)
             ),
             num_lines))
+
+        assert not result or isinstance(result[0], six.text_type)
+
+        return result
 
     def apply_patch(self, root_target_dir):
         """Apply the patch for this file to the filesystem.
@@ -301,7 +322,7 @@ class File(object):
                                    source_file, dest_file, self.id)
 
             with open(dest_file, 'wb') as fp:
-                fp.write(self.patched_file_contents)
+                fp.write(self.patched_file_contents or b'')
 
         self.patched_file_path = self.dest_file
 
@@ -365,17 +386,23 @@ class File(object):
                         self._is_modified(first_line, num_lines))
 
         if modified:
+            extra = []
             real_line = self._translate_line_num(first_line)
 
             if num_lines != 1:
+                if num_lines > self.COMMENT_MAX_LINES:
+                    extra.append((
+                        'Lines',
+                        '%s-%s' % (first_line, first_line + num_lines - 1),
+                    ))
+                    num_lines = self.COMMENT_MAX_LINES
+
                 last_line = first_line + num_lines - 1
                 real_last_line = self._translate_line_num(last_line)
                 num_lines = real_last_line - real_line + 1
 
             if issue is None:
                 issue = self.review.settings['open_issues']
-
-            extra = []
 
             if start_column:
                 extra.append(('Column', start_column))

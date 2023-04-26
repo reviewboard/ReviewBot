@@ -227,12 +227,17 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
     tool_extra_exe_paths = {}
 
     def run_get_can_handle_file(self, filename, file_contents=b'',
-                                tool_settings={}):
+                                tool_settings={},
+                                file_contents_encoding='utf-8'):
         """Run get_can_handle_file with the given file and settings.
 
         This will create the review objects, set up a repository (if needed
         by the tool), apply any configuration, and run
         :py:meth:`~reviewbot.tools.base.BaseTool.get_can_handle_file`.
+
+        Version Changed:
+            3.1.2:
+            Added the ``file_contents_encoding`` argument.
 
         Args:
             filename (unicode):
@@ -244,10 +249,22 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             tool_settings (dict, optional):
                 The settings to pass to the tool constructor.
 
+            file_contents_encoding (unicode, optional):
+                The encoding used for the provided file contents (both in
+                ``file_contents`` and ``other_contents``).
+
+                If not provided, this will be ``utf-8``.
+
+                Version Added:
+                    3.1.2
+
         Returns:
             bool:
             ``True`` if the file can be handled. ``False`` if it cannot.
         """
+        assert self.tool_class is not None
+        assert isinstance(file_contents, bytes)
+
         review = self.create_review()
         review_file = self.create_review_file(
             review,
@@ -255,7 +272,11 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             dest_file=filename,
             diff_data=self.create_diff_data(chunks=[{
                 'change': 'insert',
-                'lines': file_contents.splitlines(),
+                'lines': (
+                    file_contents
+                    .decode(file_contents_encoding)
+                    .splitlines()
+                ),
                 'new_linenum': 1,
             }]),
             patched_content=file_contents)
@@ -265,12 +286,17 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
         return tool.get_can_handle_file(review_file)
 
     def run_tool_execute(self, filename, file_contents, checkout_dir=None,
-                         tool_settings={}, other_files={}):
+                         tool_settings={}, other_files={},
+                         file_contents_encoding='utf-8'):
         """Run execute with the given file and settings.
 
         This will create the review objects, set up a repository (if needed
         by the tool), apply any configuration, and run
         :py:meth:`~reviewbot.tools.base.BaseTool.execute`.
+
+        Version Changed:
+            3.1.2:
+            Added the ``file_contents_encoding`` argument.
 
         Args:
             filename (unicode):
@@ -293,6 +319,15 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
                 The dictionary is a map of file paths (relative to the
                 checkout directory) to byte strings.
 
+            file_contents_encoding (unicode, optional):
+                The encoding used for the provided file contents (both in
+                ``file_contents`` and ``other_contents``).
+
+                If not provided, this will be ``utf-8``.
+
+                Version Added:
+                    3.1.2
+
         Returns:
             tuple:
             A 2-tuple containing:
@@ -306,6 +341,9 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             ``filename``) to :py:class:`reviewbot.processing.review.File`
             instances.
         """
+        assert self.tool_class is not None
+        assert isinstance(file_contents, bytes)
+
         if self.tool_class.working_directory_required:
             repository = GitRepository(name='MyRepo',
                                        clone_path='git://example.com/repo')
@@ -324,7 +362,11 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             dest_file=filename,
             diff_data=self.create_diff_data(chunks=[{
                 'change': 'insert',
-                'lines': file_contents.splitlines(),
+                'lines': (
+                    file_contents
+                    .decode(file_contents_encoding)
+                    .splitlines()
+                ),
                 'new_linenum': 1,
             }]),
             patched_content=file_contents)
@@ -335,13 +377,19 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             review_files[filename] = review_file
 
             for other_filename, other_contents in six.iteritems(other_files):
+                assert isinstance(other_contents, bytes)
+
                 review_files[other_filename] = self.create_review_file(
                     review,
                     source_file=other_filename,
                     dest_file=other_filename,
                     diff_data=self.create_diff_data(chunks=[{
                         'change': 'insert',
-                        'lines': other_contents.splitlines(),
+                        'lines': (
+                            other_contents
+                            .decode(file_contents_encoding)
+                            .splitlines()
+                        ),
                         'new_linenum': 1,
                     }]),
                     patched_content=other_contents)

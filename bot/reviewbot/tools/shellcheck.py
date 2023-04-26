@@ -82,7 +82,7 @@ class ShellCheckTool(BaseTool):
         return (
             super(ShellCheckTool, self).get_can_handle_file(review_file,
                                                             **kwargs) or
-            self.SHELL_RE.match(review_file.patched_file_contents)
+            self.SHELL_RE.match(review_file.patched_file_contents or b'')
         )
 
     def build_base_command(self, **kwargs):
@@ -215,9 +215,9 @@ class ShellCheckTool(BaseTool):
                         replacement_lines[replacement_norm_linenum]
 
                     replacement_lines[replacement_norm_linenum] = (
-                        b'%s%s%s'
+                        '%s%s%s'
                         % (replacement_line[:replacement_start_column - 1],
-                           replacement_text.encode('utf-8'),
+                           replacement_text,
                            replacement_line[replacement_end_column - 1:]))
 
             if replacement_lines:
@@ -227,7 +227,7 @@ class ShellCheckTool(BaseTool):
                     'Suggested replacement:\n'
                     '```%s```'
                     % (comment_text,
-                       b'\n'.join(replacement_lines).decode('utf-8').strip())
+                       '\n'.join(replacement_lines).strip())
                 )
 
             f.comment(text=comment_text,

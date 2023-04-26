@@ -365,6 +365,25 @@ class FileTests(kgb.SpyAgency, TestCase):
             'rich_text': False,
         }])
 
+    def test_comment_with_line_range_exceeds_cap(self):
+        """Testing File.comment with line range > 10 lines"""
+        self.review_file.comment('This is a comment',
+                                 first_line=12,
+                                 num_lines=11)
+
+        self.assertEqual(self.review.comments, [{
+            'filediff_id': 42,
+            'first_line': 12,
+            'issue_opened': True,
+            'num_lines': 10,
+            'text': (
+                'This is a comment\n'
+                '\n'
+                'Lines: 12-22'
+            ),
+            'rich_text': False,
+        }])
+
     def test_comment_with_first_line_0(self):
         """Testing File.comment with first_line=0"""
         self.review_file.comment('This is a comment',

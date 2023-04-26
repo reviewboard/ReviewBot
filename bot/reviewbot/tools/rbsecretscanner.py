@@ -134,6 +134,12 @@ class SecretScannerTool(BaseTool):
             (pypi[-:][A-Za-z0-9_]{128,})
             |
 
+            # Review Board 5+ API Token
+            #
+            # Rule updated: October 31, 2022
+            (?P<reviewboard_api_token>rbp_[A-Za-z0-9]{251})
+            |
+
             # RSA Private Key
             #
             # Rule updated: April 7, 2021
@@ -360,3 +366,36 @@ class SecretScannerTool(BaseTool):
         except Exception:
             # This isn't a JSON web token.
             return False
+
+    def _is_reviewboard_api_token_valid(self, token, m):
+        """Return whether a Review Board API Token is valid.
+
+        Review Board API tokens (which were revamped in October 2022) are 255
+        characters long, prefixed with a ``rbp_`` prefix and contain a
+        Base62-encoded CRC32 checksum of the token data that follows, stored
+        as the last 6 characters of the token.
+
+        Args:
+            token (bytes):
+                The full token to validate.
+
+            m (object, unused):
+                The regex match data for the token.
+
+        Returns:
+            bool:
+            ``True`` if the token is valid. ``False`` if it is not.
+        """
+        checksum = base62_encode(crc32(token[4:-6]) & 0xFFFFFFFF).zfill(6)
+        checksum = checksum.decode('utf-8')
+        token = token.decode('utf-8')
+        token_checksum = token[-6:]
+
+        # Review Board 5.0 generated token checksums using an incorrect
+        # base62-encoding, which resulted in capital and lowercase letters
+        # being swapped. We check against checksum.swapcase() to catch those.
+        return (len(token) == 255 and
+                token.startswith('rbp') and
+                re.match(r'^_[0-9A-Za-z]+$', token[3:]) is not None and
+                (token_checksum == checksum or
+                 token_checksum == checksum.swapcase()))

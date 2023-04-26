@@ -339,7 +339,8 @@ class CargoToolTests(BaseToolTestCase):
         "failures:\n",
         "\n",
         "---- tests::test1 stdout ----\n",
-        "thread 'main' panicked at 'assertion failed: `(left == right)`\n",
+        "thread 'tests::test1' panicked at 'assertion failed:"
+        " `(left == right)`\n",
         "  left: `1`,\n",
         " right: `2`', tests/test.rs:4:9\n",
         "note: run with `RUST_BACKTRACE=1` environment variable to display"
@@ -378,7 +379,7 @@ class CargoToolTests(BaseToolTestCase):
                     "\n"
                     "```"
                     "---- tests::test1 stdout ----\n"
-                    "thread 'main' panicked at 'assertion failed: "
+                    "thread 'tests::test1' panicked at 'assertion failed: "
                     "`(left == right)`\n"
                     "  left: `1`,\n"
                     " right: `2`', tests/test.rs:4:9\n"
@@ -420,14 +421,16 @@ class CargoToolTests(BaseToolTestCase):
         "failures:\n",
         "\n",
         "---- tests::test1 stdout ----\n",
-        "thread 'main' panicked at 'assertion failed: `(left == right)`\n",
+        "thread 'tests::test1' panicked at 'assertion failed:"
+        " `(left == right)`\n",
         "  left: `1`,\n",
         " right: `2`', tests/test.rs:4:9\n",
         "note: run with `RUST_BACKTRACE=1` environment variable to display"
         " a backtrace\n",
         "\n",
         "---- tests::test2 stdout ----\n",
-        "thread 'main' panicked at 'assertion failed: `(left == right)`\n",
+        "thread 'tests::test2' panicked at 'assertion failed:"
+        " `(left == right)`\n",
         "  left: `3`,\n",
         " right: `4`', tests/test.rs:9:9\n",
         "note: run with `RUST_BACKTRACE=1` environment variable to display"
@@ -467,13 +470,13 @@ class CargoToolTests(BaseToolTestCase):
                     "\n"
                     "```"
                     "---- tests::test1 stdout ----\n"
-                    "thread 'main' panicked at 'assertion failed: "
+                    "thread 'tests::test1' panicked at 'assertion failed: "
                     "`(left == right)`\n"
                     "  left: `1`,\n"
                     " right: `2`', tests/test.rs:4:9\n"
                     "\n"
                     "---- tests::test2 stdout ----\n"
-                    "thread 'main' panicked at 'assertion failed: "
+                    "thread 'tests::test2' panicked at 'assertion failed: "
                     "`(left == right)`\n"
                     "  left: `3`,\n"
                     " right: `4`', tests/test.rs:9:9\n"

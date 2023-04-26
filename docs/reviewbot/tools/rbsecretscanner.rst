@@ -49,6 +49,7 @@ The following types of secrets are checked.
 * NPM Access Tokens
 * PGP Private Keys
 * PyPI API Tokens
+* Review Board 5+ API Tokens
 * RSA Private Keys
 * SSH (DSA, EC, and OPENSSH) Private Keys
 * SSL Certificates
