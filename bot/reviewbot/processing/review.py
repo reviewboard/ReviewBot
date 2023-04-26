@@ -108,7 +108,12 @@ class File(object):
             return None
 
         try:
-            return self._api_filediff.get_patched_file().data
+            contents = self._api_filediff.get_patched_file().data
+
+            if isinstance(contents, six.text_type):
+                contents = contents.encode('utf-8')
+
+            return contents
         except APIError as e:
             if e.http_status == 404:
                 # This was a deleted file, a deleted FileDiff entry,
@@ -138,7 +143,12 @@ class File(object):
             return None
 
         try:
-            return self._api_filediff.get_original_file().data
+            contents = self._api_filediff.get_original_file().data
+
+            if isinstance(contents, six.text_type):
+                contents = contents.encode('utf-8')
+
+            return contents
         except APIError as e:
             if e.http_status == 404:
                 # This was a deleted FileDiff entry, or something has gone
@@ -306,7 +316,7 @@ class File(object):
                                    source_file, dest_file, self.id)
 
             with open(dest_file, 'wb') as fp:
-                fp.write(self.patched_file_contents)
+                fp.write(self.patched_file_contents or b'')
 
         self.patched_file_path = self.dest_file
 

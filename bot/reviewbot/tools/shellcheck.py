@@ -82,7 +82,7 @@ class ShellCheckTool(BaseTool):
         return (
             super(ShellCheckTool, self).get_can_handle_file(review_file,
                                                             **kwargs) or
-            self.SHELL_RE.match(review_file.patched_file_contents)
+            self.SHELL_RE.match(review_file.patched_file_contents or b'')
         )
 
     def build_base_command(self, **kwargs):

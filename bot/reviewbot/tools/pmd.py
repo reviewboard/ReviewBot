@@ -180,10 +180,13 @@ class PMDTool(JavaToolMixin, FilePatternsFromSettingMixin, BaseTool):
 
             return
 
-        # Make sure there's only a single file. If not, something went wrong,
-        # but there isn't really anything the user can do about it. The
+        # Make sure there's only a single file, at most. If not, something went
+        # wrong, but there isn't really anything the user can do about it. The
         # administrator will need to look into it.
         files = report.get('files', [])
+
+        if not files:
+            return
 
         if len(files) != 1:
             self.logger.error('Expected 1 file in PMD output. Got %s: %r',
