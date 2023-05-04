@@ -1,0 +1,46 @@
+.. default-intersphinx:: reviewbot3.0
+
+
+============================
+Review Bot 3.2 Release Notes
+============================
+
+**Release date**: May 3, 2023
+
+
+New Features
+============
+
+* Added Secret Scanning support for the enhanced API token format introduced
+  in Review Board 5.
+
+  `Learn more about enhanced API tokens.
+  <https://www.reviewboard.org/docs/releasenotes/reviewboard/5.0/#enhanced-api-tokens>`_
+
+
+Bug Fixes
+=========
+
+* Fixed a crash when using :ref:`Shellcheck <tool-shellcheck>` on Python 3.
+
+* Fixed a bad result when :ref:`PMD <tool-pmd>` reports zero results for a
+  file.
+
+* Fixed a crash when viewing the list of installed automated review tools in
+  the administration UI in Review Board 5.
+
+* The diff display for comments are now capped to 10 lines.
+
+  This is helpful for tools that may report line ranges for entire functions
+  or classes (such as :ref:`PMD <tool-pmd>`).
+
+  When the lines are capped, the original line range is shown in the comment,
+  so reviewers can still find all affected lines in the diff viewer.
+
+
+Contributors
+============
+
+* Christian Hammond
+* David Trowbridge
+* Michelle Aubin
