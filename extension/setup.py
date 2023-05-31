@@ -34,7 +34,7 @@ setup(
 
         # importlib-metadata >= 5.0 on Celery 5.2.x breaks the celery.Celery
         # import. See https://github.com/celery/celery/issues/7783
-        'importlib-metadata<=4.999; python_version <= "3.7"',
+        'importlib-metadata<=4.999; python_version == "3.7"',
 
         # We have to cap kombu for Python 3.6, as celery 5.1.x covers too
         # broad a range of versions, resulting in a Python 3.6-incompatible
