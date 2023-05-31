@@ -57,10 +57,16 @@ setup(
         # We have to cap kombu for Python 3.6, as celery 5.1.x covers too
         # broad a range of versions, resulting in a Python 3.6-incompatible
         # kombu to be installed.
+        #
+        # Kombu 5.3 also drops Python 3.7 support.
         'kombu>=5.1.0,<=5.1.999; python_version == "3.6"',
+        'kombu>=5.1.0,<=5.2.999; python_version == "3.7"',
 
         'enum; python_version == "2.7"',
-        'RBTools>=1.0',
+
+        # RBTools 4.0 drops Python 2.7 and 3.6.
+        'RBTools>=3.0,<=3.999; python_version < "3.7"',
+        'RBTools>=4.0; python_version >= "3.7"',
 
         # We unconditionally include these plugins to ensure they're present.
         'flake8-json>=21.1',
