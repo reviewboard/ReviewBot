@@ -1,8 +1,63 @@
 #!/usr/bin/env python
 
+import os
+import subprocess
+import sys
+
 from setuptools import find_packages, setup
+from setuptools.command.develop import develop
 
 from reviewbot import get_package_version
+
+
+class DevelopCommand(develop):
+    """Installs Review Bot in developer mode.
+
+    This will install all standard and development dependencies and add the
+    source tree to the Python module search path.
+
+    Version Added:
+        3.2.1
+    """
+
+    def install_for_development(self):
+        """Install the package for development.
+
+        This takes care of the work of installing all dependencies.
+        """
+        if self.no_deps:
+            # In this case, we don't want to install any of the dependencies
+            # below. However, it's really unlikely that a user is going to
+            # want to pass --no-deps.
+            #
+            # Instead, what this really does is give us a way to know we've
+            # been called by `pip install -e .`. That will call us with
+            # --no-deps, as it's going to actually handle all dependency
+            # installation, rather than having easy_install do it.
+            develop.install_for_development(self)
+            return
+
+        # Install the dependencies using pip instead of easy_install. This
+        # will use wheels instead of legacy eggs.
+        self._run_pip(['install', '-e', '.'])
+        self._run_pip(['install', '-r', 'dev-requirements.txt'])
+
+    def _run_pip(self, args):
+        """Run pip.
+
+        Args:
+            args (list):
+                Arguments to pass to :command:`pip`.
+
+        Raises:
+            RuntimeError:
+                The :command:`pip` command returned a non-zero exit code.
+        """
+        cmd = subprocess.list2cmdline([sys.executable, '-m', 'pip'] + args)
+        ret = os.system(cmd)
+
+        if ret != 0:
+            raise RuntimeError('Failed to run `%s`' % cmd)
 
 
 with open('README.rst', 'r') as fp:
@@ -97,6 +152,9 @@ setup(
         '!=3.4.*',
         '!=3.5.*',
     ]),
+    cmdclass={
+        'develop': DevelopCommand,
+    },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
