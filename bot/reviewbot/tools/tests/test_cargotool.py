@@ -803,6 +803,7 @@ class CargoToolTests(BaseToolTestCase):
 
     @integration_test()
     @simulation_test(output=[
+        # This is based on a cargo 1.68.2 result.
         json.dumps({
             'message': {
                 'code': None,
@@ -904,21 +905,32 @@ class CargoToolTests(BaseToolTestCase):
                 'test': True,
             })
 
-        self.assertEqual(review.comments, [
-            {
-                'filediff_id': review_files['tests/test.rs'].id,
-                'first_line': 1,
-                'num_lines': 1,
-                'text': (
-                    'this file contains an unclosed delimiter\n'
-                    '\n'
-                    'Column: 11\n'
-                    'Severity: error'
-                ),
-                'issue_opened': True,
-                'rich_text': True,
-            },
-            {
+        # Cargo 1.68.2 reports 2 comments:
+        #
+        # 1. "this file contains an unclosed delimiter ..."
+        # 2. "expected `;`, found `#` ..."
+        #
+        # Cargo 1.69.0 and higher report just the first.
+        #
+        # We'll check for both.
+        self.assertIn(len(review.comments), [1, 2])
+
+        self.assertEqual(review.comments[0], {
+            'filediff_id': review_files['tests/test.rs'].id,
+            'first_line': 1,
+            'num_lines': 1,
+            'text': (
+                'this file contains an unclosed delimiter\n'
+                '\n'
+                'Column: 11\n'
+                'Severity: error'
+            ),
+            'issue_opened': True,
+            'rich_text': True,
+        })
+
+        if len(review.comments) == 2:
+            self.assertEqual(review.comments[1], {
                 'filediff_id': review_files['tests/test.rs'].id,
                 'first_line': 6,
                 'num_lines': 1,
@@ -930,8 +942,8 @@ class CargoToolTests(BaseToolTestCase):
                 ),
                 'issue_opened': True,
                 'rich_text': True,
-            },
-        ])
+            })
+
         self.assertEqual(review.general_comments, [])
 
         self.assertSpyCallCount(execute, 1)
