@@ -35,7 +35,10 @@ setup(
         # We have to cap kombu for Python 3.6, as celery 5.1.x covers too
         # broad a range of versions, resulting in a Python 3.6-incompatible
         # kombu to be installed.
+        #
+        # Kombu 5.3 also drops Python 3.7 support.
         'kombu>=5.1.0,<=5.1.999; python_version == "3.6"',
+        'kombu>=5.1.0,<=5.2.999; python_version == "3.7"',
 
         'six',
     ],
