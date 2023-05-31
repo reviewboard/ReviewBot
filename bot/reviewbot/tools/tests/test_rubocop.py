@@ -436,7 +436,7 @@ class RubocopToolTests(BaseToolTestCase):
                             '(Using Ruby 2.4 parser; configure using '
                             '`TargetRubyVersion` parameter, under `AllCops`)'
                         ),
-                        'severity': 'error',
+                        'severity': 'fatal',
                     },
                 ],
                 'path': '/test.rb',
@@ -472,7 +472,7 @@ class RubocopToolTests(BaseToolTestCase):
                     '`TargetRubyVersion` parameter, under `AllCops`)\n'
                     '\n'
                     'Column: 3\n'
-                    'Severity: error\n'
+                    'Severity: fatal\n'
                     'Error code: Lint/Syntax'
                 ),
                 'issue_opened': True,
