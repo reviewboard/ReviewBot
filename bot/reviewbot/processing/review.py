@@ -673,7 +673,7 @@ class Review(object):
                 review_request_id=self.review_request_id,
                 diff_revision=self.diff_revision)
 
-            for filediff in filediffs:
+            for filediff in filediffs.all_items:
                 # Filter out binary files and symlinks.
                 if (getattr(filediff, 'binary', False) or
                     filediff.status not in self._VALID_FILEDIFF_STATUS_TYPES or
