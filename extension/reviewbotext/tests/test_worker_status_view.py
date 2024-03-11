@@ -4,13 +4,7 @@ import json
 from collections import OrderedDict
 
 import kgb
-
-try:
-    # Django >= 1.11, Review Board >= 4.0
-    from django.urls import reverse
-except ImportError:
-    # Django 1.6, Review Board 3.0
-    from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from reviewbotext.tests.testcase import TestCase
 

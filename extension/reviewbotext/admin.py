@@ -1,7 +1,9 @@
-from django.conf.urls import url
+"""Admin site definitions."""
+
 from django.contrib import admin
 from django.http import HttpResponse
 from django.template.context import RequestContext
+from django.urls import path
 from reviewboard.extensions.base import get_extension_manager
 
 from reviewbotext.extension import ReviewBotExtension
@@ -77,7 +79,7 @@ class ToolAdmin(admin.ModelAdmin):
         urls = super(ToolAdmin, self).get_urls()
 
         my_urls = [
-            url('^refresh/$',
+            path('refresh/',
                 self.admin_site.admin_view(self.refresh_tools_view)),
         ]
         return my_urls + urls
