@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.http import HttpRequest
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from djblets.db.query import get_object_or_none
 from reviewboard.accounts.backends import auth_backends
 from reviewboard.admin.server import get_server_url

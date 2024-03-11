@@ -1,6 +1,8 @@
+"""Forms for Review Bot."""
+
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext, ugettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _
 from djblets.forms.fields import ConditionsField
 from reviewboard.integrations.forms import IntegrationConfigForm
 from reviewboard.reviews.conditions import ReviewRequestConditionChoices
@@ -108,9 +110,9 @@ class ReviewBotConfigForm(IntegrationConfigForm):
         if not hasattr(StatusUpdate, 'drop_open_issues'):
             self.disabled_fields = ['drop_old_issues', 'run_manually']
             self.disabled_reasons = {
-                'drop_old_issues': ugettext(
+                'drop_old_issues': gettext(
                     'Requires Review Board 3.0.19 or newer.'),
-                'run_manually': ugettext(
+                'run_manually': gettext(
                     'Requires Review Board 3.0.19 or newer.'),
             }
             self.fields['drop_old_issues'].initial = False

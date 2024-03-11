@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from djblets.extensions.hooks import SignalHook
 from reviewboard.admin.server import get_server_url
 from reviewboard.diffviewer.models import DiffSet
