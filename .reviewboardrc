@@ -1,6 +1,6 @@
 REVIEWBOARD_URL = 'https://reviews.reviewboard.org'
 REPOSITORY = 'ReviewBot'
 REPOSITORY_TYPE = 'git'
-BRANCH = 'master'
+BRANCH = 'release-4.x'
 TRACKING_BRANCH = 'origin/%s' % BRANCH
 LAND_DEST_BRANCH = BRANCH
