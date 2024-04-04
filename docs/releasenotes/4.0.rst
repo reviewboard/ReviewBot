@@ -1,0 +1,38 @@
+.. default-intersphinx reviewbot4.0
+
+============================
+Review Bot 4.0 Release Notes
+============================
+
+**Release date**: TBD
+
+
+Installation/Upgrade
+====================
+
+Review Bot 4.0 includes full support for Review Board 5.0-7.0. It supports
+Python 3.8-3.12.
+
+The Review Bot 4 release is mostly a dependency modernization release,
+necessary to run on Review Board 7. This release drops support for very old
+versions of Python and Review Board.
+
+Follow our :ref:`installation guide <reviewbot-installation>` for installing
+the Review Bot extension and worker.
+
+To learn more, see:
+
+* :ref:`Documentation <reviewbot-docs>`
+* :pypi:`Review Bot Extension on PyPI <reviewbot-extension>`
+* :pypi:`Review Bot Worker on PyPI <reviewbot-worker>`
+
+
+New Features
+============
+
+PMD
+---
+
+The PMD tool now supports the recently-released `PMD 7`_.
+
+.. _`PMD 7`: https://pmd.github.io/pmd/pmd_release_notes_pmd7.html

@@ -365,6 +365,7 @@ intersphinx_mapping = {
     'reviewbot1.0': ('%s/docs/reviewbot/1.0/' % rbwebsite_url, None),
     'reviewbot2.0': ('%s/docs/reviewbot/2.0/' % rbwebsite_url, None),
     'reviewbot3.0': ('%s/docs/reviewbot/3.0/' % rbwebsite_url, None),
+    'reviewbot4.0': ('%s/docs/reviewbot/4.0/' % rbwebsite_url, None),
 }
 
 extlinks = {

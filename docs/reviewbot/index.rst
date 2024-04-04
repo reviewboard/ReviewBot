@@ -1,3 +1,5 @@
+.. _reviewbot-docs:
+
 ========================
 Review Bot Documentation
 ========================

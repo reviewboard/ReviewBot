@@ -1,3 +1,5 @@
+.. _reviewbot-installation:
+
 ============
 Installation
 ============
