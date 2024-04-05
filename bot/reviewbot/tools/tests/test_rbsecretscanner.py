@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import kgb
-import six
-
 from reviewbot.tools.rbsecretscanner import SecretScannerTool
 from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
@@ -12,8 +9,8 @@ from reviewbot.tools.testing import (BaseToolTestCase,
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class SecretScannerToolTests(BaseToolTestCase, kgb.SpyAgency):
+class SecretScannerToolTests(BaseToolTestCase,
+                             metaclass=ToolTestCaseMetaclass):
     """Unit tests for SecretScannerTool."""
 
     tool_class = SecretScannerTool

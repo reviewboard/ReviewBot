@@ -6,7 +6,6 @@ import json
 import os
 
 import kgb
-import six
 
 from reviewbot.tools.shellcheck import ShellCheckTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -17,8 +16,7 @@ from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class ShellCheckToolTests(BaseToolTestCase):
+class ShellCheckToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.shellcheck.ShellCheckTool."""
 
     tool_class = ShellCheckTool

@@ -12,7 +12,6 @@ from functools import wraps
 from unittest import SkipTest
 
 import kgb
-import six
 
 from reviewbot.config import config
 from reviewbot.repositories import GitRepository
@@ -61,7 +60,7 @@ class ToolTestCaseMetaclass(type):
                '%s must set tool_exe_config_key' % name
             assert d.get('tool_exe_path'), '%s must set tool_exe_path' % name
 
-        for func_name, func in six.iteritems(d.copy()):
+        for func_name, func in d.copy().items():
             if callable(func):
                 added = False
 
@@ -375,7 +374,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
         if other_files:
             review_files[filename] = review_file
 
-            for other_filename, other_contents in six.iteritems(other_files):
+            for other_filename, other_contents in other_files.items():
                 assert isinstance(other_contents, bytes)
 
                 review_files[other_filename] = self.create_review_file(

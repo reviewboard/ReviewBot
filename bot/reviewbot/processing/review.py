@@ -5,7 +5,6 @@ import os
 from enum import Enum
 from itertools import islice
 
-import six
 from rbtools.api.errors import APIError
 
 from reviewbot.utils.filesystem import (ensure_dirs_exist,
@@ -116,7 +115,7 @@ class File(object):
         try:
             contents = self._api_filediff.get_patched_file().data
 
-            if isinstance(contents, six.text_type):
+            if isinstance(contents, str):
                 contents = contents.encode('utf-8')
 
             return contents
@@ -151,7 +150,7 @@ class File(object):
         try:
             contents = self._api_filediff.get_original_file().data
 
-            if isinstance(contents, six.text_type):
+            if isinstance(contents, str):
                 contents = contents.encode('utf-8')
 
             return contents
@@ -268,7 +267,7 @@ class File(object):
             ),
             num_lines))
 
-        assert not result or isinstance(result[0], six.text_type)
+        assert not result or isinstance(result[0], str)
 
         return result
 

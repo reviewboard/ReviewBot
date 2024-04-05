@@ -6,7 +6,6 @@ import json
 import os
 
 import kgb
-import six
 
 from reviewbot.tools.pmd import PMDTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -18,8 +17,7 @@ from reviewbot.utils.filesystem import tmpdirs, tmpfiles
 from reviewbot.utils.process import execute, is_exe_in_path
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class PMDToolTests(BaseToolTestCase):
+class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.pmd.PMDTool."""
 
     tool_class = PMDTool
@@ -580,7 +578,7 @@ class PMDToolTests(BaseToolTestCase):
             stderr (unicode, optional):
                 The error output to simulate from PMD.
         """
-        assert isinstance(stderr, six.text_type)
+        assert isinstance(stderr, str)
 
         @self.spy_for(execute)
         def _execute(cmdline, *args, **kwargs):

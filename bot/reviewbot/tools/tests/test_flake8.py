@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 
 import kgb
-import six
 
 from reviewbot.tools.flake8 import Flake8Tool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -15,8 +14,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class Flake8ToolTests(BaseToolTestCase):
+class Flake8ToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.flake8.Flake8Tool."""
 
     tool_class = Flake8Tool

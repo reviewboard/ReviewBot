@@ -7,8 +7,6 @@ import os
 import re
 from collections import OrderedDict
 
-import six
-
 from reviewbot.config import config
 from reviewbot.tools.base import BaseTool, FullRepositoryToolMixin
 from reviewbot.utils.process import execute
@@ -187,7 +185,7 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
                         test_result['failed'] = True
 
         if test_results:
-            for test_name, test_result in six.iteritems(test_results):
+            for test_name, test_result in test_results.items():
                 if test_result['failed']:
                     review.general_comment(
                         '%s failed in the %s package:\n'

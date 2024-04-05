@@ -6,7 +6,6 @@ import os
 from uuid import uuid4
 
 import appdirs
-import six
 
 from reviewbot.config import config
 from reviewbot.utils.api import get_api_root
@@ -294,7 +293,7 @@ def init_repositories():
 
     for repository in config['repositories']:
         missing_keys = ({'name', 'type', 'clone_path'} -
-                        set(six.iterkeys(repository)))
+                        set(repository.keys()))
 
         if missing_keys:
             logger.error(

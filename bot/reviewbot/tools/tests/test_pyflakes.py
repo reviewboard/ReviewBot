@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import kgb
-import six
 
 from reviewbot.tools.pyflakes import PyflakesTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -13,8 +12,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class PyflakesToolTests(BaseToolTestCase):
+class PyflakesToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.pyflakes.PyflakesTool."""
 
     tool_class = PyflakesTool

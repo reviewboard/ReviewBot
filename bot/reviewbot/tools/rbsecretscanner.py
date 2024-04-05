@@ -7,8 +7,6 @@ import json
 import re
 from zlib import crc32
 
-import six
-
 from reviewbot.tools.base import BaseTool
 from reviewbot.utils.text import base62_encode
 
@@ -299,7 +297,7 @@ class SecretScannerTool(BaseTool):
                 # check it now.
                 is_valid = True
 
-                for key, value in six.iteritems(m.groupdict()):
+                for key, value in m.groupdict().items():
                     if value is not None:
                         validate_func = getattr(self, '_is_%s_valid' % key,
                                                 None)

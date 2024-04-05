@@ -7,8 +7,6 @@ import os
 import tempfile
 from unittest import SkipTest
 
-import six
-
 from reviewbot.config import config
 from reviewbot.tools.fbinfer import FBInferTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -18,8 +16,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
 from reviewbot.utils.process import execute, is_exe_in_path
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class FBInferToolTests(BaseToolTestCase):
+class FBInferToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.fbinfer.FBInferTool."""
 
     tool_class = FBInferTool

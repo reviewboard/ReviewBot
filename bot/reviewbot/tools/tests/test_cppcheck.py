@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 
 import kgb
-import six
 
 from reviewbot.tools.cppcheck import CPPCheckTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -16,8 +15,7 @@ from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class CPPCheckToolTests(BaseToolTestCase):
+class CPPCheckToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.cppcheck.CPPCheckTool."""
 
     tool_class = CPPCheckTool

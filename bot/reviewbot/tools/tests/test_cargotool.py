@@ -7,7 +7,6 @@ import os
 import tempfile
 
 import kgb
-import six
 
 from reviewbot.tools.cargotool import CargoTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -17,8 +16,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class CargoToolTests(BaseToolTestCase):
+class CargoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.cargotool.CargoTool."""
 
     tool_class = CargoTool

@@ -6,7 +6,6 @@ import json
 import os
 
 import kgb
-import six
 
 from reviewbot.tools.jshint import JSHintTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -17,8 +16,7 @@ from reviewbot.utils.filesystem import tmpdirs, tmpfiles
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class JSHintToolTests(BaseToolTestCase):
+class JSHintToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.jshint.JSHintTool."""
 
     tool_class = JSHintTool

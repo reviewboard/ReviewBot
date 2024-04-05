@@ -5,8 +5,6 @@ from __future__ import annotations
 import os
 import plistlib
 
-import six
-
 from reviewbot.tools.clang import ClangTool
 from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
@@ -16,8 +14,7 @@ from reviewbot.utils.filesystem import tmpfiles
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class ClangToolTests(BaseToolTestCase):
+class ClangToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.clang.ClangTool."""
 
     tool_class = ClangTool

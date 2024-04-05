@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 
 import kgb
-import six
 
 from reviewbot.config import config
 from reviewbot.testing import get_test_dep_path
@@ -18,8 +17,7 @@ from reviewbot.utils.filesystem import tmpdirs, tmpfiles
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class CheckstyleToolTests(BaseToolTestCase):
+class CheckstyleToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.checkstyle.CheckstyleTool."""
 
     tool_class = CheckstyleTool

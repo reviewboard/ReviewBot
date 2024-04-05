@@ -6,8 +6,6 @@ import os
 import shutil
 import tempfile
 
-import six
-
 from reviewbot.tools.gotool import GoTool
 from reviewbot.tools.testing import (BaseToolTestCase,
                                      ToolTestCaseMetaclass,
@@ -16,8 +14,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class GoToolTests(BaseToolTestCase):
+class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.gotool.GoTool."""
 
     tool_class = GoTool

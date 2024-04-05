@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 
 import kgb
-import six
 
 from reviewbot.tools.doc8 import Doc8Tool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -16,8 +15,7 @@ from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class Doc8ToolTests(BaseToolTestCase):
+class Doc8ToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.doc8.Doc8Tool."""
 
     tool_class = Doc8Tool

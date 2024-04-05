@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import json
 
-import six
-
 from reviewbot.config import config
 from reviewbot.tools.base import BaseTool
 from reviewbot.tools.utils.codeclimate import \
@@ -106,7 +104,7 @@ class Flake8Tool(BaseTool):
             return
 
         assert len(payload) == 1
-        issues = next(six.itervalues(payload))
+        issues = next(iter(payload.values()))
 
         for issue in issues:
             add_comment_from_codeclimate_issue(issue_payload=issue,

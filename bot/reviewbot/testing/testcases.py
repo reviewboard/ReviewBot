@@ -13,14 +13,12 @@ import unittest
 from contextlib import contextmanager
 from copy import deepcopy
 
-import six
 from rbtools.api.resource import (FileAttachmentListResource,
                                   FileDiffResource,
                                   ItemResource,
                                   ListResource,
                                   RootResource)
 from rbtools.api.tests.base import MockTransport
-from six.moves import range
 
 from reviewbot.config import config, reset_config
 from reviewbot.processing.review import File, Review
@@ -532,7 +530,7 @@ class TestCase(unittest.TestCase):
 
         # We'll attempt a very simple sort of merge, since at the time of this
         # implementation, we have a very simple default config schema.
-        for key, value in six.iteritems(new_config):
+        for key, value in new_config.items():
             if isinstance(value, dict):
                 config[key].update(value)
             else:

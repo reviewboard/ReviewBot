@@ -6,7 +6,6 @@ import json
 import os
 from copy import deepcopy
 
-import six
 from appdirs import AppDirs
 
 from reviewbot.utils.log import get_root_logger
@@ -128,7 +127,7 @@ def load_config():
                 config_module = {}
                 exec(compile(f.read(), config_file, 'exec'), config_module)
 
-            for key in six.iterkeys(DEFAULT_CONFIG):
+            for key in DEFAULT_CONFIG.keys():
                 if key in config_module:
                     new_config[key] = deepcopy(config_module[key])
 

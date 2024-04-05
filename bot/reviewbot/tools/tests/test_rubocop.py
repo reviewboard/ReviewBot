@@ -7,7 +7,6 @@ import os
 import re
 
 import kgb
-import six
 
 from reviewbot.tools.rubocop import RubocopTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -18,8 +17,7 @@ from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class RubocopToolTests(BaseToolTestCase):
+class RubocopToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.rubocop.RubocopTool."""
 
     tool_class = RubocopTool
