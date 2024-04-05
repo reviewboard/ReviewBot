@@ -52,7 +52,7 @@ class RegistryTestCase(TestCase):
             % DummyTool
         )
 
-        with self.assertRaisesRegexp(ValueError, expected_message):
+        with self.assertRaisesRegex(ValueError, expected_message):
             register_tool_class(DummyTool)
 
         self.assertEqual(_registered_tools, {})
@@ -72,7 +72,7 @@ class RegistryTestCase(TestCase):
             % DummyTool
         )
 
-        with self.assertRaisesRegexp(ValueError, expected_message):
+        with self.assertRaisesRegex(ValueError, expected_message):
             register_tool_class(DummyTool2)
 
         self.assertEqual(
@@ -97,7 +97,7 @@ class RegistryTestCase(TestCase):
             'A tool with the ID "dummy" was not registered.'
         )
 
-        with self.assertRaisesRegexp(KeyError, expected_message):
+        with self.assertRaisesRegex(KeyError, expected_message):
             unregister_tool_class('dummy')
 
         self.assertEqual(_registered_tools, {})

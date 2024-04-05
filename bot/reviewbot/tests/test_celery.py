@@ -77,7 +77,7 @@ class SetupCookiesTests(kgb.SpyAgency, TestCase):
                 'Unable to create cookies directory "/dev/null/cookies/":'
             )
 
-            with self.assertRaisesRegexp(IOError, expected_message):
+            with self.assertRaisesRegex(IOError, expected_message):
                 setup_cookies()
 
         self.assertSpyCalledWith(
@@ -107,7 +107,7 @@ class SetupCookiesTests(kgb.SpyAgency, TestCase):
                 % cookie_path
             )
 
-            with self.assertRaisesRegexp(IOError, expected_message):
+            with self.assertRaisesRegex(IOError, expected_message):
                 setup_cookies()
 
         self.assertSpyCalledWith(
@@ -134,7 +134,7 @@ class SetupCookiesTests(kgb.SpyAgency, TestCase):
                 % cookie_path
             )
 
-            with self.assertRaisesRegexp(IOError, expected_message):
+            with self.assertRaisesRegex(IOError, expected_message):
                 setup_cookies()
 
         self.assertSpyCalledWith(
