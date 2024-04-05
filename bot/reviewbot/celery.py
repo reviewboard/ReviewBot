@@ -360,42 +360,42 @@ def start_worker(broker, hostname, loglevel, logfile, detach, pidfile, uid,
         3.0
 
     Args:
-        broker (unicode):
+        broker (str):
             The broker URI.
 
-        hostname (unicode):
+        hostname (str):
             The local hostname Review Bot will identify with when talking to
             the broker.
 
-        loglevel (unicode):
+        loglevel (str):
             The minimum log level.
 
-        logfile (unicode):
+        logfile (str):
             The path to a log file to write to.
 
         detach (bool):
             Whether to run the worker in a detached process.
 
-        pidfile (unicode):
+        pidfile (str):
             The path to a PID file to write to when detaching.
 
-        uid (unicode):
+        uid (str):
             The user ID to use when detaching.
 
-        gid (unicode):
+        gid (str):
             The group ID to use when detaching.
 
-        umask (unicode):
+        umask (str):
             The umask (in octal string format) to use for the process when
             detaching.
 
         concurrency (int):
             The number of concurrent processes to run.
 
-        pool_cls (unicode):
+        pool_cls (str):
             The pool implementation.
 
-        autoscale (unicode):
+        autoscale (str):
             The autoscale settings, in the form of
             ``max_concurrency,min_concurrency``.
 

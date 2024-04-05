@@ -220,7 +220,7 @@ class Doc8ToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         it return the provided output.
 
         Args:
-            output (list of unicode):
+            output (list of str):
                 The simulated output from the tool.
         """
         self.spy_on(execute, op=kgb.SpyOpReturn(output))

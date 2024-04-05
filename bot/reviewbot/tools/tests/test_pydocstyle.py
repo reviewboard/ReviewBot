@@ -208,7 +208,7 @@ class PydocstyleToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         it return the provided output.
 
         Args:
-            output (unicode):
-                The simulatedo output from the tool.
+            output (str):
+                The simulated output from the tool.
         """
         self.spy_on(execute, op=kgb.SpyOpReturn(output))

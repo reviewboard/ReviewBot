@@ -25,7 +25,7 @@ def get_logger(name, is_task_logger=True):
         3.0
 
     Args:
-        name (unicode):
+        name (str):
             The name shown in the log line. This is expected to be a module
             name.
 

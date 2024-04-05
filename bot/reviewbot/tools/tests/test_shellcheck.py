@@ -546,7 +546,7 @@ class ShellCheckToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         payload directly, if it's a string).
 
         Args:
-            output_payload (dict or unicode):
+            output_payload (dict or str):
                 The payload to output.
         """
         if isinstance(output_payload, dict):

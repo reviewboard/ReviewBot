@@ -150,10 +150,10 @@ class RustfmtToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         it return the provided stdout and stderr results.
 
         Args:
-            stdout (unicode, optional):
+            stdout (str, optional):
                 The outputted stdout.
 
-            stderr (unicode, optional):
+            stderr (str, optional):
                 The outputted stderr.
         """
         self.spy_on(execute, op=kgb.SpyOpReturn((stdout, stderr)))

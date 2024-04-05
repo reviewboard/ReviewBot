@@ -574,10 +574,10 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         it return the provided output.
 
         Args:
-            test_output (list of unicode, optional):
+            test_output (list of str, optional):
                 The outputted content from :command:`go test`.
 
-            vet_output (unicode, optional):
+            vet_output (str, optional):
                 The outputted content from :command:`go vet`.
         """
         @self.spy_for(execute)

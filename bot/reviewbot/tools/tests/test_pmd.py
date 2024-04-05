@@ -575,7 +575,7 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 The output payload to serialize to JSON. If not provided, a
                 file will not be written.
 
-            stderr (unicode, optional):
+            stderr (str, optional):
                 The error output to simulate from PMD.
         """
         assert isinstance(stderr, str)

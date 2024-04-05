@@ -68,7 +68,7 @@ class CargoTool(FullRepositoryToolMixin, BaseTool):
                 Additional keyword arguments.
 
         Returns:
-            list of unicode:
+            list of str:
             The base command line.
         """
         return [config['exe_paths']['cargo']]
@@ -83,7 +83,7 @@ class CargoTool(FullRepositoryToolMixin, BaseTool):
             review (reviewbot.processing.review.Review):
                 The review being populated.
 
-            base_command (list of unicode):
+            base_command (list of str):
                 The base command used to run cargo.
 
             **kwargs (dict, unused):
@@ -115,7 +115,7 @@ class CargoTool(FullRepositoryToolMixin, BaseTool):
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            path (unicode):
+            path (str):
                 The local path to the patched file to review.
 
             file_results (dict):
@@ -182,7 +182,7 @@ class CargoTool(FullRepositoryToolMixin, BaseTool):
         :py:meth:`handle_file`.
 
         Args:
-            base_command (list of unicode):
+            base_command (list of str):
                 The base command used to run cargo.
 
         Returns:
@@ -237,7 +237,7 @@ class CargoTool(FullRepositoryToolMixin, BaseTool):
         :py:attr:`TEST_LINES_LIMIT` lines of unit test output.
 
         Args:
-            base_command (list of unicode):
+            base_command (list of str):
                 The base command used to run cargo.
         """
         output = execute(

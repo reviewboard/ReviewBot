@@ -390,7 +390,7 @@ class CheckstyleToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         it return the provided payload.
 
         Args:
-            output (unicode):
+            output (str):
                 The outputted payload.
         """
         self.spy_on(execute, op=kgb.SpyOpReturn(output))

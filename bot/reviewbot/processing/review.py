@@ -177,7 +177,7 @@ class File(object):
             Empty files no longer return ``None``.
 
         Returns:
-            unicode:
+            str:
             The filename of a new temporary file containing the patched file
             contents. If the file is deleted, this will return ``None``.
         """
@@ -209,7 +209,7 @@ class File(object):
             Empty files no longer return ``None``.
 
         Returns:
-            unicode:
+            str:
             The filename of a new temporary file containing the original file
             contents. If the file is new, this will return ``None``.
         """
@@ -249,7 +249,7 @@ class File(object):
                 Whether to return lines from the original (unmodified) file.
 
         Returns:
-            list of unicode:
+            list of str:
             The list of lines, up to the maximum requested. This will be
             empty if the lines could not be found.
         """
@@ -280,7 +280,7 @@ class File(object):
             3.0
 
         Args:
-            root_target_dir (unicode):
+            root_target_dir (str):
                 The root directory for the project. No files are allowed to
                 be created, modified, deleted, or linked to outside of this
                 path.
@@ -336,7 +336,7 @@ class File(object):
             ``text_extra`` arguments.
 
         Args:
-            text (unicode):
+            text (str):
                 The text of the comment.
 
             first_line (int):
@@ -351,7 +351,7 @@ class File(object):
                 applied, as reported by a linter. If provided, this will be
                 appended to the text.
 
-            error_code (unicode, optional):
+            error_code (str, optional):
                 An error code for the error being reported. If provided,
                 this will be appended to the text.
 
@@ -365,7 +365,7 @@ class File(object):
                 If True, the ``first_line`` argument corresponds to the line
                 number in the original file, instead of the patched file.
 
-            severity (unicode, optional):
+            severity (str, optional):
                 A tool-specific, human-readable indication of the severity of
                 this comment.
 
@@ -689,7 +689,7 @@ class Review(object):
         """Make a general comment.
 
         Args:
-            text (unicode):
+            text (str):
                 The text of the comment.
 
             issue (bool, optional):
@@ -748,7 +748,7 @@ class Review(object):
         """The contents of the patch.
 
         Returns:
-            unicode:
+            str:
             The contents of the patch associated with the review request and
             diff revision.
         """
@@ -766,7 +766,7 @@ class Review(object):
         """Fetch the patch and return the filename of it.
 
         Returns:
-            unicode:
+            str:
             The filename of a new temporary file containing the patch contents.
             If the patch is empty, return None.
         """

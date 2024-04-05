@@ -73,7 +73,7 @@ class PMDTool(JavaToolMixin, FilePatternsFromSettingMixin, BaseTool):
                 Additional keyword arguments.
 
         Returns:
-            list of unicode:
+            list of str:
             The base command line.
         """
         rulesets = self.settings['rulesets']
@@ -96,10 +96,10 @@ class PMDTool(JavaToolMixin, FilePatternsFromSettingMixin, BaseTool):
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            path (unicode):
+            path (str):
                 The local path to the patched file to review.
 
-            base_command (list of unicode, optional):
+            base_command (list of str, optional):
                 The common base command line used for reviewing a file.
 
             **kwargs (dict, unused):

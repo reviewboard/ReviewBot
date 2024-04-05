@@ -43,11 +43,11 @@ def split_comma_separated(s):
     Any blank values will be filtered out.
 
     Args:
-        s (unicode):
+        s (str):
             The string to split.
 
     Returns:
-        list of unicode:
+        list of str:
         The list of values.
     """
     return [

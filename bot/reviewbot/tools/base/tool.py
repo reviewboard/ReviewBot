@@ -30,13 +30,13 @@ class BaseTool(object):
     #: The displayed name of the tool.
     #:
     #: Type:
-    #:     unicode
+    #:     str
     name = ''
 
     #: A short description of the tool.
     #:
     #: Type:
-    #:     unicode
+    #:     str
     description = ''
 
     #: The compatibility version of the tool.
@@ -49,7 +49,7 @@ class BaseTool(object):
     #: the older tool.
     #:
     #: Type:
-    #:     unicode
+    #:     str
     version = '1'
 
     #: A list of executable tools required by the tool.
@@ -85,7 +85,7 @@ class BaseTool(object):
     #:     3.0
     #:
     #: Type:
-    #:     list of unicode
+    #:     list of str
     file_patterns = []
 
     #: Configurable options defined for the tool.
@@ -93,10 +93,10 @@ class BaseTool(object):
     #: Each item in the list is a dictionary representing a form field to
     #: display in the Review Board administration UI. Keys include:
     #:
-    #: ``field_type`` (:py:class:`unicode`):
+    #: ``field_type`` (:py:class:`str`):
     #:     The full path as a string to a Django form field class to render.
     #:
-    #: ``name`` (:py:class:`unicode`):
+    #: ``name`` (:py:class:`str`):
     #:     The name/ID of the field. This will map to the key in the
     #:     settings provided to :py:meth:`handle_files` and
     #:     :py:meth:`handle_file`.
@@ -111,7 +111,7 @@ class BaseTool(object):
     #:     Information on the Django form field widget class used to render
     #:     the field. This dictionary includes the following keys:
     #:
-    #:     ``type`` (:py:class:`unicode`):
+    #:     ``type`` (:py:class:`str`):
     #:         The full path as a string to a Django form field widget class.
     #:
     #:     ``attrs`` (:py:class:`dict`, optional):
@@ -259,7 +259,7 @@ class BaseTool(object):
             repository (reviewbot.repositories.Repository, optional):
                 The repository.
 
-            base_commit_id (unicode, optional):
+            base_commit_id (str, optional):
                 The ID of the commit that the patch should be applied to.
 
             **kwargs (dict, unused):
@@ -288,7 +288,7 @@ class BaseTool(object):
                 Additional keyword arguments, for future expansion.
 
         Returns:
-            list of unicode:
+            list of str:
             The base command line.
         """
         return []
@@ -354,12 +354,12 @@ class BaseTool(object):
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            path (unicode, optional):
+            path (str, optional):
                 The local path to the patched file to review.
 
                 This won't be passed for legacy tools.
 
-            base_command (list of unicode, optional):
+            base_command (list of str, optional):
                 The common base command line used for reviewing a file,
                 if returned from :py:meth:`build_base_command`.
 

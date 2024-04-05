@@ -325,7 +325,7 @@ class DummyRootResource(RootResource):
         This only supports the Review Bot extension ID.
 
         Args:
-            extension_name (unicode):
+            extension_name (str):
                 The extension name requested.
 
             **kwargs (dict):
@@ -410,7 +410,7 @@ class DummyRootResource(RootResource):
         """Return a user file attachment list resource.
 
         Args:
-            username (unicode):
+            username (str):
                 The username for the user who owns the file attachments.
 
             **kwargs (dict, unused):
@@ -498,7 +498,7 @@ class TestCase(unittest.TestCase):
         short, though.
 
         Returns:
-            unicode:
+            str:
             The test description, without truncating lines.
         """
         doc = self._testMethodDoc
@@ -589,16 +589,16 @@ class TestCase(unittest.TestCase):
             filediff_id (int, optional):
                 The ID of the FileDiff being reviewed.
 
-            source_file (unicode, optional):
+            source_file (str, optional):
                 The filename of the original version of the file.
 
-            dest_file (unicode, optional):
+            dest_file (str, optional):
                 The filename of the modified version of the file.
 
-            source_revision (unicode, optional):
+            source_revision (str, optional):
                 The source revision for the file.
 
-            status (unicode, optional):
+            status (str, optional):
                 The status value set for the FileDiff.
 
             patch (bytes, optional):
@@ -612,7 +612,7 @@ class TestCase(unittest.TestCase):
                 The patched version of the file. If not provided, one will
                 be generated.
 
-            patched_file_path (unicode, optional):
+            patched_file_path (str, optional):
                 The local path to the patched file content.
 
             diff_data (dict, optional):
@@ -845,16 +845,16 @@ class TestCase(unittest.TestCase):
             review_request_id (int, optional):
                 The ID of the review request that owns the FileDiff.
 
-            source_file (unicode, optional):
+            source_file (str, optional):
                 The filename of the original version of the file.
 
-            source_revision (unicode, optional):
+            source_revision (str, optional):
                 The source revision for the file.
 
-            dest_file (unicode, optional):
+            dest_file (str, optional):
                 The filename of the modified version of the file.
 
-            status (unicode, optional):
+            status (str, optional):
                 The status value set for the FileDiff.
 
             binary (bool, optional):

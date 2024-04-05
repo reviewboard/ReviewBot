@@ -965,7 +965,7 @@ class CargoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         it return the provided data.
 
         Args:
-            output (unicode):
+            output (str):
                 The outputted data.
         """
         output = [

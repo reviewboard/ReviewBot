@@ -54,7 +54,7 @@ def _load_json_config_items(path):
         3.0
 
     Args:
-        path (unicode):
+        path (str):
             The path to the file.
 
     Returns:
@@ -85,7 +85,7 @@ def get_config_file_path():
         3.0
 
     Returns:
-        unicode:
+        str:
         The configuration file path.
     """
     return os.environ.get(

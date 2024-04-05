@@ -93,7 +93,7 @@ class ShellCheckTool(BaseTool):
                 Additional keyword arguments.
 
         Returns:
-            list of unicode:
+            list of str:
             The base command line.
         """
         settings = self.settings
@@ -121,10 +121,10 @@ class ShellCheckTool(BaseTool):
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            path (unicode):
+            path (str):
                 The local path to the patched file to review.
 
-            base_command (list of unicode):
+            base_command (list of str):
                 The base command used to run shellcheck.
 
             **kwargs (dict, unused):

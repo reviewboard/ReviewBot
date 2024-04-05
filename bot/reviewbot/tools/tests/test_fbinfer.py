@@ -383,7 +383,7 @@ class FBInferToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         """Set up an integration test.
 
         Args:
-            exe_deps (list of unicode):
+            exe_deps (list of str):
                 Dependencies required by this test.
 
             **kwargs (dict):
@@ -413,7 +413,7 @@ class FBInferToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
             full_report (list, optional):
                 A full report file contents to write.
 
-            output (unicode, optional):
+            output (str, optional):
                 Output to return when executing a command.
         """
         if full_report is not None:

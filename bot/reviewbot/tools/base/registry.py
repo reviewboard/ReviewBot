@@ -77,7 +77,7 @@ def get_tool_class(tool_id):
     """Return the tool class with a given ID.
 
     Args:
-        tool_id (unicode):
+        tool_id (str):
             The ID of the tool to return.
 
     Returns:

@@ -148,10 +148,10 @@ class PyflakesToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         it return the provided stdout and stderr results.
 
         Args:
-            stdout (list of unicode, optional):
+            stdout (list of str, optional):
                 The outputted stdout.
 
-            stderr (list of unicode, optional):
+            stderr (list of str, optional):
                 The outputted stderr.
         """
         self.spy_on(execute, op=kgb.SpyOpReturn((stdout, stderr)))

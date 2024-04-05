@@ -575,7 +575,7 @@ class ClangToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
             plist_data (dict, optional):
                 The simulated plist data, if simulating a successful run.
 
-            output (unicode, optional):
+            output (str, optional):
                 The resulting compiler output, if simulating a compiler error.
         """
         @self.spy_for(execute)

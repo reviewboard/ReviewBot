@@ -325,7 +325,7 @@ class CPPCheckToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         it return the provided stdout and stderr results.
 
         Args:
-            output (unicode):
+            output (str):
                 The outputted results from cppcheck.
         """
         self.spy_on(execute, op=kgb.SpyOpReturn(output))

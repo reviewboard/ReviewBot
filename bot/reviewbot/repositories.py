@@ -25,14 +25,14 @@ class BaseRepository(object):
     """A repository.
 
     Attributes:
-        clone_path (unicode):
+        clone_path (str):
             The clone path of the repository. This may be the ``path`` or
             ``mirror_path`` of the repository in the API.
 
-        name (unicode):
+        name (str):
             The name of the repository.
 
-        repo_path (unicode):
+        repo_path (str):
             The local path where the clone/checkout is or will be stored.
     """
 
@@ -42,7 +42,7 @@ class BaseRepository(object):
     #:     3.0
     #:
     #: Type:
-    #:     tuple of unicode
+    #:     tuple of str
     repo_types = None
 
     #: The Review Board tool name that this supports.
@@ -51,20 +51,20 @@ class BaseRepository(object):
     #:     3.0
     #:
     #: Type:
-    #:     unicode
+    #:     str
     tool_name = None
 
     def __init__(self, name, clone_path):
         """Initialize the repository.
 
         Args:
-            name (unicode):
+            name (str):
                 The name of the repository.
 
-            clone_path (unicode):
+            clone_path (str):
                 The clone path of the repository.
 
-            repo_path (unicode):
+            repo_path (str):
         """
         self.name = name
         self.clone_path = clone_path
@@ -80,11 +80,11 @@ class BaseRepository(object):
         """Check out the given commit.
 
         Args:
-            commit_id (unicode):
+            commit_id (str):
                 The ID of the commit to check out.
 
         Returns:
-            unicode:
+            str:
             The name of a directory with the given checkout.
         """
         raise NotImplementedError
@@ -112,7 +112,7 @@ class BaseRepository(object):
             3.0
 
         Returns:
-            unicode:
+            str:
             A string representation.
         """
         return '<%s(name=%r, clone_path=%r, repo_path=%r)>' % (
@@ -144,11 +144,11 @@ class GitRepository(BaseRepository):
         """Check out the given commit.
 
         Args:
-            commit_id (unicode):
+            commit_id (str):
                 The ID of the commit to check out.
 
         Returns:
-            unicode:
+            str:
             The name of a directory with the given checkout.
         """
         workdir = make_tempdir()
@@ -197,11 +197,11 @@ class HgRepository(BaseRepository):
         """Check out the given commit.
 
         Args:
-            commit_id (unicode):
+            commit_id (str):
                 The ID of the commit to check out.
 
         Returns:
-            unicode:
+            str:
             The name of a directory with the given checkout.
         """
         workdir = make_tempdir()
@@ -218,13 +218,13 @@ def fetch_repositories(url, user=None, token=None):
     """Fetch repositories from Review Board.
 
     Args:
-        url (unicode):
+        url (str):
             The configured url for the connection.
 
-        user (unicode):
+        user (str):
             The configured user for the connection.
 
-        token (unicode):
+        token (str):
             The configured API token for the user.
     """
     logger.info('Fetching repositories from Review Board: %s', url)

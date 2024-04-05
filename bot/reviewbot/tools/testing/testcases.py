@@ -92,7 +92,7 @@ class ToolTestCaseMetaclass(type):
             func_name (str):
                 The original name of the function.
 
-            tag (unicode):
+            tag (str):
                 The tag to add.
 
         Returns:
@@ -200,7 +200,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
     #: This is required.
     #:
     #: Type:
-    #:     unicode
+    #:     str
     tool_exe_config_key = None
 
     #: The path to the executable for running the tool.
@@ -210,7 +210,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
     #: test/test suite setup.
     #:
     #: Type:
-    #:     unicode
+    #:     str
     tool_exe_path = None
 
     #: Extra executables needed to run the tool.
@@ -238,7 +238,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             Added the ``file_contents_encoding`` argument.
 
         Args:
-            filename (unicode):
+            filename (str):
                 The filename of the file being reviewed.
 
             file_contents (bytes, optional):
@@ -247,7 +247,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             tool_settings (dict, optional):
                 The settings to pass to the tool constructor.
 
-            file_contents_encoding (unicode, optional):
+            file_contents_encoding (str, optional):
                 The encoding used for the provided file contents (both in
                 ``file_contents`` and ``other_contents``).
 
@@ -297,13 +297,13 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             Added the ``file_contents_encoding`` argument.
 
         Args:
-            filename (unicode):
+            filename (str):
                 The filename of the file being reviewed.
 
             file_contents (bytes):
                 File content to review.
 
-            checkout_dir (unicode, optional):
+            checkout_dir (str, optional):
                 An explicit directory to use as the checkout directory, for
                 tools that require full-repository checkouts.
 
@@ -317,7 +317,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
                 The dictionary is a map of file paths (relative to the
                 checkout directory) to byte strings.
 
-            file_contents_encoding (unicode, optional):
+            file_contents_encoding (str, optional):
                 The encoding used for the provided file contents (both in
                 ``file_contents`` and ``other_contents``).
 

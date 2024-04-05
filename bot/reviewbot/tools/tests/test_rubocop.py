@@ -534,7 +534,7 @@ class RubocopToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         it return the provided payload (serializing to JSON if a dictionary).
 
         Args:
-            output_payload (dict or unicode):
+            output_payload (dict or str):
                 The payload to return.
         """
         if isinstance(output_payload, dict):

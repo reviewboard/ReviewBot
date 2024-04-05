@@ -46,13 +46,13 @@ class FilePatternsFromSettingMixin(object):
     #: The name of a tool setting for a comma-separated list of extensions.
     #:
     #: Type:
-    #:     unicode
+    #:     str
     file_extensions_setting = None
 
     #: The name of a tool setting for a comma-separated list of patterns.
     #:
     #: Type:
-    #:     unicode
+    #:     str
     file_patterns_setting = None
 
     #: Whether to include default file patterns in the resulting list.
@@ -124,7 +124,7 @@ class FullRepositoryToolMixin(object):
             repository (reviewbot.repositories.Repository, optional):
                 The repository.
 
-            base_commit_id (unicode, optional):
+            base_commit_id (str, optional):
                 The ID of the commit that the patch should be applied to.
         """
         repository.sync()
@@ -150,13 +150,13 @@ class JavaToolMixin(object):
     #: Main class to call to run the Java application.
     #:
     #: Type:
-    #:     unicode
+    #:     str
     java_main = None
 
     #: The key identifying the classpaths to use.
     #:
     #: Type:
-    #:     unicode
+    #:     str
     java_classpaths_key = None
 
     exe_dependencies = ['java']
@@ -239,7 +239,7 @@ class JavaToolMixin(object):
                 Additional keyword arguments.
 
         Returns:
-            list of unicode:
+            list of str:
             The base command line.
         """
         return self._build_java_command(**kwargs)
@@ -251,7 +251,7 @@ class JavaToolMixin(object):
         :py:attr:`java_main`.
 
         Returns:
-            list of unicode:
+            list of str:
             The base command line for running the Java class.
         """
         classpath = ':'.join(
@@ -270,7 +270,7 @@ class JavaToolMixin(object):
         """Return whether all entries in a classpath exist.
 
         Args:
-            classpath (list of unicode):
+            classpath (list of str):
                 The classpath locations.
 
         Returns:

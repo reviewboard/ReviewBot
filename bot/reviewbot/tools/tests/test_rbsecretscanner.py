@@ -717,7 +717,7 @@ class SecretScannerToolTests(BaseToolTestCase,
         """Run an execution test with a given token.
 
         Args:
-            token (unicode):
+            token (str):
                 The token to test for.
 
             match (bool, optional):

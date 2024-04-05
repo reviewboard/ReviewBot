@@ -22,16 +22,16 @@ def get_api_root(url, username=None, api_token=None, session=None):
         3.0
 
     Args:
-        url (unicode):
+        url (str):
             The path to the Review Board server.
 
-        username (unicode, optional):
+        username (str, optional):
             The username used for authentication.
 
-        api_token (unicode, optional):
+        api_token (str, optional):
             The API token used for authentication.
 
-        session (unicode, optional):
+        session (str, optional):
             An existing Review Board session identifier.
 
     Returns:

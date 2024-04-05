@@ -41,13 +41,13 @@ def RunTool(server_url='',
     """Execute an automated review on a review request.
 
     Args:
-        server_url (unicode):
+        server_url (str):
             The URL of the Review Board server.
 
-        session (unicode):
+        session (str):
             The encoded session identifier.
 
-        username (unicode):
+        username (str):
             The name of the user who owns the ``session``.
 
         review_request_id (int):
@@ -66,11 +66,11 @@ def RunTool(server_url='',
         tool_options (dict):
             The tool-specific settings.
 
-        repository_name (unicode):
+        repository_name (str):
             The name of the repository to clone to run the tool, if the tool
             requires full working directory access.
 
-        base_commit_id (unicode):
+        base_commit_id (str):
             The ID of the commit that the patch should be applied to.
 
         *args (tuple):

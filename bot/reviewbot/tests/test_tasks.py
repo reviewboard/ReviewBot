@@ -420,7 +420,7 @@ class RunToolTests(BaseTaskTestCase):
         performed.
 
         Args:
-            routing_key (unicode):
+            routing_key (str):
                 The routing key to pass for the task.
 
             **kwargs (dict):

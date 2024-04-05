@@ -21,7 +21,7 @@ class SuspiciousFilePath(Exception):
         """Initialize the exception.
 
         Args:
-            path (unicode):
+            path (str):
                 The path that was suspicious.
         """
         self.path = path

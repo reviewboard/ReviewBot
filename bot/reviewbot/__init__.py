@@ -11,7 +11,7 @@ def get_version_string():
     """Return the version of Review Bot.
 
     Returns:
-        unicode:
+        str:
         The full version.
     """
     version = '%s.%s' % (VERSION[0], VERSION[1])
@@ -42,7 +42,7 @@ def get_package_version():
     This is a simplified version string which is used when building a package.
 
     Returns:
-        unicode:
+        str:
         The version to use for the package.
     """
     version = '%d.%d' % (VERSION[0], VERSION[1])
