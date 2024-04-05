@@ -4,7 +4,7 @@ Version Added:
     3.0
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 
 def add_comment_from_codeclimate_issue(issue_payload, review_file):

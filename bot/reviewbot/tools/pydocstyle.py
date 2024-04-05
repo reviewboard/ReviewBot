@@ -1,6 +1,6 @@
 """Review Bot tool to run pydocstyle."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import re
 

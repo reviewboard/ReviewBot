@@ -4,13 +4,13 @@ Version Added:
     3.0
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 import re
 
 from reviewbot.config import config
-from reviewbot.utils.filesystem import chdir, ensure_dirs_exist
+from reviewbot.utils.filesystem import chdir
 from reviewbot.utils.process import execute
 from reviewbot.utils.text import split_comma_separated
 

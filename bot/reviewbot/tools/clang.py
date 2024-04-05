@@ -1,16 +1,11 @@
 """Review Bot tool to run Clang."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
+import plistlib
 import shlex
-
-try:
-    # Python 3.x
-    from plistlib import load as plist_load
-except ImportError:
-    # Python 2.x
-    from plistlib import readPlist as plist_load
+from plistlib import load as plist_load
 
 from reviewbot.config import config
 from reviewbot.tools.base import BaseTool, FullRepositoryToolMixin

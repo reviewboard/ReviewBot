@@ -1,6 +1,6 @@
 """Utility functions for Process invocation and management."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 import subprocess

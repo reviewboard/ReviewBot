@@ -1,15 +1,9 @@
 """Unit tests for reviewbot.tools.clang."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
-
-try:
-    # Python 3.x
-    from plistlib import writePlist as dump_plist
-except ImportError:
-    # Python 2.7
-    from plistlib import dump as dump_plist
+import plistlib
 
 import six
 
@@ -593,7 +587,7 @@ class ClangToolTests(BaseToolTestCase):
 
             if plist_data:
                 with open(cmdline[-1], 'wb') as fp:
-                    dump_plist(plist_data, fp)
+                    plistlib.dump(plist_data, fp)
             else:
                 # clang will delete the output file if there's a compiler
                 # error.

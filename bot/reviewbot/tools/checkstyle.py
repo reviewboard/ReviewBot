@@ -1,11 +1,9 @@
 """Review Bot tool to run checkstyle."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
-import logging
 from xml.etree import ElementTree
 
-from reviewbot.config import config
 from reviewbot.tools.base import BaseTool, JavaToolMixin
 from reviewbot.utils.filesystem import make_tempfile
 from reviewbot.utils.process import execute

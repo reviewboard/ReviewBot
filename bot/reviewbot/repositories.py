@@ -1,6 +1,6 @@
 """Full access repository management."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 from uuid import uuid4

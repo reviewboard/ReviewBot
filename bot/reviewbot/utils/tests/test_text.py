@@ -1,6 +1,6 @@
 """Unit tests for reviewbot.utils.text."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 from reviewbot.testing import TestCase
 from reviewbot.utils.text import base62_encode, split_comma_separated

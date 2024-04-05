@@ -1,11 +1,10 @@
 """Configuration loading and validation."""
 
-from __future__ import print_function, unicode_literals
+from __future__ import annotations
 
 import json
 import os
 from copy import deepcopy
-from glob import glob
 
 import six
 from appdirs import AppDirs

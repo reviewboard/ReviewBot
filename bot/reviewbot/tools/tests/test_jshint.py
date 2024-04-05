@@ -1,6 +1,6 @@
 """Unit tests for reviewbot.tools.jshint."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
 import os

@@ -8,7 +8,7 @@ Version Added:
     3.0
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import warnings
 

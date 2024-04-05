@@ -4,7 +4,7 @@ Version Added:
     3.0
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 from celery.utils.log import (get_logger as _get_logger,
                               get_task_logger as _get_task_logger)

@@ -1,6 +1,6 @@
 """Unit tests for reviewbot.tasks."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import kgb
 from celery.worker.control import Panel

@@ -1,6 +1,6 @@
 """Utility functions for working with text."""
 
-from __future__ import division, unicode_literals
+from __future__ import annotations
 
 import re
 

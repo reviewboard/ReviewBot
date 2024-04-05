@@ -1,6 +1,6 @@
 """Celery and Review Bot worker setup and management."""
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import annotations
 
 import os
 import sys
@@ -11,16 +11,10 @@ from celery import (Celery,
                     __version__ as celery_version_str,
                     concurrency as celery_concurrency,
                     maybe_patch_concurrency)
+from celery.bin.worker import detach as detach_process
 from celery.platforms import maybe_drop_privileges
 from celery.signals import celeryd_after_setup, celeryd_init
 from kombu import Exchange, Queue
-
-try:
-    # Celery 5, Python 3+
-    from celery.bin.worker import detach as detach_process
-except ImportError:
-    # Celery 3, Python 2.7
-    from celery.bin.celeryd_detach import detach as detach_process
 
 from reviewbot import VERSION
 from reviewbot.config import config, get_config_file_path, load_config

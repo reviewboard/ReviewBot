@@ -1,4 +1,4 @@
-from __future__ import division, unicode_literals
+from __future__ import annotations
 
 import json
 import os

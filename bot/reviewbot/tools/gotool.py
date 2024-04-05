@@ -1,6 +1,6 @@
 """Review Bot tool to run Go Tools."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
 import os

@@ -1,4 +1,3 @@
-
 #: The version of Review Bot.
 #:
 #: This is in the format of:

@@ -4,10 +4,9 @@ Version Added:
     3.0
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
-import tempfile
 from copy import deepcopy
 from functools import wraps
 from unittest import SkipTest

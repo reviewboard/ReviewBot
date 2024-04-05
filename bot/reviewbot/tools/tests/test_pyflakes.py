@@ -1,6 +1,6 @@
 """Unit tests for reviewbot.tools.pyflakes."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import kgb
 import six

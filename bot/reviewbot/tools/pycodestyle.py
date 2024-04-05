@@ -1,6 +1,6 @@
 """Unit tests for reviewbot.tools.pycodestyle."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 from reviewbot.config import config
 from reviewbot.tools import BaseTool
