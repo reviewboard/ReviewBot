@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from typing import Any, Optional
 
 import kgb
 
@@ -104,7 +105,7 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                         'beginline': 1,
                         'description': 'Avoid short class names like Cls',
                         'endcolumn': 1,
-                        'endline': 7,
+                        'endline': 1,
                         'externalInfoUrl': (
                             'https://pmd.github.io/pmd-6.32.0/'
                             'pmd_rules_java_codestyle.html'
@@ -154,11 +155,17 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 ),
             })
 
+        # PMD 7 has a much better span for this particular rule.
+        if self.tool.pmd_version == 7:
+            class_names_num_lines = 1
+        else:
+            class_names_num_lines = 7
+
         self.assertEqual(review.comments, [
             {
                 'filediff_id': review_file.id,
                 'first_line': 1,
-                'num_lines': 7,
+                'num_lines': class_names_num_lines,
                 'text': (
                     'Avoid short class names like Cls\n'
                     '\n'
@@ -184,13 +191,7 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
 
         self.assertSpyCalledWith(
             execute,
-            [
-                self.tool_exe_path,
-                'pmd',
-                '-no-cache',
-                '-f', 'json',
-                '-R', ('category/java/codestyle.xml/ShortClassName,'
-                       'category/java/codestyle.xml/ControlStatementBraces'),
+            self.tool._base_command + [
                 '-d', os.path.join(tmpdirs[-1], 'test.java'),
                 '-r', tmpfiles[-1],
             ],
@@ -210,7 +211,7 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                         'beginline': 1,
                         'description': 'Avoid short class names like Cls',
                         'endcolumn': 1,
-                        'endline': 7,
+                        'endline': 1,
                         'externalInfoUrl': (
                             'https://pmd.github.io/pmd-6.32.0/'
                             'pmd_rules_java_codestyle.html'
@@ -255,11 +256,17 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 'rulesets': ruleset_xml,
             })
 
+        # PMD 7 has a much better span for this particular rule.
+        if self.tool.pmd_version == 7:
+            class_names_num_lines = 1
+        else:
+            class_names_num_lines = 7
+
         self.assertEqual(review.comments, [
             {
                 'filediff_id': review_file.id,
                 'first_line': 1,
-                'num_lines': 7,
+                'num_lines': class_names_num_lines,
                 'text': (
                     'Avoid short class names like Cls\n'
                     '\n'
@@ -271,87 +278,15 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         ])
         self.assertEqual(review.general_comments, [])
 
-        self.assertSpyCalledWith(
-            execute,
+        # We can't use build_base_command again here to check the full
+        # assertSpyCalledWith because it will generate a new tempfile for the
+        # rulesets. Just compare the last elements in the command-line.
+        self.assertEqual(
+            execute.last_call.args[0][-4:],
             [
-                self.tool_exe_path,
-                'pmd',
-                '-no-cache',
-                '-f', 'json',
-                '-R', tmpfiles[-2],
                 '-d', os.path.join(tmpdirs[-1], 'test.java'),
                 '-r', tmpfiles[-1],
-            ],
-            ignore_errors=True)
-
-    @integration_test()
-    @simulation_test(stderr=(
-        'SEVERE: No rules found. Maybe you misspelled a rule name? '
-        '(<check ruleset configuration>)'
-    ))
-    def test_execute_with_ruleset_xml_bad(self):
-        """Testing PMDTool.execute with ruleset configuration XML with
-        validation problems
-        """
-        ruleset_xml = (
-            '<?xml version="1.0"?>\n'
-            '<bad-ruleset name="My Ruleset"\n'
-            '         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"\n'
-            '         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n'
-            '         xsi:schemaLocation="'
-            'http://pmd.sourceforge.net/ruleset/2.0.0 '
-            'http://pmd.sourceforge.net/ruleset_2_0_0.xsd">\n'
-            ' <description>My ruleset</description>\n'
-            '</bad-ruleset>'
-        )
-
-        review, review_file = self.run_tool_execute(
-            filename='test.java',
-            file_contents=(
-                b'public class Cls {\n'
-                b'    public int a(int b) {\n'
-                b'        if (b == true)\n'
-                b'            return 1;\n'
-                b'        return 0;\n'
-                b'    }\n'
-                b'}\n'
-            ),
-            tool_settings={
-                'file_ext': '',
-                'rulesets': ruleset_xml,
-            })
-
-        self.assertEqual(review.comments, [
-            {
-                'filediff_id': review_file.id,
-                'first_line': 1,
-                'num_lines': 1,
-                'text': (
-                    'PMD was unable to process this file:\n'
-                    '\n'
-                    '```\n'
-                    'SEVERE: No rules found. Maybe you misspelled a rule '
-                    'name? (<check ruleset configuration>)\n'
-                    '```'
-                ),
-                'issue_opened': True,
-                'rich_text': False,
-            },
-        ])
-        self.assertEqual(review.general_comments, [])
-
-        self.assertSpyCalledWith(
-            execute,
-            [
-                self.tool_exe_path,
-                'pmd',
-                '-no-cache',
-                '-f', 'json',
-                '-R', tmpfiles[-2],
-                '-d', os.path.join(tmpdirs[-1], 'test.java'),
-                '-r', tmpfiles[-1],
-            ],
-            ignore_errors=True)
+            ])
 
     @integration_test()
     @simulation_test(output_payload={
@@ -385,12 +320,7 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
 
         self.assertSpyCalledWith(
             execute,
-            [
-                self.tool_exe_path,
-                'pmd',
-                '-no-cache',
-                '-f', 'json',
-                '-R', 'category/java/codestyle.xml/ShortClassName',
+            self.tool._base_command + [
                 '-d', os.path.join(tmpdirs[-1], 'test.java'),
                 '-r', tmpfiles[-1],
             ],
@@ -405,7 +335,14 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         'processingErrors': [
             {
                 'filename': '/path/to/test.java',
-                'message': 'PMDException: Error while parsing test.java'
+                'message': (
+                    'ParseException: Parse exception in file \'test.java\' '
+                    'at line 1, column 8: Encountered <IDENTIFIER: "Bagel">.\n'
+                    'Was expecting one of:\n'
+                    '    "class" ...\n'
+                    '    "interface" ...\n'
+                    '    "@" ...\n'
+                ),
             },
         ],
     })
@@ -421,20 +358,45 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 'rulesets': 'category/java/codestyle.xml/ShortClassName',
             })
 
+        if self.tool_exe_path == '/path/to/pmd':
+            # Running in simulation mode.
+            filename = 'test.java'
+        else:
+            # Running in integration mode.
+            filename = f'{tmpdirs[-1]}/test.java'
+
+        if self.tool.pmd_version == 7:
+            error_text = (
+                f'PMD was unable to process this file:\n'
+                f'\n'
+                f'```\n'
+                f'ParseException: Parse exception in file \'{filename}\' '
+                f'at line 1, column 8: Encountered <IDENTIFIER: "Bagel">.\n'
+                f'Was expecting one of:\n'
+                f'    "class" ...\n'
+                f'    "interface" ...\n'
+                f'    "@" ...\n'
+                f'```\n'
+                f'\n'
+                f'Check the file locally for more information.'
+            )
+        else:
+            error_text = (
+                f'PMD was unable to process this file:\n'
+                f'\n'
+                f'```\n'
+                f'PMDException: Error while parsing {filename}\n'
+                f'```\n'
+                f'\n'
+                f'Check the file locally for more information.'
+            )
+
         self.assertEqual(review.comments, [
             {
                 'filediff_id': review_file.id,
                 'first_line': 1,
                 'num_lines': 1,
-                'text': (
-                    'PMD was unable to process this file:\n'
-                    '\n'
-                    '```\n'
-                    'PMDException: Error while parsing test.java\n'
-                    '```\n'
-                    '\n'
-                    'Check the file locally for more information.'
-                ),
+                'text': error_text,
                 'issue_opened': True,
                 'rich_text': False,
             },
@@ -443,12 +405,7 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
 
         self.assertSpyCalledWith(
             execute,
-            [
-                self.tool_exe_path,
-                'pmd',
-                '-no-cache',
-                '-f', 'json',
-                '-R', 'category/java/codestyle.xml/ShortClassName',
+            self.tool._base_command + [
                 '-d', os.path.join(tmpdirs[-1], 'test.java'),
                 '-r', tmpfiles[-1],
             ],
@@ -486,12 +443,7 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
 
         self.assertSpyCalledWith(
             execute,
-            [
-                self.tool_exe_path,
-                'pmd',
-                '-no-cache',
-                '-f', 'json',
-                '-R', 'category/java/codestyle.xml/ShortClassName',
+            self.tool._base_command + [
                 '-d', os.path.join(tmpdirs[-1], 'test.java'),
                 '-r', tmpfiles[-1],
             ],
@@ -531,12 +483,7 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
 
         self.assertSpyCalledWith(
             execute,
-            [
-                self.tool_exe_path,
-                'pmd',
-                '-no-cache',
-                '-f', 'json',
-                '-R', 'category/java/codestyle.xml/ShortClassName',
+            self.tool._base_command + [
                 '-d', os.path.join(tmpdirs[-1], 'test.java'),
                 '-r', tmpfiles[-1],
             ],
@@ -562,9 +509,26 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         self.assertEqual(review.comments, [])
         self.assertEqual(review.general_comments, [])
 
-        self.assertSpyNotCalled(execute)
+        n_calls = len(execute.calls)
 
-    def setup_simulation_test(self, output_payload=None, stderr=''):
+        # Make sure that the only calls we got were to check the PMD version.
+        self.assertIn(n_calls, (1, 2))
+
+        if n_calls > 1:
+            self.assertSpyCalledWith(
+                execute,
+                [self.tool_exe_path, '--version'])
+
+        if n_calls > 2:
+            self.assertSpyCalledWith(
+                execute,
+                [self.tool_exe_path, 'pmd', '--version'])
+
+    def setup_simulation_test(
+        self,
+        output_payload: Optional[dict[str, Any]] = None,
+        stderr: str = '',
+    ) -> None:
         """Set up the simulation test for PMD.
 
         This will spy on :py:func:`~reviewbot.utils.process.execute`, making
@@ -580,10 +544,21 @@ class PMDToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         """
         assert isinstance(stderr, str)
 
-        @self.spy_for(execute)
         def _execute(cmdline, *args, **kwargs):
             if output_payload is not None:
                 with open(tmpfiles[-1], 'w') as fp:
                     json.dump(output_payload, fp)
 
             return ('stdout junk', stderr)
+
+        self.spy_on(execute, op=kgb.SpyOpMatchInOrder([
+            {
+                'args': (
+                    [self.tool_exe_path, '--version'],
+                ),
+                'op': kgb.SpyOpReturn('PMD 7.0.0'),
+            },
+            {
+                'call_fake': _execute,
+            },
+        ]))

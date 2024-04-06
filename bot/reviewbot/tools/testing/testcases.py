@@ -169,7 +169,6 @@ class ToolTestCaseMetaclass(type):
         """
         @wraps(func)
         def _wrapper(self, *args, **kwargs):
-            print('setup!')
             self.setup_simulation_test(**func.simulation_setup_kwargs)
 
             return func(self, *args, **kwargs)
@@ -402,9 +401,9 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             exe_paths.update(self.tool_extra_exe_paths)
 
         with self.override_config(worker_config):
-            tool = self.tool_class(settings=tool_settings)
-            tool.execute(review,
-                         repository=repository)
+            self.tool = self.tool_class(settings=tool_settings)
+            self.tool.execute(review,
+                              repository=repository)
 
         if other_files:
             return review, review_files
