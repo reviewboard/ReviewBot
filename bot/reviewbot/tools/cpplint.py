@@ -1,26 +1,6 @@
-# Copyright (c) 2012 Ericsson Television Ltd
-# Author D Laird
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-# IN THE SOFTWARE.
 """Review Bot tool to run cpplint."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import re
 
@@ -87,7 +67,7 @@ class CPPLintTool(BaseTool):
                 Additional keyword arguments.
 
         Returns:
-            list of unicode:
+            list of str:
             The base command line.
         """
         settings = self.settings
@@ -111,10 +91,10 @@ class CPPLintTool(BaseTool):
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            path (unicode):
+            path (str):
                 The local path to the patched file to review.
 
-            base_command (list of unicode):
+            base_command (list of str):
                 The base command used to run pyflakes.
 
             **kwargs (dict, unused):

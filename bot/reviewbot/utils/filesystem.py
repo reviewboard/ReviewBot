@@ -1,6 +1,6 @@
 """Utilities for filesystem operations and path normalization."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import ntpath
 import os
@@ -59,7 +59,7 @@ def chdir(path):
     """Temporarily change directory into the given working directory.
 
     Args:
-        path (unicode):
+        path (str):
             The directory to operate within.
     """
     cwd = os.getcwd()
@@ -104,11 +104,11 @@ def make_tempfile(content=None, extension=''):
         content (bytes, optional):
             Optional content to put in the file.
 
-        extension (unicode, optional):
+        extension (str, optional):
             An optional file extension to add to the end of the filename.
 
     Returns:
-        unicode:
+        str:
         The name of the new file.
     """
     global tmpfiles
@@ -126,7 +126,7 @@ def make_tempdir():
     """Create a temporary directory and return the path.
 
     Returns:
-        unicode:
+        str:
         The name of the new directory.
     """
     global tmpdirs
@@ -140,7 +140,7 @@ def ensure_dirs_exist(path):
     """Ensure directories exist to an absolute path.
 
     Args:
-        path (unicode):
+        path (str):
             The absolute path for which directories should be created if they
             don't exist.
 
@@ -169,7 +169,7 @@ def get_path_platform(path):
         3.0
 
     Args:
-        path (unicode):
+        path (str):
             The Windows or POSIX path.
 
     Returns:
@@ -221,10 +221,10 @@ def normalize_platform_path(path, relative_to=None,
         3.0
 
     Args:
-        path (unicode):
+        path (str):
             The path to normalize.
 
-        relative_to (unicode, optional):
+        relative_to (str, optional):
             An optional directory that the normalized path should be joined
             to.
 
@@ -233,7 +233,7 @@ def normalize_platform_path(path, relative_to=None,
             for unit testing purposes.
 
     Returns:
-        unicode:
+        str:
         The resulting normalized path.
 
     Raises:

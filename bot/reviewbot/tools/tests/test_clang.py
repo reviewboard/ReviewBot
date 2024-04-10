@@ -1,17 +1,9 @@
 """Unit tests for reviewbot.tools.clang."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
-
-try:
-    # Python 3.x
-    from plistlib import writePlist as dump_plist
-except ImportError:
-    # Python 2.7
-    from plistlib import dump as dump_plist
-
-import six
+import plistlib
 
 from reviewbot.tools.clang import ClangTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -22,8 +14,7 @@ from reviewbot.utils.filesystem import tmpfiles
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class ClangToolTests(BaseToolTestCase):
+class ClangToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.clang.ClangTool."""
 
     tool_class = ClangTool
@@ -584,7 +575,7 @@ class ClangToolTests(BaseToolTestCase):
             plist_data (dict, optional):
                 The simulated plist data, if simulating a successful run.
 
-            output (unicode, optional):
+            output (str, optional):
                 The resulting compiler output, if simulating a compiler error.
         """
         @self.spy_for(execute)
@@ -593,7 +584,7 @@ class ClangToolTests(BaseToolTestCase):
 
             if plist_data:
                 with open(cmdline[-1], 'wb') as fp:
-                    dump_plist(plist_data, fp)
+                    plistlib.dump(plist_data, fp)
             else:
                 # clang will delete the output file if there's a compiler
                 # error.

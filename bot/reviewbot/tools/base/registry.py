@@ -6,11 +6,9 @@ Version Added:
     3.0
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import pkg_resources
-
-import six
 
 from reviewbot.utils.log import get_logger
 
@@ -79,7 +77,7 @@ def get_tool_class(tool_id):
     """Return the tool class with a given ID.
 
     Args:
-        tool_id (unicode):
+        tool_id (str):
             The ID of the tool to return.
 
     Returns:
@@ -99,7 +97,7 @@ def get_tool_classes():
         A list of tool classes (subclasses of
         :py:class:`reviewbot.tools.base.tool.BaseTool`).
     """
-    return sorted(six.itervalues(_registered_tools),
+    return sorted(_registered_tools.values(),
                   key=lambda tool_cls: tool_cls.tool_id)
 
 

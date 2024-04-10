@@ -8,7 +8,7 @@ Version Added:
     3.0
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import warnings
 
@@ -30,7 +30,7 @@ class BaseRemovedInReviewBotVersionWarning(DeprecationWarning):
         a useful message and a custom stack level.
 
         Args:
-            message (unicode):
+            message (str):
                 The message to show in the deprecation warning.
 
             stacklevel (int, optional):

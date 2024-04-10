@@ -1,6 +1,6 @@
 """Unit tests for reviewbot.config."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
 import os
@@ -699,11 +699,11 @@ class ConfigTests(kgb.SpyAgency, TestCase):
         default-loaded configuration file.
 
         Args:
-            config_contents (unicode):
+            config_contents (str):
                 The configuration file contents.
 
         Returns:
-            unicode:
+            str:
             The path to the configuration file.
         """
         tempdir = tempfile.mkdtemp()

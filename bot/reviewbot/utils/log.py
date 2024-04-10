@@ -4,7 +4,7 @@ Version Added:
     3.0
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 from celery.utils.log import (get_logger as _get_logger,
                               get_task_logger as _get_task_logger)
@@ -25,7 +25,7 @@ def get_logger(name, is_task_logger=True):
         3.0
 
     Args:
-        name (unicode):
+        name (str):
             The name shown in the log line. This is expected to be a module
             name.
 

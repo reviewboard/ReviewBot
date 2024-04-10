@@ -1,6 +1,6 @@
 """Unit tests for reviewbot.tools.pycodestyle."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 from reviewbot.config import config
 from reviewbot.tools import BaseTool
@@ -56,7 +56,7 @@ class PycodestyleTool(BaseTool):
                 Additional keyword arguments.
 
         Returns:
-            list of unicode:
+            list of str:
             The base command line.
         """
         settings = self.settings
@@ -80,10 +80,10 @@ class PycodestyleTool(BaseTool):
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            path (unicode):
+            path (str):
                 The local path to the patched file to review.
 
-            base_command (list of unicode):
+            base_command (list of str):
                 The base command used to run pycodestyle.
 
             **kwargs (dict, unused):

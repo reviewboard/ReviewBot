@@ -1,6 +1,6 @@
 """Unit tests for reviewbot.tools.BaseTool."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 import shutil
@@ -192,14 +192,14 @@ class BaseToolTests(kgb.SpyAgency, TestCase):
         """Set up an environment for dependency checks.
 
         Args:
-            filenames (list of unicode, optional):
+            filenames (list of str, optional):
                 A list of executable filenames to write to the tmep directory.
 
             set_path (bool, optional):
                 Whether to set the :envvar:`PATH` environment variable.
 
         Context:
-            unicode:
+            str:
             The generated temp directory.
         """
         tempdir = tempfile.mkdtemp()

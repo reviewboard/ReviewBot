@@ -4,7 +4,7 @@ Version Added:
     3.0
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 
@@ -21,11 +21,11 @@ def get_test_dep_path(filename):
         3.0
 
     Args:
-        filename (unicode):
+        filename (str):
             The name of the file relative to the directory.
 
     Returns:
-        unicode:
+        str:
         The path to the dependency file.
     """
     return os.path.abspath(os.path.join(reviewbot.__file__, '..', '..',

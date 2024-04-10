@@ -4,16 +4,14 @@ Version Added:
     3.0
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
-import tempfile
 from copy import deepcopy
 from functools import wraps
 from unittest import SkipTest
 
 import kgb
-import six
 
 from reviewbot.config import config
 from reviewbot.repositories import GitRepository
@@ -62,7 +60,7 @@ class ToolTestCaseMetaclass(type):
                '%s must set tool_exe_config_key' % name
             assert d.get('tool_exe_path'), '%s must set tool_exe_path' % name
 
-        for func_name, func in six.iteritems(d.copy()):
+        for func_name, func in d.copy().items():
             if callable(func):
                 added = False
 
@@ -94,7 +92,7 @@ class ToolTestCaseMetaclass(type):
             func_name (str):
                 The original name of the function.
 
-            tag (unicode):
+            tag (str):
                 The tag to add.
 
         Returns:
@@ -171,7 +169,6 @@ class ToolTestCaseMetaclass(type):
         """
         @wraps(func)
         def _wrapper(self, *args, **kwargs):
-            print('setup!')
             self.setup_simulation_test(**func.simulation_setup_kwargs)
 
             return func(self, *args, **kwargs)
@@ -202,7 +199,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
     #: This is required.
     #:
     #: Type:
-    #:     unicode
+    #:     str
     tool_exe_config_key = None
 
     #: The path to the executable for running the tool.
@@ -212,7 +209,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
     #: test/test suite setup.
     #:
     #: Type:
-    #:     unicode
+    #:     str
     tool_exe_path = None
 
     #: Extra executables needed to run the tool.
@@ -240,7 +237,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             Added the ``file_contents_encoding`` argument.
 
         Args:
-            filename (unicode):
+            filename (str):
                 The filename of the file being reviewed.
 
             file_contents (bytes, optional):
@@ -249,7 +246,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             tool_settings (dict, optional):
                 The settings to pass to the tool constructor.
 
-            file_contents_encoding (unicode, optional):
+            file_contents_encoding (str, optional):
                 The encoding used for the provided file contents (both in
                 ``file_contents`` and ``other_contents``).
 
@@ -299,13 +296,13 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             Added the ``file_contents_encoding`` argument.
 
         Args:
-            filename (unicode):
+            filename (str):
                 The filename of the file being reviewed.
 
             file_contents (bytes):
                 File content to review.
 
-            checkout_dir (unicode, optional):
+            checkout_dir (str, optional):
                 An explicit directory to use as the checkout directory, for
                 tools that require full-repository checkouts.
 
@@ -319,7 +316,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
                 The dictionary is a map of file paths (relative to the
                 checkout directory) to byte strings.
 
-            file_contents_encoding (unicode, optional):
+            file_contents_encoding (str, optional):
                 The encoding used for the provided file contents (both in
                 ``file_contents`` and ``other_contents``).
 
@@ -376,7 +373,7 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
         if other_files:
             review_files[filename] = review_file
 
-            for other_filename, other_contents in six.iteritems(other_files):
+            for other_filename, other_contents in other_files.items():
                 assert isinstance(other_contents, bytes)
 
                 review_files[other_filename] = self.create_review_file(
@@ -404,9 +401,9 @@ class BaseToolTestCase(kgb.SpyAgency, TestCase):
             exe_paths.update(self.tool_extra_exe_paths)
 
         with self.override_config(worker_config):
-            tool = self.tool_class(settings=tool_settings)
-            tool.execute(review,
-                         repository=repository)
+            self.tool = self.tool_class(settings=tool_settings)
+            self.tool.execute(review,
+                              repository=repository)
 
         if other_files:
             return review, review_files

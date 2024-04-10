@@ -1,6 +1,6 @@
 """Review Bot tool to run FBInfer."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
 import os
@@ -108,7 +108,7 @@ class FBInferTool(FullRepositoryToolMixin, BaseTool):
                 Additional keyword arguments.
 
         Returns:
-            list of unicode:
+            list of str:
             The base command line.
         """
         settings = self.settings
@@ -158,7 +158,7 @@ class FBInferTool(FullRepositoryToolMixin, BaseTool):
             review (reviewbot.processing.review.Review):
                 The review being populated.
 
-            base_command (list of unicode):
+            base_command (list of str):
                 The base command used to run infer.
 
             **kwargs (dict):
@@ -255,13 +255,13 @@ class FBInferTool(FullRepositoryToolMixin, BaseTool):
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            path (unicode):
+            path (str):
                 The local path to the patched file to review.
 
             review (reviewbot.processing.review.Review):
                 The review being populated.
 
-            base_command (list of unicode):
+            base_command (list of str):
                 The base command used to run infer.
 
             report (list of dict):
@@ -295,7 +295,7 @@ class FBInferTool(FullRepositoryToolMixin, BaseTool):
         results that pertain to the provided list of paths.
 
         Args:
-            paths (list of unicode):
+            paths (list of str):
                 The list of absolute paths to files used to filter down
                 the report.
 

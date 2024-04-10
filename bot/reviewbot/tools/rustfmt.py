@@ -1,6 +1,6 @@
 """Review Bot tool to run rustfmt."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import re
 
@@ -33,7 +33,7 @@ class RustfmtTool(BaseTool):
                 Additional keyword arguments.
 
         Returns:
-            list of unicode:
+            list of str:
             The base command line.
         """
         return [
@@ -50,10 +50,10 @@ class RustfmtTool(BaseTool):
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            path (unicode):
+            path (str):
                 The local path to the patched file to review.
 
-            base_command (list of unicode):
+            base_command (list of str):
                 The base command used to run rustfmt.
 
             **kwargs (dict, unused):

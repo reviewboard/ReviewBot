@@ -1,8 +1,6 @@
 """Unit tests for reviewbot.tools.base.mixins.JavaToolMixin."""
 
-from __future__ import unicode_literals
-
-import os
+from __future__ import annotations
 
 import kgb
 

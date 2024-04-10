@@ -1,9 +1,11 @@
 """Review Bot tool to run PMD."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
 import os
+import re
+from typing import Optional, cast
 
 from reviewbot.config import config
 from reviewbot.tools.base import (BaseTool,
@@ -44,7 +46,7 @@ class PMDTool(JavaToolMixin, FilePatternsFromSettingMixin, BaseTool):
                     'cols': 80,
                     'rows': 10,
                 },
-            }
+            },
         },
         {
             'name': 'file_ext',
@@ -61,6 +63,54 @@ class PMDTool(JavaToolMixin, FilePatternsFromSettingMixin, BaseTool):
         },
     ]
 
+    ######################
+    # Instance variables #
+    ######################
+
+    #: The saved base command. This is used for unit testing.
+    _base_command: list[str]
+
+    #: The PMD major version (6 or 7)
+    _pmd_version: Optional[int] = None
+
+    @property
+    def pmd_version(self) -> int:
+        """The version of PMD installed.
+
+        Type:
+            int
+
+        Raises:
+            Exception:
+            The version could not be found.
+        """
+        if self._pmd_version is not None:
+            return self._pmd_version
+
+        pmd_path = cast(str, config['exe_paths']['pmd'])
+
+        # First try the PMD 7 format.
+        output = cast(str, execute(
+            [pmd_path, '--version'],
+            ignore_errors=True,
+            return_errors=False))
+
+        if re.search(r'^PMD 7\.', output, re.MULTILINE):
+            self._pmd_version = 7
+            return self._pmd_version
+
+        # Now try PMD 6.
+        output = cast(str, execute(
+            [pmd_path, 'pmd', '--version'],
+            ignore_errors=True,
+            return_errors=False))
+
+        if re.search(r'^PMD 6\.', output, re.MULTILINE):
+            self._pmd_version = 6
+            return self._pmd_version
+
+        raise Exception('Unable to determine PMD version.')
+
     def build_base_command(self, **kwargs):
         """Build the base command line used to review files.
 
@@ -73,7 +123,7 @@ class PMDTool(JavaToolMixin, FilePatternsFromSettingMixin, BaseTool):
                 Additional keyword arguments.
 
         Returns:
-            list of unicode:
+            list of str:
             The base command line.
         """
         rulesets = self.settings['rulesets']
@@ -81,13 +131,29 @@ class PMDTool(JavaToolMixin, FilePatternsFromSettingMixin, BaseTool):
         if rulesets.startswith('<?xml'):
             rulesets = make_tempfile(rulesets.encode('utf-8'))
 
-        return [
-            config['exe_paths']['pmd'],
-            'pmd',
-            '-no-cache',
-            '-f', 'json',
-            '-R', rulesets,
-        ]
+        pmd_version = self.pmd_version
+
+        # Set the base command based on the detected version of PMD. We store
+        # it in a variable so unit tests can verify execute() calls.
+        if pmd_version == 6:
+            self._base_command = [
+                config['exe_paths']['pmd'],
+                'pmd',
+                '--no-cache',
+                '-f', 'json',
+                '-R', rulesets,
+            ]
+        elif pmd_version == 7:
+            self._base_command = [
+                config['exe_paths']['pmd'],
+                'check',
+                '-f', 'json',
+                '-R', rulesets,
+            ]
+        else:
+            raise Exception('Unable to determine PMD version.')
+
+        return self._base_command
 
     def handle_file(self, f, path, base_command, **kwargs):
         """Perform a review of a single file.
@@ -96,10 +162,10 @@ class PMDTool(JavaToolMixin, FilePatternsFromSettingMixin, BaseTool):
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            path (unicode):
+            path (str):
                 The local path to the patched file to review.
 
-            base_command (list of unicode, optional):
+            base_command (list of str, optional):
                 The common base command line used for reviewing a file.
 
             **kwargs (dict, unused):

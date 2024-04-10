@@ -1,11 +1,10 @@
 """Unit tests for reviewbot.tools.pycodestyle."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 
 import kgb
-import six
 
 from reviewbot.tools.pycodestyle import PycodestyleTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -16,8 +15,8 @@ from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class BasePycodestyleToolTests(BaseToolTestCase):
+class BasePycodestyleToolTests(BaseToolTestCase,
+                               metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.pycodestyle.PycodestyleTool."""
 
     tool_class = PycodestyleTool

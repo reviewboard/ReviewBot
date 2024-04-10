@@ -1,12 +1,10 @@
 """Unit tests for reviewbot.tools.gotool."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 import shutil
 import tempfile
-
-import six
 
 from reviewbot.tools.gotool import GoTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -16,8 +14,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class GoToolTests(BaseToolTestCase):
+class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.gotool.GoTool."""
 
     tool_class = GoTool
@@ -577,10 +574,10 @@ class GoToolTests(BaseToolTestCase):
         it return the provided output.
 
         Args:
-            test_output (list of unicode, optional):
+            test_output (list of str, optional):
                 The outputted content from :command:`go test`.
 
-            vet_output (unicode, optional):
+            vet_output (str, optional):
                 The outputted content from :command:`go vet`.
         """
         @self.spy_for(execute)

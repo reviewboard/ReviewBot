@@ -4,7 +4,7 @@ Version Added:
     3.0
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 from reviewbot.errors import SuspiciousFilePath
 from reviewbot.testing import TestCase
@@ -242,19 +242,19 @@ class NormalizePlatformPath(TestCase):
         Linux, with or without relative paths.
 
         Args:
-            path (unicode):
+            path (str):
                 The path to normalize.
 
-            expected_posix_path (unicode):
+            expected_posix_path (str):
                 The expected resulting POSIX path.
 
-            expected_windows_path (unicode):
+            expected_windows_path (str):
                 The expected resulting Windows path.
 
-            relative_to_posix (unicode, optional):
+            relative_to_posix (str, optional):
                 An optional path to prepend to the normalized POSIX path.
 
-            relative_to_windows (unicode, optional):
+            relative_to_windows (str, optional):
                 An optional path to prepend to the normalized Windows path.
 
         Raises:

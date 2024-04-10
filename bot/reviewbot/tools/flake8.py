@@ -1,10 +1,8 @@
 """Review Bot tool to run flake8."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
-
-import six
 
 from reviewbot.config import config
 from reviewbot.tools.base import BaseTool
@@ -62,7 +60,7 @@ class Flake8Tool(BaseTool):
                 Additional keyword arguments.
 
         Returns:
-            list of unicode:
+            list of str:
             The base command line.
         """
         settings = self.settings
@@ -87,10 +85,10 @@ class Flake8Tool(BaseTool):
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            path (unicode):
+            path (str):
                 The local path to the patched file to review.
 
-            base_command (list of unicode):
+            base_command (list of str):
                 The base command used to run flake8.
 
             **kwargs (dict, unused):
@@ -106,7 +104,7 @@ class Flake8Tool(BaseTool):
             return
 
         assert len(payload) == 1
-        issues = next(six.itervalues(payload))
+        issues = next(iter(payload.values()))
 
         for issue in issues:
             add_comment_from_codeclimate_issue(issue_payload=issue,

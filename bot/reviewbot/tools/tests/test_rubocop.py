@@ -1,13 +1,12 @@
 """Unit tests for reviewbot.tools.rubocop."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
 import os
 import re
 
 import kgb
-import six
 
 from reviewbot.tools.rubocop import RubocopTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -18,8 +17,7 @@ from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class RubocopToolTests(BaseToolTestCase):
+class RubocopToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.rubocop.RubocopTool."""
 
     tool_class = RubocopTool
@@ -536,7 +534,7 @@ class RubocopToolTests(BaseToolTestCase):
         it return the provided payload (serializing to JSON if a dictionary).
 
         Args:
-            output_payload (dict or unicode):
+            output_payload (dict or str):
                 The payload to return.
         """
         if isinstance(output_payload, dict):

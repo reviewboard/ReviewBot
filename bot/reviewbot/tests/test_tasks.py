@@ -1,6 +1,6 @@
 """Unit tests for reviewbot.tasks."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import kgb
 from celery.worker.control import Panel
@@ -420,7 +420,7 @@ class RunToolTests(BaseTaskTestCase):
         performed.
 
         Args:
-            routing_key (unicode):
+            routing_key (str):
                 The routing key to pass for the task.
 
             **kwargs (dict):

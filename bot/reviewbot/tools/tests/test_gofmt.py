@@ -1,11 +1,10 @@
 """Unit tests for reviewbot.tools.gofmt."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 
 import kgb
-import six
 
 from reviewbot.tools.gofmt import GofmtTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -16,8 +15,7 @@ from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class GofmtToolTests(BaseToolTestCase):
+class GofmtToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.gofmt.GofmtTool."""
 
     tool_class = GofmtTool
@@ -133,10 +131,10 @@ class GofmtToolTests(BaseToolTestCase):
         it return the provided stdout and stderr results.
 
         Args:
-            stdout (unicode, optional):
+            stdout (str, optional):
                 The outputted stdout.
 
-            stderr (unicode, optional):
+            stderr (str, optional):
                 The outputted stderr.
         """
         self.spy_on(execute, op=kgb.SpyOpReturn((stdout, stderr)))

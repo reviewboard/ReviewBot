@@ -1,6 +1,6 @@
 """Base support for code checking tools."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 from reviewbot.deprecation import RemovedInReviewBot40Warning
 from reviewbot.tools.base import BaseTool, FullRepositoryToolMixin

@@ -1,13 +1,11 @@
 """Unit tests for reviewbot.tools.fbinfer."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
 import os
 import tempfile
 from unittest import SkipTest
-
-import six
 
 from reviewbot.config import config
 from reviewbot.tools.fbinfer import FBInferTool
@@ -18,8 +16,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
 from reviewbot.utils.process import execute, is_exe_in_path
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class FBInferToolTests(BaseToolTestCase):
+class FBInferToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.fbinfer.FBInferTool."""
 
     tool_class = FBInferTool
@@ -386,7 +383,7 @@ class FBInferToolTests(BaseToolTestCase):
         """Set up an integration test.
 
         Args:
-            exe_deps (list of unicode):
+            exe_deps (list of str):
                 Dependencies required by this test.
 
             **kwargs (dict):
@@ -416,7 +413,7 @@ class FBInferToolTests(BaseToolTestCase):
             full_report (list, optional):
                 A full report file contents to write.
 
-            output (unicode, optional):
+            output (str, optional):
                 Output to return when executing a command.
         """
         if full_report is not None:

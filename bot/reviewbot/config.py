@@ -1,13 +1,11 @@
 """Configuration loading and validation."""
 
-from __future__ import print_function, unicode_literals
+from __future__ import annotations
 
 import json
 import os
 from copy import deepcopy
-from glob import glob
 
-import six
 from appdirs import AppDirs
 
 from reviewbot.utils.log import get_root_logger
@@ -56,7 +54,7 @@ def _load_json_config_items(path):
         3.0
 
     Args:
-        path (unicode):
+        path (str):
             The path to the file.
 
     Returns:
@@ -87,7 +85,7 @@ def get_config_file_path():
         3.0
 
     Returns:
-        unicode:
+        str:
         The configuration file path.
     """
     return os.environ.get(
@@ -129,7 +127,7 @@ def load_config():
                 config_module = {}
                 exec(compile(f.read(), config_file, 'exec'), config_module)
 
-            for key in six.iterkeys(DEFAULT_CONFIG):
+            for key in DEFAULT_CONFIG.keys():
                 if key in config_module:
                     new_config[key] = deepcopy(config_module[key])
 

@@ -1,6 +1,6 @@
 """Utility functions for Process invocation and management."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 import subprocess
@@ -24,7 +24,7 @@ def execute(command,
     """Execute a command and return the output.
 
     Args:
-        command (list of unicode):
+        command (list of str):
             The command to run.
 
         env (dict, optional):
@@ -144,7 +144,7 @@ def is_exe_in_path(name, cache={}):
         Added the ``cache`` parameter.
 
     Args:
-        name (unicode):
+        name (str):
             The name of the executable, without any platform-specific
             executable extension. The extension will be appended if necessary.
 

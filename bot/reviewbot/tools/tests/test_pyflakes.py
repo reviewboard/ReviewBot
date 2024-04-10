@@ -1,9 +1,8 @@
 """Unit tests for reviewbot.tools.pyflakes."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import kgb
-import six
 
 from reviewbot.tools.pyflakes import PyflakesTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -13,8 +12,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class PyflakesToolTests(BaseToolTestCase):
+class PyflakesToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.pyflakes.PyflakesTool."""
 
     tool_class = PyflakesTool
@@ -150,10 +148,10 @@ class PyflakesToolTests(BaseToolTestCase):
         it return the provided stdout and stderr results.
 
         Args:
-            stdout (list of unicode, optional):
+            stdout (list of str, optional):
                 The outputted stdout.
 
-            stderr (list of unicode, optional):
+            stderr (list of str, optional):
                 The outputted stderr.
         """
         self.spy_on(execute, op=kgb.SpyOpReturn((stdout, stderr)))

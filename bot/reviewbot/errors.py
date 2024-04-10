@@ -4,7 +4,7 @@ Version Added:
     3.0
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 
 class SuspiciousFilePath(Exception):
@@ -21,7 +21,7 @@ class SuspiciousFilePath(Exception):
         """Initialize the exception.
 
         Args:
-            path (unicode):
+            path (str):
                 The path that was suspicious.
         """
         self.path = path

@@ -1,13 +1,11 @@
 """Review Bot tool to run Go Tools."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
 import os
 import re
 from collections import OrderedDict
-
-import six
 
 from reviewbot.config import config
 from reviewbot.tools.base import BaseTool, FullRepositoryToolMixin
@@ -117,10 +115,10 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            path (unicode):
+            path (str):
                 The local path to the patched file to review.
 
-            packages (set of unicode):
+            packages (set of str):
                 A set of all package names. This function will add the file's
                 package to this set.
 
@@ -138,7 +136,7 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
         """Execute 'go test' on a given package
 
         Args:
-            package (unicode):
+            package (str):
                 Name of the go package.
 
             review (reviewbot.processing.review.Review):
@@ -187,7 +185,7 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
                         test_result['failed'] = True
 
         if test_results:
-            for test_name, test_result in six.iteritems(test_results):
+            for test_name, test_result in test_results.items():
                 if test_result['failed']:
                     review.general_comment(
                         '%s failed in the %s package:\n'
@@ -209,7 +207,7 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
         """Execute 'go vet' on a given package
 
         Args:
-            package (unicode):
+            package (str):
                 Name of the go package.
 
             patched_files_map (dict):

@@ -1,6 +1,6 @@
 """Unit testing utilities for Review Bot."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 from reviewbot.testing.testcases import TestCase
 from reviewbot.testing.utils import get_test_dep_path

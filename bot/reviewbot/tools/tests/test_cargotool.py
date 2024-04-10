@@ -1,13 +1,12 @@
 """Unit tests for reviewbot.tools.cargotool."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
 import os
 import tempfile
 
 import kgb
-import six
 
 from reviewbot.tools.cargotool import CargoTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -17,8 +16,7 @@ from reviewbot.tools.testing import (BaseToolTestCase,
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class CargoToolTests(BaseToolTestCase):
+class CargoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.cargotool.CargoTool."""
 
     tool_class = CargoTool
@@ -967,7 +965,7 @@ class CargoToolTests(BaseToolTestCase):
         it return the provided data.
 
         Args:
-            output (unicode):
+            output (str):
                 The outputted data.
         """
         output = [

@@ -1,11 +1,9 @@
 """Review Bot tool to run checkstyle."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
-import logging
 from xml.etree import ElementTree
 
-from reviewbot.config import config
 from reviewbot.tools.base import BaseTool, JavaToolMixin
 from reviewbot.utils.filesystem import make_tempfile
 from reviewbot.utils.process import execute
@@ -56,7 +54,7 @@ class CheckstyleTool(JavaToolMixin, BaseTool):
                 Additional keyword arguments.
 
         Returns:
-            list of unicode:
+            list of str:
             The base command line.
         """
         config_xml = self.settings['config'].strip()
@@ -77,10 +75,10 @@ class CheckstyleTool(JavaToolMixin, BaseTool):
             f (reviewbot.processing.review.File):
                 The file to process.
 
-            path (unicode):
+            path (str):
                 The local path to the patched file to review.
 
-            base_command (list of unicode):
+            base_command (list of str):
                 The base command used to run checkstyle.
 
             **kwargs (dict, unused):

@@ -1,11 +1,10 @@
 """Unit tests for reviewbot.tools.pydocstyle."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 
 import kgb
-import six
 
 from reviewbot.tools.pydocstyle import PydocstyleTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -16,8 +15,7 @@ from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class PydocstyleToolTests(BaseToolTestCase):
+class PydocstyleToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.pydocstyle.PydocstyleTool."""
 
     tool_class = PydocstyleTool
@@ -210,7 +208,7 @@ class PydocstyleToolTests(BaseToolTestCase):
         it return the provided output.
 
         Args:
-            output (unicode):
-                The simulatedo output from the tool.
+            output (str):
+                The simulated output from the tool.
         """
         self.spy_on(execute, op=kgb.SpyOpReturn(output))

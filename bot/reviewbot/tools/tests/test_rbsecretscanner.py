@@ -1,9 +1,6 @@
 """Unit tests for reviewbot.tools.rbsecretscanner."""
 
-from __future__ import unicode_literals
-
-import kgb
-import six
+from __future__ import annotations
 
 from reviewbot.tools.rbsecretscanner import SecretScannerTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -12,8 +9,8 @@ from reviewbot.tools.testing import (BaseToolTestCase,
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class SecretScannerToolTests(BaseToolTestCase, kgb.SpyAgency):
+class SecretScannerToolTests(BaseToolTestCase,
+                             metaclass=ToolTestCaseMetaclass):
     """Unit tests for SecretScannerTool."""
 
     tool_class = SecretScannerTool
@@ -720,7 +717,7 @@ class SecretScannerToolTests(BaseToolTestCase, kgb.SpyAgency):
         """Run an execution test with a given token.
 
         Args:
-            token (unicode):
+            token (str):
                 The token to test for.
 
             match (bool, optional):

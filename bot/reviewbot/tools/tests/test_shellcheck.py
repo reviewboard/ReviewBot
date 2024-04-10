@@ -1,12 +1,11 @@
 """Unit tests for reviewbot.tools.shellcheck."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
 import os
 
 import kgb
-import six
 
 from reviewbot.tools.shellcheck import ShellCheckTool
 from reviewbot.tools.testing import (BaseToolTestCase,
@@ -17,8 +16,7 @@ from reviewbot.utils.filesystem import tmpdirs
 from reviewbot.utils.process import execute
 
 
-@six.add_metaclass(ToolTestCaseMetaclass)
-class ShellCheckToolTests(BaseToolTestCase):
+class ShellCheckToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     """Unit tests for reviewbot.tools.shellcheck.ShellCheckTool."""
 
     tool_class = ShellCheckTool
@@ -548,7 +546,7 @@ class ShellCheckToolTests(BaseToolTestCase):
         payload directly, if it's a string).
 
         Args:
-            output_payload (dict or unicode):
+            output_payload (dict or str):
                 The payload to output.
         """
         if isinstance(output_payload, dict):

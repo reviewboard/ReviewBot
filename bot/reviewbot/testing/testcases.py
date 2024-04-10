@@ -4,29 +4,21 @@ Version Added:
     3.0
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import os
 import pprint
 import re
+import unittest
 from contextlib import contextmanager
 from copy import deepcopy
 
-try:
-    # Python 2
-    import unittest2 as unittest
-except ImportError:
-    # Python 3
-    import unittest
-
-import six
 from rbtools.api.resource import (FileAttachmentListResource,
                                   FileDiffResource,
                                   ItemResource,
                                   ListResource,
                                   RootResource)
 from rbtools.api.tests.base import MockTransport
-from six.moves import range
 
 from reviewbot.config import config, reset_config
 from reviewbot.processing.review import File, Review
@@ -333,7 +325,7 @@ class DummyRootResource(RootResource):
         This only supports the Review Bot extension ID.
 
         Args:
-            extension_name (unicode):
+            extension_name (str):
                 The extension name requested.
 
             **kwargs (dict):
@@ -418,7 +410,7 @@ class DummyRootResource(RootResource):
         """Return a user file attachment list resource.
 
         Args:
-            username (unicode):
+            username (str):
                 The username for the user who owns the file attachments.
 
             **kwargs (dict, unused):
@@ -506,7 +498,7 @@ class TestCase(unittest.TestCase):
         short, though.
 
         Returns:
-            unicode:
+            str:
             The test description, without truncating lines.
         """
         doc = self._testMethodDoc
@@ -538,7 +530,7 @@ class TestCase(unittest.TestCase):
 
         # We'll attempt a very simple sort of merge, since at the time of this
         # implementation, we have a very simple default config schema.
-        for key, value in six.iteritems(new_config):
+        for key, value in new_config.items():
             if isinstance(value, dict):
                 config[key].update(value)
             else:
@@ -597,16 +589,16 @@ class TestCase(unittest.TestCase):
             filediff_id (int, optional):
                 The ID of the FileDiff being reviewed.
 
-            source_file (unicode, optional):
+            source_file (str, optional):
                 The filename of the original version of the file.
 
-            dest_file (unicode, optional):
+            dest_file (str, optional):
                 The filename of the modified version of the file.
 
-            source_revision (unicode, optional):
+            source_revision (str, optional):
                 The source revision for the file.
 
-            status (unicode, optional):
+            status (str, optional):
                 The status value set for the FileDiff.
 
             patch (bytes, optional):
@@ -620,7 +612,7 @@ class TestCase(unittest.TestCase):
                 The patched version of the file. If not provided, one will
                 be generated.
 
-            patched_file_path (unicode, optional):
+            patched_file_path (str, optional):
                 The local path to the patched file content.
 
             diff_data (dict, optional):
@@ -853,16 +845,16 @@ class TestCase(unittest.TestCase):
             review_request_id (int, optional):
                 The ID of the review request that owns the FileDiff.
 
-            source_file (unicode, optional):
+            source_file (str, optional):
                 The filename of the original version of the file.
 
-            source_revision (unicode, optional):
+            source_revision (str, optional):
                 The source revision for the file.
 
-            dest_file (unicode, optional):
+            dest_file (str, optional):
                 The filename of the modified version of the file.
 
-            status (unicode, optional):
+            status (str, optional):
                 The status value set for the FileDiff.
 
             binary (bool, optional):
