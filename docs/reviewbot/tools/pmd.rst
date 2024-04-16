@@ -10,6 +10,12 @@ languages.
 .. _PMD: https://pmd.github.io/
 
 
+Supported Versions
+==================
+
+Review Bot supports both the 6.x and 7.x major versions of PMD.
+
+
 Supported File Types
 ====================
 
