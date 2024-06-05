@@ -42,8 +42,7 @@ contract`_.
 Getting Started
 ===============
 
-Review Bot |version| supports Review Board 3.0 or 4.0, and Python 2.7 or
-3.6 through 3.10.
+Review Bot |version| supports Review Board 5.0-7.0, and Python 3.8-3.12.
 
 A Review Bot setup consists of three pieces:
 
