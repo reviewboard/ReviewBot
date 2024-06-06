@@ -52,7 +52,7 @@ FROM base AS builder
 MAINTAINER Beanbag, Inc. <support@beanbaginc.com>
 
 # The version of Review Bot this will install.
-ARG REVIEWBOT_VERSION=3.2.0
+ARG REVIEWBOT_VERSION=4.0
 
 # Version of PMD to install.
 ARG PMD_VERSION=6.32.0
