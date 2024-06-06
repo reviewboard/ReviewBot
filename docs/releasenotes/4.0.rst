@@ -4,7 +4,7 @@
 Review Bot 4.0 Release Notes
 ============================
 
-**Release date**: TBD
+**Release date**: June 6, 2024
 
 
 Installation/Upgrade
@@ -25,9 +25,10 @@ Compatibility
 
 Review Bot 4.0 adds support for the upcoming Review Board 7 release.
 
-Review Bot 4 is compatible with Review Board 5.x - 7.x and Python 3.8 - 3.12.
-This release drops support for Review Board 3 and 4, and Python 2.7, 3.6, and
-3.7.
+It's compatible with Review Board 5.x - 7.x and Python 3.8 - 3.12.
+
+Support has been dropped for Review Board 3 and 4, and for Python 2.7, 3.6,
+and 3.7.
 
 
 New Features
@@ -38,7 +39,7 @@ PMD
 
 The PMD tool now supports the recently-released `PMD 7`_.
 
-.. _`PMD 7`: https://pmd.github.io/pmd/pmd_release_notes_pmd7.html
+.. _PMD 7: https://pmd.github.io/pmd/pmd_release_notes_pmd7.html
 
 
 Contributors
