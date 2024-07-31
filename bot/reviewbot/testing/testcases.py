@@ -655,7 +655,7 @@ class TestCase(unittest.TestCase):
 
         Args:
             chunks (list of dict):
-                A simplifed list of chunk data. Each should have the
+                A simplified list of chunk data. Each should have the
                 following keys:
 
                 ``change``:

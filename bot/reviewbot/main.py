@@ -135,7 +135,7 @@ def create_arg_parser():
         help=(
             'Enable auto-scaling of workers. The value is in the form of '
             'max_concurrency,min_concurrency. For example, --autoscale=10,3 '
-            'will keep 3 proceses, but grow to 10 if needed.'
+            'will keep 3 processes, but grow to 10 if needed.'
         ))
 
     return arg_parser

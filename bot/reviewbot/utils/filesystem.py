@@ -253,7 +253,7 @@ def normalize_platform_path(path, relative_to=None,
          norm_path.startswith('//'))):
         # This is an absolute path, or a UNC path. posixpath.splitdrive()
         # won't handle UNC paths, but ntpath.splitdrive() will (and handle
-        # either / or \ delimeters.
+        # either / or \ delimiters.
         norm_path = ntpath.splitdrive(norm_path)[1]
 
     # Convert the path delimiter.

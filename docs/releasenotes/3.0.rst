@@ -181,7 +181,7 @@ New Tools
 
 * :ref:`tool-shellcheck`
 
-  This tool checks stanard shell scripts for common problems and misused
+  This tool checks standard shell scripts for common problems and misused
   commands.
 
   This supports :file:`*.bash`, :file:`*.bats`, :file:`*.dash`,

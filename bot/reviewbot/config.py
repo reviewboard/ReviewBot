@@ -94,7 +94,7 @@ def get_config_file_path():
 
 
 def load_config():
-    """Load the Review Bot configuraiton.
+    """Load the Review Bot configuration.
 
     This will load the configuration file :file:`reviewbot/config.py`,
     located in the system's main configuration directory (:file:`/etc/` on

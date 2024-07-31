@@ -265,7 +265,7 @@ class ReviewBotIntegration(Integration):
             review_request, service_id=service_id))
 
         if not matching_configs:
-            # While the service ID indentified status_update as coming from
+            # While the service ID identified status_update as coming from
             # Review Bot, it doesn't match any active configs, so there's
             # nothing we can do.
             return
