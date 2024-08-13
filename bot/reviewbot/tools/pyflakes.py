@@ -118,8 +118,14 @@ class PyflakesTool(BaseTool):
                     # This should be a syntax error.
                     try:
                         linenum = int(linenum)
-                        column = int(m.group('column'))
-                    except ValueError:
+
+                        column_str = m.group('column')
+
+                        if column_str:
+                            column = int(column_str)
+                        else:
+                            column = None
+                    except (TypeError, ValueError):
                         # This isn't actually an info line. This is
                         # unexpected, but skip it.
                         continue
