@@ -337,10 +337,10 @@ class CargoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         "failures:\n",
         "\n",
         "---- tests::test1 stdout ----\n",
-        "thread 'tests::test1' panicked at 'assertion failed:"
-        " `(left == right)`\n",
-        "  left: `1`,\n",
-        " right: `2`', tests/test.rs:4:9\n",
+        "thread 'tests::test1' panicked at tests/test.rs:4:9:\n",
+        "assertion `left == right` failed\n",
+        "  left: 1\n",
+        " right: 2\n",
         "note: run with `RUST_BACKTRACE=1` environment variable to display"
         " a backtrace\n",
         "\n",
@@ -368,27 +368,49 @@ class CargoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
             })
 
         self.assertEqual(review.comments, [])
-        self.assertEqual(review.general_comments, [
-            {
-                'issue_opened': True,
-                'rich_text': True,
-                'text': (
-                    "1 test failed:\n"
-                    "\n"
-                    "```"
-                    "---- tests::test1 stdout ----\n"
-                    "thread 'tests::test1' panicked at 'assertion failed: "
-                    "`(left == right)`\n"
-                    "  left: `1`,\n"
-                    " right: `2`', tests/test.rs:4:9\n"
-                    "\n"
-                    "\n"
-                    "failures:\n"
-                    "    tests::test1"
-                    "```"
-                )
-            },
-        ])
+
+        general_comments = review.general_comments
+        self.assertEqual(len(general_comments), 1)
+
+        comment = general_comments[0]
+        self.assertIn(
+            comment.pop('text'),
+            [
+                # Added August 11, 2024
+                "1 test failed:\n"
+                "\n"
+                "```"
+                "---- tests::test1 stdout ----\n"
+                "thread 'tests::test1' panicked at tests/test.rs:4:9:\n"
+                "assertion `left == right` failed\n"
+                "  left: 1\n"
+                " right: 2\n"
+                "\n"
+                "\n"
+                "failures:\n"
+                "    tests::test1"
+                "```",
+
+                # Added August 9, 2021
+                "1 test failed:\n"
+                "\n"
+                "```"
+                "---- tests::test1 stdout ----\n"
+                "thread 'tests::test1' panicked at 'assertion failed: "
+                "`(left == right)`\n"
+                "  left: `1`,\n"
+                " right: `2`', tests/test.rs:4:9\n"
+                "\n"
+                "\n"
+                "failures:\n"
+                "    tests::test1"
+                "```",
+            ])
+
+        self.assertEqual(comment, {
+            'issue_opened': True,
+            'rich_text': True,
+        })
 
         self.assertSpyCalledWith(
             execute,
@@ -419,18 +441,18 @@ class CargoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         "failures:\n",
         "\n",
         "---- tests::test1 stdout ----\n",
-        "thread 'tests::test1' panicked at 'assertion failed:"
-        " `(left == right)`\n",
-        "  left: `1`,\n",
-        " right: `2`', tests/test.rs:4:9\n",
+        "thread 'tests::test1' panicked at tests/test.rs:4:9:\n",
+        "assertion `left == right` failed\n",
+        "  left: 1\n",
+        " right: 2\n",
         "note: run with `RUST_BACKTRACE=1` environment variable to display"
         " a backtrace\n",
         "\n",
         "---- tests::test2 stdout ----\n",
-        "thread 'tests::test2' panicked at 'assertion failed:"
-        " `(left == right)`\n",
-        "  left: `3`,\n",
-        " right: `4`', tests/test.rs:9:9\n",
+        "thread 'tests::test2' panicked at tests/test.rs:9:9:\n",
+        "assertion `left == right` failed\n",
+        "  left: 3\n",
+        " right: 4\n",
         "note: run with `RUST_BACKTRACE=1` environment variable to display"
         " a backtrace\n",
         "\n",
@@ -459,34 +481,63 @@ class CargoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
             })
 
         self.assertEqual(review.comments, [])
-        self.assertEqual(review.general_comments, [
-            {
-                'issue_opened': True,
-                'rich_text': True,
-                'text': (
-                    "2 tests failed:\n"
-                    "\n"
-                    "```"
-                    "---- tests::test1 stdout ----\n"
-                    "thread 'tests::test1' panicked at 'assertion failed: "
-                    "`(left == right)`\n"
-                    "  left: `1`,\n"
-                    " right: `2`', tests/test.rs:4:9\n"
-                    "\n"
-                    "---- tests::test2 stdout ----\n"
-                    "thread 'tests::test2' panicked at 'assertion failed: "
-                    "`(left == right)`\n"
-                    "  left: `3`,\n"
-                    " right: `4`', tests/test.rs:9:9\n"
-                    "\n"
-                    "\n"
-                    "failures:\n"
-                    "    tests::test1\n"
-                    "    tests::test2"
-                    "```"
-                )
-            },
-        ])
+
+        general_comments = review.general_comments
+        self.assertEqual(len(general_comments), 1)
+
+        comment = general_comments[0]
+        self.assertIn(
+            comment.pop('text'),
+            [
+                # Added August 11, 2024
+                "2 tests failed:\n"
+                "\n"
+                "```"
+                "---- tests::test1 stdout ----\n"
+                "thread 'tests::test1' panicked at tests/test.rs:4:9:\n"
+                "assertion `left == right` failed\n"
+                "  left: 1\n"
+                " right: 2\n"
+                "\n"
+                "---- tests::test2 stdout ----\n"
+                "thread 'tests::test2' panicked at tests/test.rs:9:9:\n"
+                "assertion `left == right` failed\n"
+                "  left: 3\n"
+                " right: 4\n"
+                "\n"
+                "\n"
+                "failures:\n"
+                "    tests::test1\n"
+                "    tests::test2"
+                "```",
+
+                # Added August 9, 2021
+                "2 tests failed:\n"
+                "\n"
+                "```"
+                "---- tests::test1 stdout ----\n"
+                "thread 'tests::test1' panicked at 'assertion failed: "
+                "`(left == right)`\n"
+                "  left: `1`,\n"
+                " right: `2`', tests/test.rs:4:9\n"
+                "\n"
+                "---- tests::test2 stdout ----\n"
+                "thread 'tests::test2' panicked at 'assertion failed: "
+                "`(left == right)`\n"
+                "  left: `3`,\n"
+                " right: `4`', tests/test.rs:9:9\n"
+                "\n"
+                "\n"
+                "failures:\n"
+                "    tests::test1\n"
+                "    tests::test2"
+                "```",
+            ])
+
+        self.assertEqual(comment, {
+            'issue_opened': True,
+            'rich_text': True,
+        })
 
         self.assertSpyCalledWith(
             execute,

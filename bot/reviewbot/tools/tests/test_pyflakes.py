@@ -108,7 +108,7 @@ class PyflakesToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
 
     @integration_test()
     @simulation_test(stderr=[
-        'test.py: problem decoding source',
+        'test.py:1: source code string cannot contain null bytes'
     ])
     def test_execute_with_unexpected_error(self):
         """Testing PyflakesTool.execute with unexpected errors"""
@@ -118,15 +118,31 @@ class PyflakesToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 b'\00\11\22'
             ))
 
-        self.assertEqual(review.comments, [])
-        self.assertEqual(review.general_comments, [
-            {
-                'text': ('pyflakes could not process test.py: '
-                         'problem decoding source'),
-                'issue_opened': True,
-                'rich_text': False,
-            },
-        ])
+        # PyFlakes on Python 3.11.4+ will have a line number. On earlier
+        # versions, it won't. Check for both.
+        if len(review.comments) > 0:
+            # This is PyFlakes on Python 3.11.4+.
+            self.assertEqual(review.comments, [
+                {
+                    'filediff_id': 42,
+                    'first_line': 1,
+                    'issue_opened': True,
+                    'num_lines': 1,
+                    'rich_text': False,
+                    'text': 'source code string cannot contain null bytes',
+                }
+            ])
+            self.assertEqual(review.general_comments, [])
+        else:
+            self.assertEqual(review.comments, [])
+            self.assertEqual(review.general_comments, [
+                {
+                    'text': ('pyflakes could not process test.py: '
+                             'problem decoding source'),
+                    'issue_opened': True,
+                    'rich_text': False,
+                },
+            ])
 
     @integration_test()
     @simulation_test()
