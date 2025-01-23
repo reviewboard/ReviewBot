@@ -113,7 +113,10 @@ class File(object):
             return None
 
         try:
-            contents = self._api_filediff.get_patched_file().data
+            try:
+                contents = self._api_filediff.get_patched_file().data
+            except NotImplementedError:
+                return None
 
             if isinstance(contents, str):
                 contents = contents.encode('utf-8')
@@ -148,7 +151,10 @@ class File(object):
             return None
 
         try:
-            contents = self._api_filediff.get_original_file().data
+            try:
+                contents = self._api_filediff.get_original_file().data
+            except NotImplementedError:
+                return None
 
             if isinstance(contents, str):
                 contents = contents.encode('utf-8')

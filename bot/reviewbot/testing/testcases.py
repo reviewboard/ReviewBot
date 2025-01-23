@@ -276,7 +276,9 @@ class ReviewBotExtensionResource(ItemResource):
             transport=self._transport,
             payload={
                 'total_results': 0,
+                'reviews': [],
             },
+            token='reviews',
             url='%sreview-bot-reviews/' % self._url)
 
     def get_tools(self, **kwargs):
@@ -294,7 +296,9 @@ class ReviewBotExtensionResource(ItemResource):
             transport=self._transport,
             payload={
                 'total_results': 0,
+                'tools': [],
             },
+            token='tools',
             url='%stools/' % self._url)
 
 
@@ -424,7 +428,9 @@ class DummyRootResource(RootResource):
             transport=self._transport,
             payload={
                 'total_results': 0,
+                'user_file_attachments': [],
             },
+            token='user_file_attachments',
             url='%susers/%s/user-file-attachments/' % (self._url, username))
 
 
