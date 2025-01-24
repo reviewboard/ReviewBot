@@ -155,12 +155,13 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
 
         test_results = OrderedDict()
         found_json_errors = False
+        error_lines = []
 
         for line in output:
             try:
                 entry = json.loads(line)
             except ValueError:
-                found_json_errors = True
+                error_lines.append(line)
                 continue
 
             if 'Test' in entry:
@@ -187,20 +188,21 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
         if test_results:
             for test_name, test_result in test_results.items():
                 if test_result['failed']:
+                    package = test_result['package']
+                    output = ''.join(test_result['output']).strip()
+
                     review.general_comment(
-                        '%s failed in the %s package:\n'
-                        '\n'
-                        '```%s```'
-                        % (test_name,
-                           test_result['package'],
-                           ''.join(test_result['output']).strip()),
+                        f'{test_name} failed in the {package} package:\n'
+                        f'\n'
+                        f'```{output}```',
                         rich_text=True)
-        elif found_json_errors:
+        elif error_lines:
+            error = ''.join(error_lines).strip()
+
             review.general_comment(
-                'Unable to run `go test` on the %s package:\n'
-                '\n'
-                '```%s```'
-                % (package, ''.join(output).strip()),
+                f'Unable to run `go test` on the {package} package:\n'
+                f'\n'
+                f'```{error}```',
                 rich_text=True)
 
     def run_go_vet(self, package, patched_files_map):

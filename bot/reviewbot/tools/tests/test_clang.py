@@ -227,8 +227,8 @@ class ClangToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     @integration_test()
     @simulation_test(output=(
         "test.m:3:6: error: use of undeclared identifier 'badcode'\n"
-        "    {badcode}\n"
-        "     ^\n"
+        "    3 |     {badcode}\n"
+        "      |      ^\n"
         "1 error generated.\n"
     ))
     def test_execute_with_objc_and_compiler_error(self):
@@ -256,8 +256,8 @@ class ClangToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                     "```\n"
                     "test.m:3:6: error: use of undeclared identifier "
                     "'badcode'\n"
-                    "    {badcode}\n"
-                    "     ^\n"
+                    "    3 |     {badcode}\n"
+                    "      |      ^\n"
                     "1 error generated.\n"
                     "```"
                 ),
@@ -386,8 +386,8 @@ class ClangToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     @integration_test()
     @simulation_test(output=(
         "test.mm:5:6: error: use of undeclared identifier 'badcode'\n"
-        "    {badcode}\n"
-        "     ^\n"
+        "    5 |     {badcode}\n"
+        "      |      ^\n"
         "1 error generated.\n"
     ))
     def test_execute_with_objcpp_and_compiler_error(self):
@@ -417,8 +417,8 @@ class ClangToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                     "```\n"
                     "test.mm:5:6: error: use of undeclared identifier "
                     "'badcode'\n"
-                    "    {badcode}\n"
-                    "     ^\n"
+                    "    5 |     {badcode}\n"
+                    "      |      ^\n"
                     "1 error generated.\n"
                     "```"
                 ),

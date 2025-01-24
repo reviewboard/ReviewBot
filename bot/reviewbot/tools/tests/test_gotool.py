@@ -173,10 +173,7 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     @integration_test()
     @simulation_test(test_output=[
         '# example.com/myrepo/mypackage\n',
-
-        'mypackage/main.go:4:1: syntax error: unexpected EOF, expecting }\n',
-
-        'FAIL\texample.com/myrepo/mypackage [build failed]\n',
+        'mypackage/main.go:4:1: syntax error: unexpected EOF, expected }\n',
     ])
     def test_execute_with_test_and_syntax_error(self):
         """Testing GoTool.execute with test setting and syntax error"""
@@ -196,10 +193,11 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 'text': (
                     'Unable to run `go test` on the mypackage package:\n'
                     '\n'
-                    '```# example.com/myrepo/mypackage\n'
+                    '```'
+                    '# example.com/myrepo/mypackage\n'
                     'mypackage/main.go:4:1: syntax error: unexpected EOF, '
-                    'expecting }\n'
-                    'FAIL\texample.com/myrepo/mypackage [build failed]```'
+                    'expected }'
+                    '```'
                 ),
                 'issue_opened': True,
                 'rich_text': True,
