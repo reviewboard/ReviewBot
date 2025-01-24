@@ -106,6 +106,7 @@ setup(
     install_requires=[
         'appdirs>=1.4.4',
         'celery~=5.3',
+        'housekeeping~=1.1',
         'RBTools>=4.0,<6',
 
         # We unconditionally include these plugins to ensure they're present.
