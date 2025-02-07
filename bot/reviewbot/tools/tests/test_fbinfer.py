@@ -88,8 +88,7 @@ class FBInferToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 'javac',
                 'Hello.java',
             ],
-            ignore_errors=True,
-            with_errors=True)
+            ignore_errors=True)
 
     @integration_test(exe_deps=['gcc', 'make'])
     @simulation_test(full_report=[
@@ -220,8 +219,7 @@ class FBInferToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 '--',
                 'make',
             ],
-            ignore_errors=True,
-            with_errors=True)
+            ignore_errors=True)
 
     @integration_test(exe_deps=['cmake'])
     @simulation_test(full_report=[
@@ -315,8 +313,7 @@ class FBInferToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 '--',
                 'cmake',
                 '.',
-            ],
-            with_errors=True)
+            ])
 
         self.assertSpyCalledWith(
             execute.calls[1],
@@ -327,8 +324,7 @@ class FBInferToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 '--',
                 'make',
             ],
-            ignore_errors=True,
-            with_errors=True)
+            ignore_errors=True)
 
     @integration_test(exe_deps=['cmake'])
     @simulation_test(compile_error=True)
@@ -376,8 +372,7 @@ class FBInferToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 '--',
                 'cmake',
                 '.',
-            ],
-            with_errors=True)
+            ])
 
     def setup_integration_test(self, exe_deps, **kwargs):
         """Set up an integration test.

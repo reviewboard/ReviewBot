@@ -9,9 +9,14 @@ import shutil
 import tempfile
 from contextlib import contextmanager
 from enum import Enum
+from typing import Optional, TYPE_CHECKING
 
 from reviewbot.errors import SuspiciousFilePath
 from reviewbot.utils.log import get_logger
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+    from types import ModuleType
 
 
 logger = get_logger(__name__)
@@ -34,13 +39,13 @@ class PathPlatform(Enum):
     #: A POSIX path.
     POSIX = 'posix'
 
-    if os.path is posixpath:
-        LOCAL = POSIX
-    else:
+    if os.name == 'nt':
         LOCAL = WINDOWS
+    else:
+        LOCAL = POSIX
 
     @property
-    def path_mod(self):
+    def path_mod(self) -> ModuleType:
         """The path module used to work with paths of this type.
 
         Returns:
@@ -55,7 +60,9 @@ class PathPlatform(Enum):
 
 
 @contextmanager
-def chdir(path):
+def chdir(
+    path: str,
+) -> Generator[None, None, None]:
     """Temporarily change directory into the given working directory.
 
     Args:
@@ -71,33 +78,33 @@ def chdir(path):
         os.chdir(cwd)
 
 
-def cleanup_tempfiles():
+def cleanup_tempfiles() -> None:
     """Clean up all temporary files.
 
     This will delete all the files created by :py:func:`make_tempfile`.
     """
-    global tmpdirs
-    global tmpfiles
-
     for tmpdir in tmpdirs:
         try:
             logger.debug('Removing temporary directory %s', tmpdir)
             shutil.rmtree(tmpdir)
-        except:
+        except Exception:
             pass
 
     for tmpfile in tmpfiles:
         try:
             logger.debug('Removing temporary file %s', tmpfile)
             os.unlink(tmpfile)
-        except:
+        except Exception:
             pass
 
     tmpdirs[:] = []
     tmpfiles[:] = []
 
 
-def make_tempfile(content=None, extension=''):
+def make_tempfile(
+    content: Optional[bytes] = None,
+    extension: str = '',
+) -> str:
     """Create a temporary file and return the path.
 
     Args:
@@ -111,7 +118,6 @@ def make_tempfile(content=None, extension=''):
         str:
         The name of the new file.
     """
-    global tmpfiles
     fd, tmpfile = tempfile.mkstemp(suffix=extension)
 
     if content:
@@ -122,21 +128,21 @@ def make_tempfile(content=None, extension=''):
     return tmpfile
 
 
-def make_tempdir():
+def make_tempdir() -> str:
     """Create a temporary directory and return the path.
 
     Returns:
         str:
         The name of the new directory.
     """
-    global tmpdirs
-
     tmpdir = tempfile.mkdtemp()
     tmpdirs.append(tmpdir)
     return tmpdir
 
 
-def ensure_dirs_exist(path):
+def ensure_dirs_exist(
+    path: str,
+) -> None:
     """Ensure directories exist to an absolute path.
 
     Args:
@@ -160,7 +166,9 @@ def ensure_dirs_exist(path):
         os.makedirs(folder_path)
 
 
-def get_path_platform(path):
+def get_path_platform(
+    path: str,
+) -> PathPlatform:
     """Return the platform most likely used to generate a path.
 
     This supports Windows and POSIX filesystem and UNC paths.
@@ -176,7 +184,7 @@ def get_path_platform(path):
         PathPlatform:
         The platform that the path is most likely for.
     """
-    nt_drive, nt_path = ntpath.splitdrive(path)
+    nt_drive = ntpath.splitdrive(path)[0]
 
     if nt_drive:
         if nt_drive.startswith('//'):
@@ -207,8 +215,11 @@ def get_path_platform(path):
     return PathPlatform.POSIX
 
 
-def normalize_platform_path(path, relative_to=None,
-                            target_platform=PathPlatform.LOCAL):
+def normalize_platform_path(
+    path: str,
+    relative_to: Optional[str] = None,
+    target_platform: PathPlatform = PathPlatform.LOCAL,
+) -> str:
     """Normalize a path from a diff, making it suitable for local use.
 
     This will convert either a Windows or POSIX path to the local platform,
@@ -253,7 +264,7 @@ def normalize_platform_path(path, relative_to=None,
          norm_path.startswith('//'))):
         # This is an absolute path, or a UNC path. posixpath.splitdrive()
         # won't handle UNC paths, but ntpath.splitdrive() will (and handle
-        # either / or \ delimeters.
+        # either / or \ delimiters.
         norm_path = ntpath.splitdrive(norm_path)[1]
 
     # Convert the path delimiter.

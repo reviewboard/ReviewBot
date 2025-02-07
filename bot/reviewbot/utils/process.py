@@ -5,23 +5,111 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from typing import Literal, Optional, Union, overload
 
+from housekeeping import deprecate_non_keyword_only_args
+
+from reviewbot.deprecation import RemovedInReviewBot60Warning
 from reviewbot.utils.log import get_logger
 
 
 logger = get_logger(__name__)
 
 
-def execute(command,
-            env=None,
-            split_lines=False,
-            ignore_errors=False,
-            extra_ignore_errors=(),
-            translate_newlines=True,
-            with_errors=True,
-            return_errors=False,
-            none_on_ignored_error=False):
-    """Execute a command and return the output.
+@overload
+def execute(
+    command: Union[list[str], str],
+    *,
+    split_lines: Literal[False] = False,
+    return_errors: Literal[False] = False,
+    **kwargs,
+) -> str:
+    ...
+
+
+@overload
+def execute(
+    command: Union[list[str], str],
+    *,
+    split_lines: Literal[True],
+    return_errors: Literal[False] = False,
+    **kwargs,
+) -> list[str]:
+    ...
+
+
+@overload
+def execute(
+    command: Union[list[str], str],
+    *,
+    return_errors: Literal[True],
+    split_lines: Literal[False] = False,
+    none_on_ignored_error: Literal[False] = False,
+    **kwargs,
+) -> tuple[str, str]:
+    ...
+
+
+@overload
+def execute(
+    command: Union[list[str], str],
+    *,
+    split_lines: Literal[True] = True,
+    return_errors: Literal[True] = True,
+    none_on_ignored_error: Literal[False] = False,
+    **kwargs,
+) -> tuple[list[str], list[str]]:
+    ...
+
+
+@overload
+def execute(
+    command: Union[list[str], str],
+    *,
+    ignore_errors: Literal[True],
+    return_errors: Literal[True],
+    none_on_ignored_error: Literal[True],
+    split_lines: Literal[False] = False,
+    **kwargs,
+) -> tuple[Optional[str], str]:
+    ...
+
+
+@overload
+def execute(
+    command: Union[list[str], str],
+    *,
+    split_lines: Literal[True],
+    ignore_errors: Literal[True],
+    return_errors: Literal[True],
+    none_on_ignored_error: Literal[True],
+    **kwargs,
+) -> tuple[Optional[list[str]], list[str]]:
+    ...
+
+
+@deprecate_non_keyword_only_args(RemovedInReviewBot60Warning)
+def execute(
+    command: Union[list[str], str],
+    *,
+    env: Optional[dict[str, str]] = None,
+    split_lines: bool = False,
+    ignore_errors: bool = False,
+    extra_ignore_errors: tuple[int, ...] = (),
+    translate_newlines: bool = True,
+    with_errors: bool = True,
+    return_errors: bool = False,
+    none_on_ignored_error: bool = False,
+    **kwargs,
+) -> Union[
+        Union[str, list[str], None],
+        tuple[Union[str, list[str], None], Union[str, list[str], None]],
+    ]:
+    r"""Execute a command and return the output.
+
+    Version Changed:
+        5.0:
+        Arguments other than ``command`` are now keyword-only.
 
     Args:
         command (list of str):
@@ -48,13 +136,16 @@ def execute(command,
             Whether the stderr output should be merged in with the stdout
             output or just ignored.
 
-        return_errors (bool, optional)
+        return_errors (bool, optional):
             Whether to return the content of the stderr stream. If set, this
             argument takes precedence over the ``with_errors`` argument.
 
         none_on_ignored_error (bool, optional):
             Whether to return ``None`` if there was an ignored error (instead
             of the process output).
+
+        **kwargs (dict, unused):
+            Additional keyword arguments, unused.
 
     Returns:
         object:
@@ -93,7 +184,7 @@ def execute(command,
                              stdout=subprocess.PIPE,
                              stderr=errors_output,
                              shell=False,
-                             universal_newlines=translate_newlines,
+                             text=translate_newlines,
                              env=env)
     else:
         p = subprocess.Popen(command,
@@ -102,7 +193,7 @@ def execute(command,
                              stderr=errors_output,
                              shell=False,
                              close_fds=True,
-                             universal_newlines=translate_newlines,
+                             text=translate_newlines,
                              env=env)
 
     data, errors = p.communicate()
@@ -110,11 +201,17 @@ def execute(command,
     if isinstance(data, bytes):
         data = data.decode('utf-8')
 
+    if isinstance(errors, bytes):
+        errors = errors.decode('utf-8')
+
+    assert isinstance(data, str)
+    assert errors is None or isinstance(errors, str)
+
     if split_lines:
         data = data.splitlines(True)
 
     if return_errors:
-        if split_lines:
+        if split_lines and errors is not None:
             errors = errors.splitlines(True)
     else:
         errors = None
@@ -122,7 +219,7 @@ def execute(command,
     rc = p.wait()
 
     if rc and not ignore_errors and rc not in extra_ignore_errors:
-        raise Exception('Failed to execute command: %s\n%s' % (command, data))
+        raise Exception(f'Failed to execute command: {command}\n{data}')
 
     if rc and none_on_ignored_error:
         data = None
@@ -133,7 +230,13 @@ def execute(command,
         return data
 
 
-def is_exe_in_path(name, cache={}):
+_is_exe_in_path_cache: dict[str, Optional[str]] = {}
+
+
+def is_exe_in_path(
+    name: str,
+    cache: Optional[dict[str, Optional[str]]] = None,
+) -> bool:
     """Check whether an executable is in the user's search path.
 
     If the provided filename is an absolute path, it will be checked
@@ -158,14 +261,17 @@ def is_exe_in_path(name, cache={}):
             can be provided instead.
 
     Returns:
-        boolean:
+        bool:
         True if the executable can be found in the execution path.
     """
+    if cache is None:
+        cache = _is_exe_in_path_cache
+
     if sys.platform == 'win32' and not name.endswith('.exe'):
         name += '.exe'
 
     if name in cache:
-        return cache[name]
+        return cache[name] is not None
 
     path = None
 
@@ -182,4 +288,4 @@ def is_exe_in_path(name, cache={}):
 
     cache[name] = path
 
-    return path is not None
+    return (path is not None)

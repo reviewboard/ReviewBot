@@ -166,7 +166,6 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 '-vet=off',
                 './mypackage',
             ],
-            with_errors=True,
             ignore_errors=True)
         self.assertSpyCallCount(execute, 1)
 
@@ -214,7 +213,6 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 '-vet=off',
                 './mypackage',
             ],
-            with_errors=True,
             ignore_errors=True)
         self.assertSpyCallCount(execute, 1)
 
@@ -286,7 +284,6 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 'vet',
                 './mypackage',
             ],
-            with_errors=True,
             ignore_errors=True)
         self.assertSpyCallCount(execute, 1)
 
@@ -329,7 +326,6 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 'vet',
                 './mypackage',
             ],
-            with_errors=True,
             ignore_errors=True)
         self.assertSpyCallCount(execute, 1)
 
@@ -471,7 +467,6 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 '-vet=off',
                 './mypackage',
             ],
-            with_errors=True,
             ignore_errors=True)
         self.assertSpyCalledWith(
             execute,
@@ -480,7 +475,6 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 'vet',
                 './mypackage',
             ],
-            with_errors=True,
             ignore_errors=True)
         self.assertSpyCallCount(execute, 2)
 
@@ -552,7 +546,6 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 '-vet=off',
                 './mypackage',
             ],
-            with_errors=True,
             ignore_errors=True)
         self.assertSpyCalledWith(
             execute,
@@ -561,7 +554,6 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 'vet',
                 './mypackage',
             ],
-            with_errors=True,
             ignore_errors=True)
         self.assertSpyCallCount(execute, 2)
 
@@ -579,7 +571,7 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 The outputted content from :command:`go vet`.
         """
         @self.spy_for(execute)
-        def _execute(cmdline, **kwargs):
+        def _execute(cmdline, *args, **kwargs):
             if cmdline[1] == 'test':
                 return test_output
             elif cmdline[1] == 'vet':

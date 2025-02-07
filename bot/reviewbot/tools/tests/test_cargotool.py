@@ -421,7 +421,6 @@ class CargoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 '--',
                 '--test-threads=1',
             ],
-            with_errors=True,
             ignore_errors=True)
 
     @integration_test()
@@ -548,7 +547,6 @@ class CargoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 '--',
                 '--test-threads=1',
             ],
-            with_errors=True,
             ignore_errors=True)
 
     @integration_test()
@@ -594,7 +592,6 @@ class CargoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 '--',
                 '--test-threads=1',
             ],
-            with_errors=True,
             ignore_errors=True)
 
     @simulation_test(output=[
@@ -770,7 +767,6 @@ class CargoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 '--',
                 '--test-threads=1',
             ],
-            with_errors=True,
             ignore_errors=True)
 
     @integration_test()
@@ -847,7 +843,6 @@ class CargoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 '--',
                 '--test-threads=1',
             ],
-            with_errors=True,
             ignore_errors=True)
 
     @integration_test()
@@ -1037,9 +1032,7 @@ class CargoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 'call_fake': lambda *args, **kwargs: output,
             },
             {
-                'kwargs': {
-                    'split_lines': False,
-                },
+                'kwargs': {},
                 'call_fake': lambda *args, **kwargs: ''.join(output),
             },
         ]))

@@ -6,6 +6,8 @@ Version Added:
 
 from __future__ import annotations
 
+from typing import Optional
+
 from reviewbot.errors import SuspiciousFilePath
 from reviewbot.testing import TestCase
 from reviewbot.utils.filesystem import (PathPlatform,
@@ -16,12 +18,12 @@ from reviewbot.utils.filesystem import (PathPlatform,
 class GetPathPlatformTests(TestCase):
     """Unit tests for reviewbot.utils.filesystem.get_path_platform."""
 
-    def test_with_windows_abs(self):
+    def test_with_windows_abs(self) -> None:
         """Testing get_path_platform with absolute Windows path"""
         self.assertEqual(get_path_platform(r'C:\Documents\Test'),
                          PathPlatform.WINDOWS)
 
-    def test_with_windows_rel(self):
+    def test_with_windows_rel(self) -> None:
         """Testing get_path_platform with relative Windows path"""
         self.assertEqual(get_path_platform(r'Documents\Test'),
                          PathPlatform.WINDOWS)
@@ -30,17 +32,17 @@ class GetPathPlatformTests(TestCase):
         self.assertEqual(get_path_platform(r'Documents\..\Test'),
                          PathPlatform.WINDOWS)
 
-    def test_with_windows_unc(self):
+    def test_with_windows_unc(self) -> None:
         """Testing get_path_platform with Windows-style UNC path"""
         self.assertEqual(get_path_platform(r'\\host\computer\Documents\Tests'),
                          PathPlatform.WINDOWS)
 
-    def test_with_posix_abs(self):
+    def test_with_posix_abs(self) -> None:
         """Testing get_path_platform with absolute POSIX path"""
         self.assertEqual(get_path_platform('/documents/test'),
                          PathPlatform.POSIX)
 
-    def test_with_posix_rel(self):
+    def test_with_posix_rel(self) -> None:
         """Testing get_path_platform with relative POSIX path"""
         self.assertEqual(get_path_platform('documents/test'),
                          PathPlatform.POSIX)
@@ -49,12 +51,12 @@ class GetPathPlatformTests(TestCase):
         self.assertEqual(get_path_platform('documents/../test'),
                          PathPlatform.POSIX)
 
-    def test_with_posix_unc(self):
+    def test_with_posix_unc(self) -> None:
         """Testing get_path_platform with POSIX-style UNC path"""
         self.assertEqual(get_path_platform('//host/computer/documents/tests'),
                          PathPlatform.POSIX)
 
-    def test_with_bare(self):
+    def test_with_bare(self) -> None:
         """Testing get_path_platform with bare filename"""
         self.assertEqual(get_path_platform('test'),
                          PathPlatform.POSIX)
@@ -63,7 +65,7 @@ class GetPathPlatformTests(TestCase):
 class NormalizePlatformPath(TestCase):
     """Unit tests for reviewbot.utils.filesystem.normalize_platform_path."""
 
-    def test_with_windows_abs(self):
+    def test_with_windows_abs(self) -> None:
         """Testing normalize_platform_path with absolute Windows path"""
         self._test_path(r'C:\Documents\Tests',
                         expected_posix_path='Documents/Tests',
@@ -72,7 +74,7 @@ class NormalizePlatformPath(TestCase):
                         expected_posix_path='Tests',
                         expected_windows_path='Tests')
 
-    def test_with_windows_abs_and_relative_to(self):
+    def test_with_windows_abs_and_relative_to(self) -> None:
         """Testing normalize_platform_path with absolute Windows path and
         relative_to=
         """
@@ -87,7 +89,7 @@ class NormalizePlatformPath(TestCase):
                         expected_posix_path='/src/test/Tests',
                         expected_windows_path=r'C:\src\test\Tests')
 
-    def test_with_windows_rel(self):
+    def test_with_windows_rel(self) -> None:
         """Testing normalize_platform_path with relative Windows path"""
         self._test_path(r'Documents\Tests',
                         expected_posix_path='Documents/Tests',
@@ -99,7 +101,7 @@ class NormalizePlatformPath(TestCase):
                         expected_posix_path='Tests',
                         expected_windows_path='Tests')
 
-    def test_with_windows_rel_and_relative_to(self):
+    def test_with_windows_rel_and_relative_to(self) -> None:
         """Testing normalize_platform_path with relative Windows path and
         relative_to=
         """
@@ -114,7 +116,7 @@ class NormalizePlatformPath(TestCase):
                         expected_posix_path='/src/test/Documents/Tests',
                         expected_windows_path=r'C:\src\test\Documents\Tests')
 
-    def test_with_windows_rel_and_suspicious_path(self):
+    def test_with_windows_rel_and_suspicious_path(self) -> None:
         """Testing normalize_platform_path with suspicious relative Windows
         path
         """
@@ -123,13 +125,13 @@ class NormalizePlatformPath(TestCase):
                             expected_posix_path='Tests',
                             expected_windows_path='Tests')
 
-    def test_with_windows_unc(self):
+    def test_with_windows_unc(self) -> None:
         """Testing normalize_platform_path with Windows-style UNC path"""
         self._test_path(r'\\host\computer\Documents\Tests',
                         expected_posix_path='Documents/Tests',
                         expected_windows_path=r'Documents\Tests')
 
-    def test_with_windows_unc_and_relative_to(self):
+    def test_with_windows_unc_and_relative_to(self) -> None:
         """Testing normalize_platform_path with Windows-style UNC path and
         relative_to=
         """
@@ -139,7 +141,7 @@ class NormalizePlatformPath(TestCase):
                         expected_posix_path='/src/test/Documents/Tests',
                         expected_windows_path=r'C:\src\test\Documents\Tests')
 
-    def test_with_posix_abs(self):
+    def test_with_posix_abs(self) -> None:
         """Testing normalize_platform_path with absolute POSIX path"""
         self._test_path('/documents/tests',
                         expected_posix_path='documents/tests',
@@ -148,7 +150,7 @@ class NormalizePlatformPath(TestCase):
                         expected_posix_path='tests',
                         expected_windows_path='tests')
 
-    def test_with_posix_abs_and_relative_to(self):
+    def test_with_posix_abs_and_relative_to(self) -> None:
         """Testing normalize_platform_path with absolute POSIX path and
         relative_to
         """
@@ -163,7 +165,7 @@ class NormalizePlatformPath(TestCase):
                         expected_posix_path='/src/test/tests',
                         expected_windows_path=r'C:\src\test\tests')
 
-    def test_with_posix_rel(self):
+    def test_with_posix_rel(self) -> None:
         """Testing normalize_platform_path with relative POSIX path"""
         self._test_path('documents/tests',
                         expected_posix_path='documents/tests',
@@ -175,7 +177,7 @@ class NormalizePlatformPath(TestCase):
                         expected_posix_path='tests',
                         expected_windows_path='tests')
 
-    def test_with_posix_rel_and_relative_to(self):
+    def test_with_posix_rel_and_relative_to(self) -> None:
         """Testing normalize_platform_path with relative POSIX path and
         relative_to=
         """
@@ -195,7 +197,7 @@ class NormalizePlatformPath(TestCase):
                         expected_posix_path='/src/test/tests',
                         expected_windows_path=r'C:\src\test\tests')
 
-    def test_with_posix_rel_and_suspicious_path(self):
+    def test_with_posix_rel_and_suspicious_path(self) -> None:
         """Testing normalize_platform_path with suspicious relative POSIX path
         """
         with self.assertRaises(SuspiciousFilePath):
@@ -203,13 +205,13 @@ class NormalizePlatformPath(TestCase):
                             expected_posix_path='/src/test/tests',
                             expected_windows_path=r'C:\src\test\tests')
 
-    def test_with_posix_unc(self):
+    def test_with_posix_unc(self) -> None:
         """Testing normalize_platform_path with POSIX-style UNC path"""
         self._test_path('//host/computer/documents/tests',
                         expected_posix_path='documents/tests',
                         expected_windows_path=r'documents\tests')
 
-    def test_with_posix_unc_and_relative_to(self):
+    def test_with_posix_unc_and_relative_to(self) -> None:
         """Testing normalize_platform_path with POSIX-style UNC path and
         relative_to=
         """
@@ -219,13 +221,13 @@ class NormalizePlatformPath(TestCase):
                         expected_posix_path='/src/test/documents/tests',
                         expected_windows_path=r'C:\src\test\documents\tests')
 
-    def test_with_bare(self):
+    def test_with_bare(self) -> None:
         """Testing normalize_platform_path with bare filename"""
         self._test_path('tests.txt',
                         expected_posix_path='tests.txt',
                         expected_windows_path='tests.txt')
 
-    def test_with_bare_and_relative_to(self):
+    def test_with_bare_and_relative_to(self) -> None:
         """Testing normalize_platform_path with bare filename and relative_to=
         """
         self._test_path('tests.txt',
@@ -234,8 +236,14 @@ class NormalizePlatformPath(TestCase):
                         expected_posix_path='/src/test/tests.txt',
                         expected_windows_path=r'C:\src\test\tests.txt')
 
-    def _test_path(self, path, expected_posix_path, expected_windows_path,
-                   relative_to_posix=None, relative_to_windows=None):
+    def _test_path(
+        self,
+        path: str,
+        expected_posix_path: str,
+        expected_windows_path: str,
+        relative_to_posix: Optional[str] = None,
+        relative_to_windows: Optional[str] = None,
+    ) -> None:
         """Test path normalization against Windows and POSIX paths.
 
         This will test that a path normalizes correctly on both Windows and

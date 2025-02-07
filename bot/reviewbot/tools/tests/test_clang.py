@@ -579,7 +579,7 @@ class ClangToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 The resulting compiler output, if simulating a compiler error.
         """
         @self.spy_for(execute)
-        def _execute(cmdline, **kwargs):
+        def _execute(cmdline, *args, **kwargs):
             filename = cmdline[-1]
 
             if plist_data:

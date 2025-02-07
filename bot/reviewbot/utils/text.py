@@ -10,7 +10,9 @@ _BASE62_CHARS = \
 _SPLIT_RE = re.compile(r'\s*,+\s*')
 
 
-def base62_encode(value):
+def base62_encode(
+    value: int,
+) -> bytes:
     """Return a base62-encoded string representing a numeric value.
 
     Args:
@@ -37,7 +39,9 @@ def base62_encode(value):
     return ''.join(encoded).encode('ascii')
 
 
-def split_comma_separated(s):
+def split_comma_separated(
+    s: str,
+) -> list[str]:
     """Return a list of values from a comma-separated string.
 
     Any blank values will be filtered out.

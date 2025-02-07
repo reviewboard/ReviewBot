@@ -6,11 +6,19 @@ Version Added:
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from celery.utils.log import (get_logger as _get_logger,
                               get_task_logger as _get_task_logger)
 
+if TYPE_CHECKING:
+    from logging import Logger
 
-def get_logger(name, is_task_logger=True):
+
+def get_logger(
+    name: str,
+    is_task_logger: bool = True,
+) -> Logger:
     """Return a logger with the given name.
 
     The logger will by default be constructed as a task logger. This will
@@ -42,7 +50,7 @@ def get_logger(name, is_task_logger=True):
     return _get_logger(name)
 
 
-def get_root_logger():
+def get_root_logger() -> Logger:
     """Return a root logger for Review Bot.
 
     This will use "Review Bot" as the logger name.
