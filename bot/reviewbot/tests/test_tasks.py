@@ -12,19 +12,11 @@ from reviewbot.tasks import RunTool, update_tools_list
 from reviewbot.testing import TestCase
 from reviewbot.testing.testcases import (ReviewBotToolsResource,
                                          StatusUpdateResource)
-from reviewbot.tools import Tool
 from reviewbot.tools.base import BaseTool
 from reviewbot.tools.base.registry import (_registered_tools,
                                            register_tool_class,
                                            unregister_tool_class)
 from reviewbot.utils.api import get_api_root
-
-
-class LegacyTool(Tool):
-    name = 'Legacy'
-    tool_id = 'legacy'
-    description = 'This is the legacy tool.'
-    timeout = 30
 
 
 class DummyTool(BaseTool):
@@ -63,7 +55,6 @@ class BaseTaskTestCase(kgb.SpyAgency, TestCase):
 
         _registered_tools.clear()
         register_tool_class(DummyTool)
-        register_tool_class(LegacyTool)
         register_tool_class(FullRepoTool)
         register_tool_class(FailedDepCheckTool)
 
@@ -72,7 +63,6 @@ class BaseTaskTestCase(kgb.SpyAgency, TestCase):
         super(BaseTaskTestCase, cls).tearDownClass()
 
         unregister_tool_class(DummyTool.tool_id)
-        unregister_tool_class(LegacyTool.tool_id)
         unregister_tool_class(FullRepoTool.tool_id)
         unregister_tool_class(FailedDepCheckTool.tool_id)
 
@@ -248,35 +238,6 @@ class RunToolTests(BaseTaskTestCase):
         self.assertIsNotNone(repository)
         self.assertIsInstance(repository, GitRepository)
         self.assertEqual(repository.name, 'MyRepo')
-
-        self.assertSpyCalledWith(StatusUpdateResource.update,
-                                 description='running...')
-        self.assertSpyCalledWith(StatusUpdateResource.update,
-                                 state='done-success',
-                                 description='passed.')
-        self.assertSpyCallCount(StatusUpdateResource.update, 2)
-
-    def test_with_legacy_tool(self):
-        """Testing RunTool task with legacy tool"""
-        self.spy_on(LegacyTool.execute,
-                    owner=LegacyTool)
-
-        result = self.run_tools_task(
-            routing_key=LegacyTool.tool_id,
-            tool_options={
-                'option1': 'value1',
-                'option2': 'value2',
-            })
-
-        self.assertTrue(result)
-        self.assertSpyCalledWith(
-            LegacyTool.execute,
-            base_commit_id='',
-            repository=None,
-            settings={
-                'option1': 'value1',
-                'option2': 'value2',
-            })
 
         self.assertSpyCalledWith(StatusUpdateResource.update,
                                  description='running...')
@@ -500,15 +461,6 @@ class UpdateToolsListTests(BaseTaskTestCase):
                     'tool_options': '[]',
                     'version': '2',
                     'working_directory_required': True,
-                },
-                {
-                    'description': 'This is the legacy tool.',
-                    'entry_point': 'legacy',
-                    'name': 'Legacy',
-                    'timeout': 30,
-                    'tool_options': '[]',
-                    'version': '1',
-                    'working_directory_required': False,
                 },
             ],
         })

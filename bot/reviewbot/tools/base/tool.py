@@ -265,11 +265,10 @@ class BaseTool(object):
             **kwargs (dict, unused):
                 Additional keyword arguments, for future expansion.
         """
-        if not getattr(self, 'legacy_tool', False):
-            kwargs.update({
-                'base_command': self.build_base_command(),
-                'review': review,
-            })
+        kwargs.update({
+            'base_command': self.build_base_command(),
+            'review': review,
+        })
 
         self.handle_files(review.files, **kwargs)
 
@@ -316,17 +315,12 @@ class BaseTool(object):
                 Additional keyword arguments passed to :py:meth:`execute`.
                 This is intended for future expansion.
         """
-        legacy_tool = getattr(self, 'legacy_tool', False)
-
         for f in files:
             if self.get_can_handle_file(review_file=f, **kwargs):
-                if legacy_tool:
-                    self.handle_file(f, **kwargs)
-                else:
-                    path = f.get_patched_file_path()
+                path = f.get_patched_file_path()
 
-                    if path:
-                        self.handle_file(f, path=path, **kwargs)
+                if path:
+                    self.handle_file(f, path=path, **kwargs)
 
     def handle_file(self, f, path=None, base_command=None, **kwargs):
         """Perform a review of a single file.

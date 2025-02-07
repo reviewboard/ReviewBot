@@ -28,49 +28,23 @@ class BaseRemovedInReviewBotVersionWarning(BaseRemovedInWarning):
 
 
 @final
-class RemovedInReviewBot40Warning(BaseRemovedInReviewBotVersionWarning):
-    """Deprecations for features removed in Review Bot 4.0.
+class RemovedInReviewBot60Warning(BaseRemovedInReviewBotVersionWarning):
+    """Deprecations for features removed in Review Bot 6.0.
 
-    Note that this class will itself be removed in Review Bot 4.0. If you need
-    to check against Review Bot deprecation warnings, please see
-    :py:class:`BaseRemovedInReviewBotVersionWarning`.
-    """
-
-    version = '4.0'
-
-
-@final
-class RemovedInReviewBot50Warning(BaseRemovedInReviewBotVersionWarning):
-    """Deprecations for features removed in Review Bot 5.0.
-
-    Note that this class will itself be removed in Review Bot 5.0. If you need
+    Note that this class will itself be removed in Review Bot 6.0. If you need
     to check against Review Bot deprecation warnings, please see
     :py:class:`BaseRemovedInReviewBotVersionWarning`. Alternatively, you can
     use the alias for this class,
     :py:data:`RemovedInNextReviewBotVersionWarning`.
     """
 
-    version = '5.0'
-
-
-@final
-class RemovedInReviewBot60Warning(BaseRemovedInReviewBotVersionWarning):
-    """Deprecations for features removed in Review Bot 6.0.
-
-    Note that this class will itself be removed in Review Bot 6.0. If you need
-    to check against Review Bot deprecation warnings, please see
-    :py:class:`BaseRemovedInReviewBotVersionWarning`.
-    """
-
     version = '6.0'
 
 
 #: An alias for the next release of Review Bot where features would be removed.
-RemovedInNextReviewBotVersionWarning = RemovedInReviewBot40Warning
+RemovedInNextReviewBotVersionWarning = RemovedInReviewBot60Warning
 
 
 # Enable each warning for display.
-for _warning_cls in (RemovedInReviewBot40Warning,
-                     RemovedInReviewBot50Warning,
-                     RemovedInReviewBot60Warning):
+for _warning_cls in [RemovedInReviewBot60Warning]:
     warnings.simplefilter('once', _warning_cls, 0)

@@ -10,7 +10,7 @@ from contextlib import contextmanager
 import kgb
 
 from reviewbot.testing import TestCase
-from reviewbot.tools import BaseTool, Tool
+from reviewbot.tools.base import BaseTool
 
 
 class DummyTool(BaseTool):
@@ -158,34 +158,6 @@ class BaseToolTests(kgb.SpyAgency, TestCase):
         self.assertSpyCalled(review_file2.get_patched_file_path)
         self.assertSpyCalledWith(tool.handle_file, review_file2)
         self.assertSpyCallCount(tool.handle_file, 1)
-
-    def test_handle_files_with_patched_file_none_and_legacy_tool(self):
-        """Testing BaseTool.handle_files with file.get_patched_file_path() as
-        None and legacy tool
-        """
-        class LegacyTool(Tool):
-            pass
-
-        tool = LegacyTool()
-
-        review = self.create_review()
-        review_file1 = self.create_review_file(review,
-                                               dest_file='/src/foo.c')
-        review_file2 = self.create_review_file(review,
-                                               dest_file='/inc/bar.cc')
-
-        self.spy_on(tool.handle_file)
-        self.spy_on(review_file1.get_patched_file_path,
-                    op=kgb.SpyOpReturn(None))
-        self.spy_on(review_file2.get_patched_file_path)
-
-        tool.handle_files(review.files)
-
-        self.assertSpyNotCalled(review_file1.get_patched_file_path)
-        self.assertSpyNotCalled(review_file2.get_patched_file_path)
-        self.assertSpyCalledWith(tool.handle_file, review_file1)
-        self.assertSpyCalledWith(tool.handle_file, review_file2)
-        self.assertSpyCallCount(tool.handle_file, 2)
 
     @contextmanager
     def _setup_deps(cls, filenames=[], set_path=True):
