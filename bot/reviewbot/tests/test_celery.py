@@ -44,7 +44,7 @@ class SetupCookiesTests(kgb.SpyAgency, TestCase):
         shutil.rmtree(self.cookie_root)
 
     def test_with_nonexistant_cookie_dir(self):
-        """Testing setup_cookies with non-existant cookie directory"""
+        """Testing setup_cookies with non-existent cookie directory"""
         os.rmdir(self.cookie_dir)
 
         with self.override_config(self.config):
@@ -62,7 +62,7 @@ class SetupCookiesTests(kgb.SpyAgency, TestCase):
             self.cookie_path)
 
     def test_with_nonexistant_cookie_dir_cant_create(self):
-        """Testing setup_cookies with non-existant cookie directory that
+        """Testing setup_cookies with non-existent cookie directory that
         can't be created
         """
         cookie_path = '/dev/null/cookies/reviewbot-cookies.txt'
@@ -120,7 +120,7 @@ class SetupCookiesTests(kgb.SpyAgency, TestCase):
             cookie_path)
 
     def test_with_nonexistant_cookie_path_cant_write(self):
-        """Testing setup_cookies with non-existant cookie file that can't be
+        """Testing setup_cookies with non-existent cookie file that can't be
         written to
         """
         cookie_path = self.cookie_path

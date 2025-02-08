@@ -59,7 +59,7 @@ class ReviewFileStatus(Enum):
 class File(object):
     """Represents a file in the review.
 
-    Information about the file can be retreived through this class,
+    Information about the file can be retrieved through this class,
     including retrieving the actual body of the original or patched
     file.
 
