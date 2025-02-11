@@ -1,9 +1,13 @@
+"""Utilities for processing files and creating reviews."""
+
 from __future__ import annotations
 
 import json
 import os
 from enum import Enum
 from itertools import islice
+from typing import (Any, Final, Literal, Optional, TypedDict, TYPE_CHECKING,
+                    cast)
 
 from rbtools.api.errors import APIError
 
@@ -13,6 +17,15 @@ from reviewbot.utils.filesystem import (ensure_dirs_exist,
                                         normalize_platform_path)
 from reviewbot.utils.log import get_logger
 
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from rbtools.api.resource import (
+        FileDiffItemResource,
+        ItemResource,
+        ReviewItemResource,
+        RootResource,
+    )
+
 
 #: The logger for the module.
 #:
@@ -21,7 +34,78 @@ from reviewbot.utils.log import get_logger
 logger = get_logger(__name__, is_task_logger=False)
 
 
-class ReviewFileStatus(Enum):
+class BaseCommentData(TypedDict):
+    """Base class for comment data.
+
+    Version Added:
+        5.0
+    """
+
+    #: Whether an issue should be opened.
+    issue_opened: bool
+
+    #: Whether the comment text should be formatted using Markdown.
+    rich_text: bool
+
+    #: The text of the comment.
+    text: str
+
+
+class GeneralCommentData(BaseCommentData):
+    """Data for a general comment.
+
+    Version Added:
+        5.0
+    """
+
+
+class DiffCommentData(BaseCommentData):
+    """Data for a diff comment.
+
+    Version Added:
+        5.0
+    """
+
+    #: The ID of the FileDiff that the comment is on.
+    filediff_id: int
+
+    #: The row number that the comment starts on.
+    first_line: int
+
+    #: The number of lines that the comment spans.
+    num_lines: int
+
+
+class DiffChunk(TypedDict):
+    """Data for a diff chunk.
+
+    This corresponds with the data created in
+    :py:mod:`reviewboard.diffviewer.chunk_generator`. This definition includes
+    types for the keys we use, but omits anything that Review Bot doesn't need,
+    so it is not a complete representation of what comes back through the API.
+
+    Version Added:
+        5.0
+    """
+
+    #: The type of change for the chunk.
+    change: Literal['delete', 'equal', 'insert', 'replace']
+
+    #: The 0-based index of the chunk.
+    index: int
+
+    #: The rendered list of lines.
+    lines: list[list[Any]]
+
+    #: Metadata for the chunk.
+    meta: dict[str, Any]
+
+    #: The number of lines in the chunk.
+    numlines: int
+
+
+# TODO: When we're Python 3.11+, switch to StrEnum
+class ReviewFileStatus(str, Enum):
     """The change status of a file.
 
     Version Added:
@@ -35,11 +119,14 @@ class ReviewFileStatus(Enum):
     COPIED = 'copied'
 
     @classmethod
-    def for_filediff(cls, filediff):
+    def for_filediff(
+        cls,
+        filediff: FileDiffItemResource,
+    ) -> ReviewFileStatus:
         """Return a status for a FileDiff.
 
         Args:
-            filediff (rbtools.api.resource.Resource):
+            filediff (rbtools.api.resource.FileDiffItemResource):
                 The filediff resource.
 
         Returns:
@@ -56,10 +143,10 @@ class ReviewFileStatus(Enum):
             return cls(filediff.status)
 
 
-class File(object):
+class File:
     """Represents a file in the review.
 
-    Information about the file can be retreived through this class,
+    Information about the file can be retrieved through this class,
     including retrieving the actual body of the original or patched
     file.
 
@@ -70,16 +157,54 @@ class File(object):
     #:
     #: If a comment exceeds this count, it will be capped and a line range
     #: will be provided in the comment.
-    COMMENT_MAX_LINES = 10
+    COMMENT_MAX_LINES: Final[int] = 10
 
-    def __init__(self, review, api_filediff):
+    ######################
+    # Instance variables #
+    ######################
+
+    #: The name of the patched version of the file.
+    dest_file: str
+
+    #: The diff data from the server.
+    diff_data: ItemResource
+
+    #: The file extension.
+    file_extension: str
+
+    #: The name of the file (without the extension).
+    filename: str
+
+    #: Tde ID of the FileDiff.
+    id: int
+
+    #: The path to the patched file.
+    patched_file_path: Optional[str]
+
+    #: The review that owns this file.
+    review: Review
+
+    #: The name of the original version of the file.
+    source_file: str
+
+    #: The status of the file in the diff.
+    status: ReviewFileStatus
+
+    #: The resource for the FileDiff.
+    _api_filediff: FileDiffItemResource
+
+    def __init__(
+        self,
+        review: Review,
+        api_filediff: FileDiffItemResource,
+    ) -> None:
         """Initialize the File.
 
         Args:
             review (Review):
                 The review object.
 
-            api_filediff (rbtools.api.resource.Resource):
+            api_filediff (rbtools.api.resource.FileDiffItemResource):
                 The filediff resource.
         """
         self.review = review
@@ -94,14 +219,15 @@ class File(object):
             # We don't need to normalize again. Just copy.
             self.dest_file = self.source_file
         else:
-            self.dest_file = normalize_platform_path(api_filediff.dest_file)
+            self.dest_file = normalize_platform_path(
+                cast(str, api_filediff.dest_file))
 
         self.filename, self.file_extension = os.path.splitext(self.dest_file)
 
         self._api_filediff = api_filediff
 
     @property
-    def patched_file_contents(self):
+    def patched_file_contents(self) -> Optional[bytes]:
         """The patched contents of the file.
 
         Returns:
@@ -139,7 +265,7 @@ class File(object):
             raise
 
     @property
-    def original_file_contents(self):
+    def original_file_contents(self) -> Optional[bytes]:
         """The original contents of the file.
 
         Returns:
@@ -175,7 +301,7 @@ class File(object):
 
             raise
 
-    def get_patched_file_path(self):
+    def get_patched_file_path(self) -> Optional[str]:
         """Fetch the patched file and return the filename of it.
 
         Version Changed:
@@ -207,7 +333,7 @@ class File(object):
 
         return filename
 
-    def get_original_file_path(self):
+    def get_original_file_path(self) -> Optional[str]:
         """Fetch the original file and return the filename of it.
 
         Version Changed:
@@ -235,7 +361,12 @@ class File(object):
 
         return filename
 
-    def get_lines(self, first_line, num_lines=1, original=False):
+    def get_lines(
+        self,
+        first_line: int,
+        num_lines: int = 1,
+        original: bool = False,
+    ) -> list[str]:
         """Return the lines from the file in the given range.
 
         This can be used to extract lines from the original or modified file,
@@ -277,7 +408,10 @@ class File(object):
 
         return result
 
-    def apply_patch(self, root_target_dir):
+    def apply_patch(
+        self,
+        root_target_dir: str,
+    ) -> None:
         """Apply the patch for this file to the filesystem.
 
         The file will be written relative to the current directory.
@@ -303,8 +437,8 @@ class File(object):
 
         assert os.path.commonprefix((source_file, dest_file,
                                      root_target_dir)) == root_target_dir, (
-            '%r and %r must be located within %r'
-            % (source_file, dest_file, root_target_dir))
+            f'{source_file} and {dest_file} must be located within '
+            f'{root_target_dir}')
 
         if self.status == ReviewFileStatus.DELETED:
             try:
@@ -320,7 +454,7 @@ class File(object):
             if self.status == ReviewFileStatus.MOVED:
                 try:
                     os.rename(source_file, dest_file)
-                except Exception as e:
+                except Exception:
                     # We'll log and then continue, just creating the new file.
                     logger.warning('Unable to move source file "%s" to '
                                    'to "%s" for FileDiff ID=%s',
@@ -331,9 +465,19 @@ class File(object):
 
         self.patched_file_path = self.dest_file
 
-    def comment(self, text, first_line, num_lines=1, start_column=None,
-                error_code=None, issue=None, rich_text=False, original=False,
-                text_extra=None, severity=None):
+    def comment(
+        self,
+        text: str,
+        first_line: Optional[int],
+        num_lines: int = 1,
+        start_column: Optional[int] = None,
+        error_code: Optional[str] = None,
+        issue: Optional[bool] = None,
+        rich_text: Optional[bool] = False,
+        original: Optional[bool] = False,
+        text_extra: Optional[list[tuple[str, str]]] = None,
+        severity: Optional[str] = None,
+    ) -> None:
         """Make a comment on the file.
 
         Version Changed:
@@ -371,14 +515,14 @@ class File(object):
                 If True, the ``first_line`` argument corresponds to the line
                 number in the original file, instead of the patched file.
 
-            severity (str, optional):
-                A tool-specific, human-readable indication of the severity of
-                this comment.
-
             text_extra (list of tuple, optional):
                 Additional data to append to the text in ``Key: Value`` form.
                 Each item is an ordered tuple of ``(Key, Value``). These will
                 be placed after the default items ("Column" and "Error code").
+
+            severity (str, optional):
+                A tool-specific, human-readable indication of the severity of
+                this comment.
         """
         # Some tools report a first_line of 0 to mean a 'global comment' on a
         # particular file. For now, we handle this as a special case as
@@ -391,23 +535,28 @@ class File(object):
                         self._is_modified(first_line, num_lines))
 
         if modified:
-            extra = []
+            extra: list[tuple[str, Any]] = []
             real_line = self._translate_line_num(first_line)
+            assert real_line is not None
 
             if num_lines != 1:
                 if num_lines > self.COMMENT_MAX_LINES:
+                    last_line = first_line + num_lines - 1
                     extra.append((
                         'Lines',
-                        '%s-%s' % (first_line, first_line + num_lines - 1),
+                        f'{first_line}-{last_line}',
                     ))
                     num_lines = self.COMMENT_MAX_LINES
 
                 last_line = first_line + num_lines - 1
                 real_last_line = self._translate_line_num(last_line)
+                assert real_last_line is not None
                 num_lines = real_last_line - real_line + 1
 
             if issue is None:
                 issue = self.review.settings['open_issues']
+
+            assert issue is not None
 
             if start_column:
                 extra.append(('Column', start_column))
@@ -422,22 +571,26 @@ class File(object):
                 extra += text_extra
 
             if extra:
-                text = '%s\n\n%s' % (text, '\n'.join(
-                    '%s: %s' % (key, value)
+                text += '\n\n' + '\n'.join(
+                    f'{key}: {value}'
                     for key, value in extra
-                ))
+                )
 
-            data = {
+            data: DiffCommentData = {
                 'filediff_id': self.id,
                 'first_line': real_line,
                 'num_lines': num_lines,
                 'text': text,
                 'issue_opened': issue,
-                'rich_text': rich_text,
+                'rich_text': bool(rich_text),
             }
             self.review.comments.append(data)
 
-    def _translate_line_num(self, line_num, original=False):
+    def _translate_line_num(
+        self,
+        line_num: int,
+        original: bool = False,
+    ) -> Optional[int]:
         """Convert a file line number to a filediff line number.
 
         Args:
@@ -462,7 +615,12 @@ class File(object):
         except StopIteration:
             return None
 
-    def _is_modified(self, line_num, num_lines, original=False):
+    def _is_modified(
+        self,
+        line_num: int,
+        num_lines: int,
+        original: bool = False,
+    ) -> bool:
         """Return whether the given region is modified in the diff.
 
         A region is considered modified if any of the lines within are
@@ -497,7 +655,11 @@ class File(object):
 
         return False
 
-    def _iter_lines(self, first_line=None, original=False):
+    def _iter_lines(
+        self,
+        first_line: Optional[int] = None,
+        original: bool = False,
+    ) -> Iterator[tuple[DiffChunk, list[Any], int]]:
         """Iterate through lines in the diff data.
 
         This is a convenience function for iterating through chunks in the
@@ -514,9 +676,15 @@ class File(object):
             tuple:
             A 3-tuple containing:
 
-            1. The chunk dictionary.
-            2. The list of information for the current row.
-            3. The line number of the row.
+            Tuple:
+                0 (dict):
+                    The chunk dictionary.
+
+                1 (list):
+                    The current row.
+
+                2 (int):
+                    The line number of the current row.
         """
         # The index in a diff line of a chunk that the relevant (original vs.
         # patched) line number is stored at.
@@ -525,7 +693,7 @@ class File(object):
         else:
             line_num_index = 4
 
-        chunks = self.diff_data.chunks
+        chunks: list[DiffChunk] = self.diff_data.chunks
 
         if first_line is not None:
             # First, we need to find the chunk with the line number. For
@@ -539,13 +707,16 @@ class File(object):
                 # We didn't find the line, so bail.
                 return
 
+            assert first_chunk is not None
+            assert first_chunk_i is not None
+
             # We found a result. Sanity-check it and then start
             # iterating.
             assert first_row[line_num_index] == first_line
 
             # First, iterate through the remainder of the chunk where
             # the row was found, starting at that row.
-            for row in first_chunk.lines[first_row_i:]:
+            for row in first_chunk['lines'][first_row_i:]:
                 yield first_chunk, row, row[line_num_index]
 
             # Now we'll prepare the remainder of the chunks for iteration.
@@ -558,7 +729,15 @@ class File(object):
                 if row_line_num:
                     yield chunk, row, row_line_num
 
-    def _find_line_num_info(self, chunks, expected_line_num, line_num_index):
+    def _find_line_num_info(
+        self,
+        chunks: list[DiffChunk],
+        expected_line_num: int,
+        line_num_index: int,
+    ) -> tuple[Optional[DiffChunk],
+               Optional[int],
+               Optional[list[Any]],
+               Optional[int]]:
         """Find the chunk and row for an expected line number.
 
         This will perform a binary search through the provided chunks, looking
@@ -580,10 +759,18 @@ class File(object):
             tuple:
             A 4-tuple containing:
 
-            1. The chunk containing the line number.
-            2. The index of the chunk within the list of chunks.
-            3. The row containing the line number.
-            4. The index of the row within the chunk.
+            Tuple:
+                0 (dict):
+                    The chunk containing the line number.
+
+                1 (int):
+                    The index of the chunk within the list of chunks.
+
+                2 (str):
+                    The row containing the line number.
+
+                3 (int):
+                    The index of the row within the chunk.
 
             If the line number could not be found, these will all be ``None``.
         """
@@ -592,21 +779,21 @@ class File(object):
         found_row = None
         found_row_i = None
 
-        chunks = [
+        chunks_i = [
             (chunk_i, chunk)
             for chunk_i, chunk in enumerate(chunks)
-            if chunk.lines[0][line_num_index] != ''
+            if chunk['lines'][0][line_num_index] != ''
         ]
 
         low = 0
-        high = len(chunks) - 1
+        high = len(chunks_i) - 1
 
         while low <= high:
             mid = (low + high) // 2
-            chunk_i, chunk = chunks[mid]
-            chunk_lines = chunk.lines
-            chunk_linenum1 = chunk_lines[0][line_num_index]
-            chunk_linenum2 = chunk_lines[-1][line_num_index]
+            chunk_i, chunk = chunks_i[mid]
+            chunk_lines = chunk['lines']
+            chunk_linenum1 = cast(int, chunk_lines[0][line_num_index])
+            chunk_linenum2 = cast(int, chunk_lines[-1][line_num_index])
 
             if chunk_linenum1 <= expected_line_num <= chunk_linenum2:
                 # We found the chunk containing the line number. Now
@@ -629,27 +816,61 @@ class File(object):
         return found_chunk, found_chunk_i, found_row, found_row_i
 
 
-class Review(object):
+class Review:
     """An object which orchestrates the creation of a review."""
 
-    #: Additional text to show above the comments in the review.
-    body_top = ""
-
-    #: Additional text to show below the comments in the review.
-    body_bottom = ""
-
-    _VALID_FILEDIFF_STATUS_TYPES = {
+    _VALID_FILEDIFF_STATUS_TYPES: Final[set[str]] = {
         'copied',
         'deleted',
         'modified',
         'moved',
     }
 
-    def __init__(self, api_root, review_request_id, diff_revision, settings):
+    ######################
+    # Instance variables #
+    ######################
+
+    #: The API root for the Review Board server.
+    api_root: RootResource
+
+    #: Additional text to show above the comments in the review.
+    body_top: str
+
+    #: Additional text to show below the comments in the review.
+    body_bottom: str
+
+    #: The diff comments in the review.
+    comments: list[DiffCommentData]
+
+    #: The diff revision being reviewed.
+    diff_revision: int
+
+    #: The files to be reviewed.
+    files: list[File]
+
+    #: The general comments in the review.
+    general_comments: list[GeneralCommentData]
+
+    #: The patch contents.
+    patch: Optional[str]
+
+    #: The ID of the review request being reviewed.
+    review_request_id: int
+
+    #: The settings provided by the extension.
+    settings: dict[str, Any]
+
+    def __init__(
+        self,
+        api_root: RootResource,
+        review_request_id: int,
+        diff_revision: int,
+        settings: dict[str, Any],
+    ) -> None:
         """Initialize the review.
 
         Args:
-            api_root (rbtools.api.resource.Resource):
+            api_root (rbtools.api.resource.RootResource):
                 The API root.
 
             review_request_id (int):
@@ -663,6 +884,8 @@ class Review(object):
                 The settings provided by the extension when triggering the
                 task.
         """
+        self.body_top = ''
+        self.body_bottom = ''
         self.api_root = api_root
         self.settings = settings
         self.review_request_id = review_request_id
@@ -671,7 +894,7 @@ class Review(object):
         self.general_comments = []
 
         # Get the list of files.
-        files = []
+        files: list[File] = []
 
         if self.diff_revision:
             filediffs = api_root.get_files(
@@ -682,8 +905,7 @@ class Review(object):
                 # Filter out binary files and symlinks.
                 if (getattr(filediff, 'binary', False) or
                     filediff.status not in self._VALID_FILEDIFF_STATUS_TYPES or
-                    ('is_symlink' in filediff.extra_data and
-                     filediff.extra_data['is_symlink'])):
+                    filediff.extra_data.get('is_symlink', False)):
                     continue
 
                 files.append(File(review=self,
@@ -691,7 +913,12 @@ class Review(object):
 
         self.files = files
 
-    def general_comment(self, text, issue=None, rich_text=False):
+    def general_comment(
+        self,
+        text: str,
+        issue: Optional[bool] = None,
+        rich_text: bool = False,
+    ) -> None:
         """Make a general comment.
 
         Args:
@@ -710,7 +937,7 @@ class Review(object):
             'rich_text': rich_text,
         })
 
-    def publish(self):
+    def publish(self) -> ReviewItemResource:
         """Upload the review to Review Board."""
         # Truncate comments to the maximum permitted amount to avoid
         # overloading the review and freezing the browser.
@@ -718,11 +945,13 @@ class Review(object):
         num_comments = len(self.comments) + len(self.general_comments)
 
         if num_comments > max_comments:
-            warning = ('**Warning:** Showing %d of %d failures.'
-                       % (max_comments, num_comments))
+            warning = (
+                f'**Warning:** Showing {max_comments} of {num_comments} '
+                f'failures.'
+            )
 
             if self.body_top:
-                self.body_top = '%s\n%s' % (self.body_top, warning)
+                self.body_top = f'{self.body_top}\n{warning}'
             else:
                 self.body_top = warning
 
@@ -733,7 +962,7 @@ class Review(object):
                 del self.comments[max_comments - len(self.general_comments):]
 
         bot_reviews = self.api_root.get_extension(
-            extension_name='reviewbotext.extension.ReviewBotExtension'
+            extension_name='reviewbotext.extension.ReviewBotExtension',
         ).get_review_bot_reviews()
 
         return bot_reviews.create(
@@ -745,30 +974,32 @@ class Review(object):
             general_comments=json.dumps(self.general_comments))
 
     @property
-    def has_comments(self):
-        """Whether the review has comments."""
+    def has_comments(self) -> bool:
+        """Whether the review has comments.
+
+        Type:
+            bool
+        """
         return len(self.comments) + len(self.general_comments) != 0
 
     @property
-    def patch_contents(self):
+    def patch_contents(self) -> Optional[str]:
         """The contents of the patch.
 
-        Returns:
+        Type:
             str:
-            The contents of the patch associated with the review request and
-            diff revision.
         """
         if not hasattr(self, 'patch'):
             if not hasattr(self.api_root, 'get_diff'):
                 return None
 
-            self.patch = self.api_root.get_diff(
+            self.patch = cast(str, self.api_root.get_diff(
                 review_request_id=self.review_request_id,
-                diff_revision=self.diff_revision).get_patch().data
+                diff_revision=self.diff_revision).get_patch().data)
 
         return self.patch
 
-    def get_patch_file_path(self):
+    def get_patch_file_path(self) -> Optional[str]:
         """Fetch the patch and return the filename of it.
 
         Returns:

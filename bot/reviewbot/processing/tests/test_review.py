@@ -14,7 +14,7 @@ from reviewbot.testing import TestCase
 class ReviewTests(kgb.SpyAgency, TestCase):
     """Unit tests for reviewbot.processing.review.Review."""
 
-    def test_init_load_filediffs(self):
+    def test_init_load_filediffs(self) -> None:
         """Testing Review.__init__ with loading FileDiffs"""
         self.spy_on(self.api_root.get_files, op=kgb.SpyOpReturn([
             self.create_filediff_resource(
