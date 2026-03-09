@@ -155,6 +155,8 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
 
         test_results = OrderedDict()
         found_json_errors = False
+        build_output_lines = []
+        build_failed = False
 
         for line in output:
             try:
@@ -163,9 +165,9 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
                 found_json_errors = True
                 continue
 
-            if 'Test' in entry:
-                action = entry['Action']
+            action = entry.get('Action')
 
+            if 'Test' in entry:
                 if action in ('fail', 'output'):
                     test_name = entry['Test']
                     package = entry['Package']
@@ -183,6 +185,10 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
                         test_result['output'].append(entry['Output'])
                     elif action == 'fail':
                         test_result['failed'] = True
+            elif action == 'build-output':
+                build_output_lines.append(entry.get('Output', ''))
+            elif action == 'build-fail':
+                build_failed = True
 
         if test_results:
             for test_name, test_result in test_results.items():
@@ -195,6 +201,14 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
                            test_result['package'],
                            ''.join(test_result['output']).strip()),
                         rich_text=True)
+        elif build_failed:
+            review.general_comment(
+                'Unable to run `go test` on the %s package:\n'
+                '\n'
+                '```%s```'
+                % (package,
+                   ''.join(build_output_lines).strip()),
+                rich_text=True)
         elif found_json_errors:
             review.general_comment(
                 'Unable to run `go test` on the %s package:\n'

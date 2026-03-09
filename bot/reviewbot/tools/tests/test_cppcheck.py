@@ -158,8 +158,7 @@ class CPPCheckToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     @integration_test()
     @simulation_test(output=(
         "6::12::information::templateRecursion::TemplateSimplifier: max "
-        "template recursion (100) reached for template 'test<101>'. You might "
-        "want to limit Cppcheck recursion.\n"
+        "template recursion (100) reached for template 'test<101>'.\n"
 
         "4::8::error::arrayIndexOutOfBounds::Array 'buf[10]' accessed at "
         "index 100, which is out of bounds.\n"
@@ -186,8 +185,7 @@ class CPPCheckToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 'num_lines': 1,
                 'text': (
                     "TemplateSimplifier: max template recursion (100) "
-                    "reached for template 'test<101>'. You might want to "
-                    "limit Cppcheck recursion.\n"
+                    "reached for template 'test<101>'.\n"
                     "\n"
                     "Column: 12\n"
                     "Severity: information\n"

@@ -191,20 +191,21 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 'test': True,
             })
 
-        self.assertEqual(review.general_comments, [
-            {
-                'text': (
-                    'Unable to run `go test` on the mypackage package:\n'
-                    '\n'
-                    '```# example.com/myrepo/mypackage\n'
-                    'mypackage/main.go:4:1: syntax error: unexpected EOF, '
-                    'expecting }\n'
-                    'FAIL\texample.com/myrepo/mypackage [build failed]```'
-                ),
-                'issue_opened': True,
-                'rich_text': True,
-            },
-        ])
+        comments = review.general_comments
+        self.assertEqual(len(comments), 1)
+
+        comment = comments[0]
+        self.assertTrue(comment['issue_opened'])
+        self.assertTrue(comment['rich_text'])
+        self.assertRegex(
+            comment['text'],
+            r'Unable to run `go test` on the mypackage package:\n'
+            r'\n'
+            r'```# example.com/myrepo/mypackage\n'
+            r'mypackage/main\.go:4:1: syntax error: unexpected EOF, '
+            r'expect(ing|ed) \}\n?'
+            r'(FAIL\texample\.com/myrepo/mypackage \[build failed\])?```')
+
         self.assertEqual(review.comments, [])
 
         self.assertSpyCalledWith(
