@@ -106,7 +106,8 @@ setup(
     install_requires=[
         'appdirs>=1.4.4',
         'celery~=5.3',
-        'RBTools>=4.0,<6',
+        'importlib_metadata>=6.6',
+        'RBTools>=5.0,<7',
 
         # We unconditionally include these plugins to ensure they're present.
         'flake8-json>=21.1',
