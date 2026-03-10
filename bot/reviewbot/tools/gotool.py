@@ -163,6 +163,7 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
                 entry = json.loads(line)
             except ValueError:
                 found_json_errors = True
+                build_output_lines.append(line)
                 continue
 
             action = entry.get('Action')
@@ -185,9 +186,9 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
                         test_result['output'].append(entry['Output'])
                     elif action == 'fail':
                         test_result['failed'] = True
-            elif action == 'build-output':
+            elif action in {'build-output', 'output'}:
                 build_output_lines.append(entry.get('Output', ''))
-            elif action == 'build-fail':
+            elif action in {'build-fail', 'fail'}:
                 build_failed = True
 
         if test_results:

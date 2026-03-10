@@ -178,22 +178,26 @@ class CPPCheckToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 'all_checks_enabled': True,
             })
 
-        self.assertEqual(review.comments, [
-            {
-                'filediff_id': review_file.id,
-                'first_line': 6,
-                'num_lines': 1,
-                'text': (
-                    "TemplateSimplifier: max template recursion (100) "
-                    "reached for template 'test<101>'.\n"
-                    "\n"
-                    "Column: 12\n"
-                    "Severity: information\n"
-                    "Error code: templateRecursion"
-                ),
-                'issue_opened': True,
-                'rich_text': False,
-            },
+        self.assertEqual(len(review.comments), 4)
+
+        # The templateRecursion message text varies across cppcheck
+        # versions, so check it with a regex.
+        first_comment = review.comments[0]
+        self.assertEqual(first_comment['filediff_id'], review_file.id)
+        self.assertEqual(first_comment['first_line'], 6)
+        self.assertEqual(first_comment['num_lines'], 1)
+        self.assertRegex(
+            first_comment['text'],
+            r"TemplateSimplifier: max template recursion \(100\) "
+            r"reached for template 'test<101>'\..*\n"
+            r"\n"
+            r"Column: 12\n"
+            r"Severity: information\n"
+            r"Error code: templateRecursion$")
+        self.assertTrue(first_comment['issue_opened'])
+        self.assertFalse(first_comment['rich_text'])
+
+        self.assertEqual(review.comments[1:], [
             {
                 'filediff_id': review_file.id,
                 'first_line': 4,
