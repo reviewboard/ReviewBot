@@ -8,7 +8,7 @@ Version Added:
 
 from __future__ import annotations
 
-import pkg_resources
+from importlib_metadata import entry_points
 
 from reviewbot.utils.log import get_logger
 
@@ -112,7 +112,7 @@ def load_tool_classes():
     """
     _registered_tools.clear()
 
-    for ep in pkg_resources.iter_entry_points(group='reviewbot.tools'):
+    for ep in entry_points(group='reviewbot.tools'):
         try:
             tool_cls = ep.load()
             tool_cls.tool_id = ep.name

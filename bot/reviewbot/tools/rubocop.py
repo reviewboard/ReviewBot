@@ -84,7 +84,8 @@ class RubocopTool(BaseTool):
                 Additional keyword arguments.
         """
         output = execute(base_command + [path],
-                         ignore_errors=True)
+                         ignore_errors=True,
+                         with_errors=False)
 
         try:
             results = json.loads(output)

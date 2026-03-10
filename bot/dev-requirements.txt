@@ -1,9 +1,6 @@
-kgb>=7.0
-rbtools>=3.1.1
+kgb~=7.3
+rbtools~=5.3
 reviewbot-worker[all]
-unittest2; python_version == "2.7"
 
-pytest~=4.6.11; python_version == "2.7"
-pytest~=7.0.1; python_version == "3.6"
-pytest~=7.1.2; python_version >= "3.7"
-pytest-env~=0.6.2
+pytest
+pytest-env

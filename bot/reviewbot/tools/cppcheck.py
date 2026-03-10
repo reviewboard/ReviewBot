@@ -133,6 +133,12 @@ class CPPCheckTool(BaseTool):
                          ignore_errors=True)
 
         for m in self.ERROR_RE.finditer(output):
+            error_code = m.group('error_code')
+
+            # Skip cppcheck's internal diagnostics (added in cppcheck 2.x).
+            if error_code == 'checkersReport':
+                continue
+
             try:
                 column = int(m.group('column'))
             except ValueError:
@@ -142,4 +148,4 @@ class CPPCheckTool(BaseTool):
                       first_line=int(m.group('linenum') or 0),
                       start_column=column,
                       severity=m.group('severity'),
-                      error_code=m.group('error_code'))
+                      error_code=error_code)

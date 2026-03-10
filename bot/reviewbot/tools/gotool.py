@@ -155,18 +155,20 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
 
         test_results = OrderedDict()
         found_json_errors = False
-        error_lines = []
+        build_output_lines = []
+        build_failed = False
 
         for line in output:
             try:
                 entry = json.loads(line)
             except ValueError:
-                error_lines.append(line)
+                found_json_errors = True
+                build_output_lines.append(line)
                 continue
 
-            if 'Test' in entry:
-                action = entry['Action']
+            action = entry.get('Action')
 
+            if 'Test' in entry:
                 if action in ('fail', 'output'):
                     test_name = entry['Test']
                     package = entry['Package']
@@ -184,6 +186,10 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
                         test_result['output'].append(entry['Output'])
                     elif action == 'fail':
                         test_result['failed'] = True
+            elif action in {'build-output', 'output'}:
+                build_output_lines.append(entry.get('Output', ''))
+            elif action in {'build-fail', 'fail'}:
+                build_failed = True
 
         if test_results:
             for test_name, test_result in test_results.items():
@@ -196,8 +202,16 @@ class GoTool(FullRepositoryToolMixin, BaseTool):
                         f'\n'
                         f'```{output}```',
                         rich_text=True)
-        elif error_lines:
-            error = ''.join(error_lines).strip()
+        elif build_failed:
+            review.general_comment(
+                'Unable to run `go test` on the %s package:\n'
+                '\n'
+                '```%s```'
+                % (package,
+                   ''.join(build_output_lines).strip()),
+                rich_text=True)
+        elif found_json_errors:
+            error = ''.join(build_output_lines).strip()
 
             review.general_comment(
                 f'Unable to run `go test` on the {package} package:\n'
