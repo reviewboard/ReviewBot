@@ -187,21 +187,21 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 'test': True,
             })
 
-        self.assertEqual(review.general_comments, [
-            {
-                'text': (
-                    'Unable to run `go test` on the mypackage package:\n'
-                    '\n'
-                    '```'
-                    '# example.com/myrepo/mypackage\n'
-                    'mypackage/main.go:4:1: syntax error: unexpected EOF, '
-                    'expected }'
-                    '```'
-                ),
-                'issue_opened': True,
-                'rich_text': True,
-            },
-        ])
+        comments = review.general_comments
+        self.assertEqual(len(comments), 1)
+
+        comment = comments[0]
+        self.assertTrue(comment['issue_opened'])
+        self.assertTrue(comment['rich_text'])
+        self.assertRegex(
+            comment['text'],
+            r'Unable to run `go test` on the mypackage package:\n'
+            r'\n'
+            r'```# example.com/myrepo/mypackage\n'
+            r'mypackage/main\.go:4:1: syntax error: unexpected EOF, '
+            r'expect(ing|ed) \}\n?'
+            r'(FAIL\texample\.com/myrepo/mypackage \[build failed\])?```')
+
         self.assertEqual(review.comments, [])
 
         self.assertSpyCalledWith(
@@ -220,12 +220,12 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
     @simulation_test(vet_output=(
         "# example.com/myrepo/mypackage\n"
 
-        "mypackage/main.go:10:2: self-assignment of i to i\n"
-
-        "mypackage/main.go:15:8: using res before checking for errors\n"
+        "mypackage/main.go:10:2: self-assignment of i\n"
 
         "mypackage/main.go:12:14: comparison of function main == nil is "
         "always false\n"
+
+        "mypackage/main.go:15:8: using res before checking for errors\n"
     ))
     def test_execute_with_vet(self):
         """Testing GoTool.execute with vet setting"""
@@ -238,44 +238,45 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
             })
 
         self.assertEqual(review.general_comments, [])
-        self.assertEqual(review.comments, [
-            {
-                'filediff_id': review_file.id,
-                'first_line': 10,
-                'num_lines': 1,
-                'text': (
-                    'self-assignment of i to i\n'
-                    '\n'
-                    'Column: 2'
-                ),
-                'issue_opened': True,
-                'rich_text': False,
-            },
-            {
-                'filediff_id': review_file.id,
-                'first_line': 15,
-                'num_lines': 1,
-                'text': (
-                    'using res before checking for errors\n'
-                    '\n'
-                    'Column: 8'
-                ),
-                'issue_opened': True,
-                'rich_text': False,
-            },
-            {
-                'filediff_id': review_file.id,
-                'first_line': 12,
-                'num_lines': 1,
-                'text': (
-                    'comparison of function main == nil is always false\n'
-                    '\n'
-                    'Column: 14'
-                ),
-                'issue_opened': True,
-                'rich_text': False,
-            },
-        ])
+
+        comments = sorted(review.comments, key=lambda c: c['first_line'])
+        self.assertEqual(len(comments), 3)
+
+        # The self-assignment message varies across Go versions
+        # (e.g. "self-assignment of i" vs "self-assignment of i to i").
+        first_comment = comments[0]
+        self.assertEqual(first_comment['filediff_id'], review_file.id)
+        self.assertEqual(first_comment['first_line'], 10)
+        self.assertEqual(first_comment['num_lines'], 1)
+        self.assertRegex(first_comment['text'],
+                         r'^self-assignment of i( to i)?\n\nColumn: 2$')
+        self.assertTrue(first_comment['issue_opened'])
+        self.assertFalse(first_comment['rich_text'])
+
+        self.assertEqual(comments[1], {
+            'filediff_id': review_file.id,
+            'first_line': 12,
+            'num_lines': 1,
+            'text': (
+                'comparison of function main == nil is always false\n'
+                '\n'
+                'Column: 14'
+            ),
+            'issue_opened': True,
+            'rich_text': False,
+        })
+        self.assertEqual(comments[2], {
+            'filediff_id': review_file.id,
+            'first_line': 15,
+            'num_lines': 1,
+            'text': (
+                'using res before checking for errors\n'
+                '\n'
+                'Column: 8'
+            ),
+            'issue_opened': True,
+            'rich_text': False,
+        })
 
         self.assertSpyCalledWith(
             execute,
@@ -383,12 +384,12 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
         vet_output=(
             "# example.com/myrepo/mypackage\n"
 
-            "mypackage/main.go:10:2: self-assignment of i to i\n"
-
-            "mypackage/main.go:15:8: using res before checking for errors\n"
+            "mypackage/main.go:10:2: self-assignment of i\n"
 
             "mypackage/main.go:12:14: comparison of function main == nil is "
             "always false\n"
+
+            "mypackage/main.go:15:8: using res before checking for errors\n"
         )
     )
     def test_execute_with_test_and_vet(self):
@@ -419,44 +420,44 @@ class GoToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
                 'rich_text': True,
             },
         ])
-        self.assertEqual(review.comments, [
-            {
-                'filediff_id': review_file.id,
-                'first_line': 10,
-                'num_lines': 1,
-                'text': (
-                    'self-assignment of i to i\n'
-                    '\n'
-                    'Column: 2'
-                ),
-                'issue_opened': True,
-                'rich_text': False,
-            },
-            {
-                'filediff_id': review_file.id,
-                'first_line': 15,
-                'num_lines': 1,
-                'text': (
-                    'using res before checking for errors\n'
-                    '\n'
-                    'Column: 8'
-                ),
-                'issue_opened': True,
-                'rich_text': False,
-            },
-            {
-                'filediff_id': review_file.id,
-                'first_line': 12,
-                'num_lines': 1,
-                'text': (
-                    'comparison of function main == nil is always false\n'
-                    '\n'
-                    'Column: 14'
-                ),
-                'issue_opened': True,
-                'rich_text': False,
-            },
-        ])
+        comments = sorted(review.comments, key=lambda c: c['first_line'])
+        self.assertEqual(len(comments), 3)
+
+        # The self-assignment message varies across Go versions
+        # (e.g. "self-assignment of i" vs "self-assignment of i to i").
+        first_comment = comments[0]
+        self.assertEqual(first_comment['filediff_id'], review_file.id)
+        self.assertEqual(first_comment['first_line'], 10)
+        self.assertEqual(first_comment['num_lines'], 1)
+        self.assertRegex(first_comment['text'],
+                         r'^self-assignment of i( to i)?\n\nColumn: 2$')
+        self.assertTrue(first_comment['issue_opened'])
+        self.assertFalse(first_comment['rich_text'])
+
+        self.assertEqual(comments[1], {
+            'filediff_id': review_file.id,
+            'first_line': 12,
+            'num_lines': 1,
+            'text': (
+                'comparison of function main == nil is always false\n'
+                '\n'
+                'Column: 14'
+            ),
+            'issue_opened': True,
+            'rich_text': False,
+        })
+        self.assertEqual(comments[2], {
+            'filediff_id': review_file.id,
+            'first_line': 15,
+            'num_lines': 1,
+            'text': (
+                'using res before checking for errors\n'
+                '\n'
+                'Column: 8'
+            ),
+            'issue_opened': True,
+            'rich_text': False,
+        })
 
         self.assertSpyCalledWith(
             execute,

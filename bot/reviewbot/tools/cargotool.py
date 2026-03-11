@@ -274,6 +274,29 @@ class CargoTool(FullRepositoryToolMixin, BaseTool):
                 if not _line.startswith('note: run with `RUST_BACKTRACE=1`')
             ]
 
+            # Normalize output across Rust versions.
+            #
+            # Newer versions of Rust (1.84+) include thread IDs in panic
+            # messages and add blank lines after stdout headers. Strip
+            # these for cleaner, more stable review output.
+            normalized_lines = []
+            prev_is_stdout_header = False
+
+            for line in test_output_lines:
+                line = re.sub(r"(thread '.*?') \(\d+\)",
+                              r'\1',
+                              line)
+
+                if prev_is_stdout_header and line == '':
+                    prev_is_stdout_header = False
+                    continue
+
+                prev_is_stdout_header = (line.startswith('---- ') and
+                                         line.endswith(' stdout ----'))
+                normalized_lines.append(line)
+
+            test_output_lines = normalized_lines
+
             # Cap the output length.
             if len(test_output_lines) > self.TEST_LINES_LIMIT:
                 num_lines_removed = \

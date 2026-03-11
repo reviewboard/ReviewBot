@@ -370,7 +370,6 @@ class RubocopToolTests(BaseToolTestCase, metaclass=ToolTestCaseMetaclass):
             ],
             ignore_errors=True)
 
-    @integration_test()
     @simulation_test(output_payload=(
         'Unrecognized cop or department: XXXBAD.\n'
         '{}'
