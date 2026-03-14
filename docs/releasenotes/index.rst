@@ -4,15 +4,16 @@
 Review Bot Release Notes
 ========================
 
-4.0 Releases
+4.x Releases
 ============
 
 .. toctree::
    :maxdepth: 1
 
+   4.1
    4.0
 
-3.0 Releases
+3.x Releases
 ============
 
 .. toctree::
@@ -24,7 +25,7 @@ Review Bot Release Notes
    3.0
 
 
-2.0 Releases
+2.x Releases
 ============
 
 .. toctree::
@@ -35,7 +36,7 @@ Review Bot Release Notes
    2.0
 
 
-1.0 Releases
+1.x Releases
 ============
 
 .. toctree::
