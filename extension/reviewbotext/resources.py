@@ -182,7 +182,7 @@ class ToolResource(WebAPIResource):
         except Exception:
             return INVALID_FORM_DATA, {
                 'fields': {
-                    'dtools': 'Malformed JSON.',
+                    'tools': 'Malformed JSON.',
                 },
             }
 
