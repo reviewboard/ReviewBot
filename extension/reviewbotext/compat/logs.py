@@ -16,7 +16,7 @@ if TYPE_CHECKING or hasattr(DjbletsTimedLogInfo, '__enter__'):
     log_timed = djblets_log_timed
 else:
     import logging
-    from datetime import UTC, datetime
+    from datetime import datetime, timezone
     from typing import Literal, Mapping, Optional
     from uuid import uuid4
 
@@ -119,7 +119,7 @@ else:
             self.warning_at = warning_at
             self.critical_at = critical_at
             self.default_level = default_level
-            self.start_time = datetime.now(UTC)
+            self.start_time = datetime.now(timezone.utc)
             self.request = request
 
             if logger is None:
@@ -178,7 +178,7 @@ else:
             The resulting time of the operation will be written to the log
             file.  The log level depends on how long the operation takes.
             """
-            delta = datetime.now(UTC) - self.start_time
+            delta = datetime.now(timezone.utc) - self.start_time
             level = self.default_level
             logger = self.logger
             message = self.message
