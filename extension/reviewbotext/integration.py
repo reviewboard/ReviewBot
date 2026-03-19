@@ -1,3 +1,7 @@
+"""Main integration support for Review Bot."""
+
+from __future__ import annotations
+
 import json
 import logging
 from datetime import datetime
@@ -11,8 +15,12 @@ from reviewboard.integrations.base import Integration
 from reviewboard.reviews.models import StatusUpdate
 from reviewboard.reviews.signals import review_request_published
 
+from reviewbotext.compat.logs import log_timed
 from reviewbotext.forms import ReviewBotConfigForm
 from reviewbotext.models import Tool
+
+
+logger = logging.getLogger(__name__)
 
 
 class ReviewBotIntegration(Integration):
@@ -92,9 +100,9 @@ class ReviewBotIntegration(Integration):
             try:
                 tool = Tool.objects.get(pk=tool_id)
             except Tool.DoesNotExist:
-                logging.error('Skipping Review Bot integration config %s (%d) '
-                              'because Tool with pk=%d does not exist.',
-                              config.name, config.pk, tool_id)
+                logger.error('Skipping Review Bot integration config %s (%d) '
+                             'because Tool with pk=%d does not exist.',
+                             config.name, config.pk, tool_id)
 
             review_settings = {
                 'comment_unmodified': config.settings.get(
@@ -118,9 +126,9 @@ class ReviewBotIntegration(Integration):
                 tool_options = json.loads(
                     config.settings.get('tool_options', '{}'))
             except Exception as e:
-                logging.exception('Failed to parse tool_options for Review '
-                                  'Bot integration config %s (%d): %s',
-                                  config.name, config.pk, e)
+                logger.exception('Failed to parse tool_options for Review '
+                                 'Bot integration config %s (%d): %s',
+                                 config.name, config.pk, e)
                 tool_options = {}
 
             yield config, tool, tool_options, review_settings
@@ -203,21 +211,27 @@ class ReviewBotIntegration(Integration):
                 if tool.working_directory_required:
                     queue = '%s.%s' % (queue, repository.name)
 
-                extension.celery.send_task(
-                    'reviewbot.tasks.RunTool',
-                    kwargs={
-                        'server_url': server_url,
-                        'session': session,
-                        'username': user.username,
-                        'review_request_id': review_request_id,
-                        'diff_revision': diffset.revision,
-                        'status_update_id': status_update.pk,
-                        'review_settings': review_settings,
-                        'tool_options': tool_options,
-                        'repository_name': repository.name,
-                        'base_commit_id': diffset.base_commit_id,
-                    },
-                    queue=queue)
+                with log_timed(f'Sending automatic run task to Review Bot '
+                               f'queue {queue} for review request '
+                               f'{review_request.pk}, diff revision '
+                               f'{diffset.revision}, status update ID '
+                               f'{status_update.pk}',
+                               logger=logger):
+                    extension.celery.send_task(
+                        'reviewbot.tasks.RunTool',
+                        kwargs={
+                            'server_url': server_url,
+                            'session': session,
+                            'username': user.username,
+                            'review_request_id': review_request_id,
+                            'diff_revision': diffset.revision,
+                            'status_update_id': status_update.pk,
+                            'review_settings': review_settings,
+                            'tool_options': tool_options,
+                            'repository_name': repository.name,
+                            'base_commit_id': diffset.base_commit_id,
+                        },
+                        queue=queue)
 
     def _drop_old_issues(self, user, service_id, review_request):
         """Drop old issues associated with the given tool config.
@@ -310,23 +324,28 @@ class ReviewBotIntegration(Integration):
                 diffset = DiffSet.objects.filter(
                     history=review_request.diffset_history_id).earliest()
         except DiffSet.DoesNotExist:
-            logging.error('Unable to determine diffset when running '
-                          'Review Bot tool for status update %d',
-                          status_update.pk)
+            logger.error('Unable to determine diffset when running '
+                         'Review Bot tool for status update %d',
+                         status_update.pk)
             return
 
-        extension.celery.send_task(
-            'reviewbot.tasks.RunTool',
-            kwargs={
-                'server_url': server_url,
-                'session': session,
-                'username': user.username,
-                'review_request_id': review_request.get_display_id(),
-                'diff_revision': diffset.revision,
-                'status_update_id': status_update.pk,
-                'review_settings': review_settings,
-                'tool_options': tool_options,
-                'repository_name': repository.name,
-                'base_commit_id': diffset.base_commit_id,
-            },
-            queue=queue)
+        with log_timed(f'Sending manual run task to Review Bot queue {queue} '
+                       f'for review request {review_request.pk}, '
+                       f'diff revision {diffset.revision}, '
+                       f'status update ID {status_update.pk}',
+                       logger=logger):
+            extension.celery.send_task(
+                'reviewbot.tasks.RunTool',
+                kwargs={
+                    'server_url': server_url,
+                    'session': session,
+                    'username': user.username,
+                    'review_request_id': review_request.get_display_id(),
+                    'diff_revision': diffset.revision,
+                    'status_update_id': status_update.pk,
+                    'review_settings': review_settings,
+                    'tool_options': tool_options,
+                    'repository_name': repository.name,
+                    'base_commit_id': diffset.base_commit_id,
+                },
+                queue=queue)
