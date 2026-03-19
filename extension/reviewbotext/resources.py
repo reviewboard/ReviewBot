@@ -1,5 +1,10 @@
+"""API resources for the extension."""
+
+from __future__ import annotations
+
 import json
 import logging
+from typing import TYPE_CHECKING, overload
 
 from django.core.exceptions import ObjectDoesNotExist
 from djblets.webapi.decorators import (webapi_login_required,
@@ -13,14 +18,73 @@ from reviewboard.diffviewer.models import FileDiff
 from reviewboard.reviews.models import BaseComment, Review
 from reviewboard.webapi.decorators import webapi_check_local_site
 from reviewboard.webapi.resources import resources, WebAPIResource
+from typing_extensions import NotRequired, TypedDict
 
 from reviewbotext.models import Tool
+
+if TYPE_CHECKING:
+    from typing import Any, Literal, Mapping
+
+    from django.http import HttpRequest
+    from djblets.webapi.resources.base import WebAPIResourceHandlerResult
+
+
+class GeneralCommentData(TypedDict):
+    """Data for a general comment.
+
+    Version Added:
+        4.1
+    """
+
+    #: Whether the comment has an open issue.
+    issue_opened: bool
+
+    #: The issue status for the comment.
+    issue_status: str | None
+
+    #: Whether the text should be formatted using Markdown.
+    rich_text: bool
+
+    #: The comment text.
+    text: str
+
+
+class DiffCommentData(GeneralCommentData):
+    """Data for a diff comment.
+
+    Version Added:
+        4.1
+    """
+
+    #: The filediff the comment applies to.
+    #:
+    #: This must be set before creating the comment.
+    filediff: NotRequired[FileDiff]
+
+    #: The ID of the file diff the comment applies to.
+    #:
+    #: This is used to set ``filediff`` and then removed.
+    filediff_id: NotRequired[int]
+
+    #: The first line of the comment range.
+    first_line: int
+
+    #: The interfilediff the comment applies to.
+    #:
+    #: This is always ``None`` since Review Bot doesn't review interdiffs.
+    interfilediff: NotRequired[None]
+
+    #: The number of lines in the comment range.
+    num_lines: int
 
 
 class InvalidFormDataError(Exception):
     """Error that signals to return INVALID_FORM_DATA with attached data."""
 
-    def __init__(self, data):
+    def __init__(
+        self,
+        data: Mapping[str, Any],
+    ) -> None:
         """Initialize the Error.
 
         Args:
@@ -59,7 +123,14 @@ class ToolResource(WebAPIResource):
             },
         },
     )
-    def create(self, request, hostname, tools, *args, **kwargs):
+    def create(
+        self,
+        request: HttpRequest,
+        hostname: str,
+        tools: str,
+        *args,
+        **kwargs,
+    ) -> WebAPIResourceHandlerResult:
         """Add to the list of installed tools.
 
         The hostname field should contain the hostname the celery
@@ -108,7 +179,7 @@ class ToolResource(WebAPIResource):
 
         try:
             tools = json.loads(tools)
-        except:
+        except Exception:
             return INVALID_FORM_DATA, {
                 'fields': {
                     'dtools': 'Malformed JSON.',
@@ -199,23 +270,25 @@ class ReviewBotReviewResource(WebAPIResource):
             },
         },
     )
-    def create(self,
-               request,
-               review_request_id,
-               ship_it=False,
-               body_top='',
-               body_top_rich_text=False,
-               body_bottom='',
-               body_bottom_rich_text=False,
-               diff_comments=None,
-               general_comments=None,
-               *args, **kwargs):
-        """Creates a new review and publishes it.
+    def create(
+        self,
+        request: HttpRequest,
+        review_request_id: int,
+        ship_it: bool = False,
+        body_top: str = '',
+        body_top_rich_text: bool = False,
+        body_bottom: str = '',
+        body_bottom_rich_text: bool = False,
+        diff_comments: (str | None) = None,
+        general_comments: (str | None) = None,
+        *args,
+        **kwargs,
+    ) -> WebAPIResourceHandlerResult:
+        """Create a new review and publishes it.
 
         Args:
-            request (reviewboard.reviews.models.review_request.
-                     ReviewRequest):
-                The review request the review is filed against.
+            request (django.http.HttpRequest):
+                The HTTP request.
 
             review_request_id (int):
                 The ID of the review request being reviewed (ID for use in the
@@ -224,23 +297,23 @@ class ReviewBotReviewResource(WebAPIResource):
             ship_it (bool, optional):
                 The Ship It state for the review.
 
-            body_top (unicode, optional):
+            body_top (str, optional):
                 The text for the ``body_top`` field.
 
-            body_top_rich_text (unicode, optional):
+            body_top_rich_text (bool, optional):
                 Whether the body_top text should be formatted using Markdown.
 
-            body_bottom (unicode, optional):
+            body_bottom (str, optional):
                 The text for the ``body_bottom`` field.
 
-            body_bottom_rich_text (unicode, optional):
+            body_bottom_rich_text (bool, optional):
                 Whether the body_bottom text should be formatted using
                 Markdown.
 
-            diff_comments (string, optional):
+            diff_comments (str, optional):
                 A JSON payload containing the diff comments.
 
-            general_comments (string, optional):
+            general_comments (str, optional):
                 A JSON payload containing the general comments.
 
             *args (tuple):
@@ -268,16 +341,16 @@ class ReviewBotReviewResource(WebAPIResource):
             body_bottom = ''
 
         try:
-            diff_comment_keys = ['filediff_id', 'first_line', 'num_lines']
-            diff_comments = self._normalizeCommentsJSON(
+            diff_comment_keys = {'filediff_id', 'first_line', 'num_lines'}
+            diff_comments_norm = self._normalize_comments_json(
                 'diff_comments', diff_comment_keys, diff_comments)
 
-            general_comments = self._normalizeCommentsJSON(
-                'general_comments', [], general_comments)
+            general_comments_norm = self._normalize_comments_json(
+                'general_comments', set(), general_comments)
 
             filediff_pks = {
                 comment['filediff_id']
-                for comment in diff_comments
+                for comment in diff_comments_norm
             }
 
             filediffs = {
@@ -288,7 +361,7 @@ class ReviewBotReviewResource(WebAPIResource):
                 )
             }
 
-            for comment in diff_comments:
+            for comment in diff_comments_norm:
                 filediff_id = comment.pop('filediff_id')
 
                 try:
@@ -315,8 +388,8 @@ class ReviewBotReviewResource(WebAPIResource):
             ship_it=ship_it)
 
         for comment_type, comments in (
-            (new_review.comments, diff_comments),
-            (new_review.general_comments, general_comments)):
+            (new_review.comments, diff_comments_norm),
+            (new_review.general_comments, general_comments_norm)):
             for comment in comments:
                 comment_type.create(**comment)
 
@@ -326,25 +399,52 @@ class ReviewBotReviewResource(WebAPIResource):
             self.item_result_key: new_review,
         }
 
-    def _normalizeCommentsJSON(self, comment_type, extra_keys, comments):
+    @overload
+    def _normalize_comments_json(
+        self,
+        comment_type: Literal['diff_comments'],
+        extra_keys: set[str],
+        comments: str | None,
+    ) -> list[DiffCommentData]:
+        ...
+
+    @overload
+    def _normalize_comments_json(
+        self,
+        comment_type: Literal['general_comments'],
+        extra_keys: set[str],
+        comments: str | None,
+    ) -> list[GeneralCommentData]:
+        ...
+
+    def _normalize_comments_json(
+        self,
+        comment_type: str,
+        extra_keys: set[str],
+        comments: str | None,
+    ) -> list[GeneralCommentData]:
         """Normalize all the comments.
 
         Args:
-            comment_type (string):
+            comment_type (str):
                 Type of the comment.
 
-            extra_keys (list):
+            extra_keys (set of str):
                 Extra comment keys expected beyond the base comment keys.
 
-            comments (string):
+            comments (str):
                 A JSON payload containing the comments.
 
         Returns:
-            list:
+            list of GeneralCommentData:
             A list of the decoded and normalized comments.
+
+        Raises:
+            InvalidFormDataError:
+                The comment data is incorrect or missing keys.
         """
-        base_comment_keys = ['issue_opened', 'text', 'rich_text']
-        expected_keys = set(base_comment_keys + extra_keys)
+        base_comment_keys = {'issue_opened', 'text', 'rich_text'}
+        expected_keys = base_comment_keys | extra_keys
 
         try:
             comments = json.loads(comments or '[]')
@@ -361,10 +461,11 @@ class ReviewBotReviewResource(WebAPIResource):
 
             if missing_keys:
                 missing_keys = ', '.join(missing_keys)
+
                 raise InvalidFormDataError({
                     'fields': {
                         comment_type: [
-                            'Element missing keys "%s".' % missing_keys,
+                            f'Element missing keys "{missing_keys}".'
                         ],
                     },
                 })
