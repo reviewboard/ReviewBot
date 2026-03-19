@@ -28,10 +28,11 @@ class ReviewBotConfigForm(IntegrationConfigForm):
     """
 
     COMMENT_ON_UNMODIFIED_CODE_DEFAULT = False
-    OPEN_ISSUES_DEFAULT = True
     DROP_OLD_ISSUES_DEFAULT = True
-    RUN_MANUALLY_DEFAULT = False
+    OPEN_ISSUES_DEFAULT = True
     MAX_COMMENTS_DEFAULT = 30
+    NOTIFY_OWNER_ONLY_DEFAULT = False
+    RUN_MANUALLY_DEFAULT = False
 
     #: When to run this configuration.
     conditions = ConditionsField(
@@ -82,7 +83,24 @@ class ReviewBotConfigForm(IntegrationConfigForm):
                     'resulting page can be very slow in some browsers.'),
         initial=MAX_COMMENTS_DEFAULT)
 
-    def __init__(self, *args, **kwargs):
+    #: Whether to send notifications only to the owner of the review request.
+    #:
+    #: Version Added:
+    #:     4.1
+    notify_owner_only = forms.BooleanField(
+        label=_('Notify only the review request owner'),
+        required=False,
+        help_text=_(
+            'When enabled, e-mail notifications for reviews created by the '
+            'tool will only be sent to the owner of the review request.'
+        ),
+        initial=NOTIFY_OWNER_ONLY_DEFAULT)
+
+    def __init__(
+        self,
+        *args,
+        **kwargs,
+    ) -> None:
         """Initialize the form.
 
         Args:
@@ -92,7 +110,7 @@ class ReviewBotConfigForm(IntegrationConfigForm):
             **kwargs (dict):
                 Keyword arguments for the form.
         """
-        super(ReviewBotConfigForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         from reviewbotext.extension import ReviewBotExtension
         extension = ReviewBotExtension.instance
@@ -100,7 +118,7 @@ class ReviewBotConfigForm(IntegrationConfigForm):
         self.css_bundle_names = [extension.get_bundle_id('integration-config')]
         self.js_bundle_names = [extension.get_bundle_id('integration-config')]
 
-    def load(self):
+    def load(self) -> None:
         """Load the form."""
         if 'tool_options' not in self.fields:
             self.fields['tool_options'] = forms.CharField(
@@ -118,9 +136,12 @@ class ReviewBotConfigForm(IntegrationConfigForm):
             self.fields['drop_old_issues'].initial = False
             self.fields['run_manually'].initial = False
 
-        super(ReviewBotConfigForm, self).load()
+        super().load()
 
-    def serialize_tool_field(self, value):
+    def serialize_tool_field(
+        self,
+        value: Tool,
+    ) -> int:
         """Serialize the tool field.
 
         This takes the value from the :py:attr:`tool field <tool>` and
@@ -136,19 +157,26 @@ class ReviewBotConfigForm(IntegrationConfigForm):
         """
         return value.pk
 
-    def deserialize_tool_field(self, value):
+    def deserialize_tool_field(
+        self,
+        value: int,
+    ) -> Tool:
         """Deserialize the tool field.
 
         This takes the serialized version (pks) and turns it back into a Tool
         object.
 
         Args:
-            value (list of int):
+            value (int):
                 The serialized value.
 
         Returns:
             reviewbotext.models.Tool:
             The deserialized value.
+
+        Raises:
+            django.core.exceptions.ValidationError:
+                The tool does not exist.
         """
         try:
             return Tool.objects.get(pk=value)
@@ -168,12 +196,13 @@ class ReviewBotConfigForm(IntegrationConfigForm):
             (_('What tool should be run?'), {
                 'fields': ('tool',),
             }),
-            (_('Tool options'), {
+            (_('Options'), {
                 'fields': ('comment_on_unmodified_code',
                            'open_issues',
                            'drop_old_issues',
                            'max_comments',
-                           'tool_options',
-                           'run_manually'),
+                           'notify_owner_only',
+                           'run_manually',
+                           'tool_options',),
             }),
         )

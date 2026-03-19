@@ -97,12 +97,15 @@ class ReviewBotIntegration(Integration):
                               config.name, config.pk, tool_id)
 
             review_settings = {
-                'max_comments': config.settings.get(
-                    'max_comments',
-                    ReviewBotConfigForm.MAX_COMMENTS_DEFAULT),
                 'comment_unmodified': config.settings.get(
                     'comment_on_unmodified_code',
                     ReviewBotConfigForm.COMMENT_ON_UNMODIFIED_CODE_DEFAULT),
+                'max_comments': config.settings.get(
+                    'max_comments',
+                    ReviewBotConfigForm.MAX_COMMENTS_DEFAULT),
+                'notify_owner_only': config.settings.get(
+                    'notify_owner_only',
+                    ReviewBotConfigForm.NOTIFY_OWNER_ONLY_DEFAULT),
                 'open_issues': config.settings.get(
                     'open_issues',
                     ReviewBotConfigForm.OPEN_ISSUES_DEFAULT),

@@ -268,6 +268,13 @@ class ReviewBotReviewResource(WebAPIResource):
                 'description':
                     'A JSON payload containing the general comments.',
             },
+            'to_owner_only': {
+                'type': bool,
+                'description':
+                    'When enabled, e-mail notifications will only be sent '
+                    'to the owner of the review request.',
+                'added_in': '4.1',
+            },
         },
     )
     def create(
@@ -282,9 +289,14 @@ class ReviewBotReviewResource(WebAPIResource):
         diff_comments: (str | None) = None,
         general_comments: (str | None) = None,
         *args,
+        to_owner_only: bool = False,
         **kwargs,
     ) -> WebAPIResourceHandlerResult:
         """Create a new review and publishes it.
+
+        Version Changed:
+            4.1:
+            Added the ``to_owner_only`` argument.
 
         Args:
             request (django.http.HttpRequest):
@@ -318,6 +330,13 @@ class ReviewBotReviewResource(WebAPIResource):
 
             *args (tuple):
                 Positional arguments to set in the review.
+
+            to_owner_only (bool):
+                When enabled, e-mail notifications will only be sent to the
+                owner of the review request.
+
+                Version Added:
+                    4.1
 
             **kwargs (dict):
                 Additional attributes to set in the review.
@@ -393,7 +412,9 @@ class ReviewBotReviewResource(WebAPIResource):
             for comment in comments:
                 comment_type.create(**comment)
 
-        new_review.publish(user=request.user)
+        new_review.publish(
+            user=request.user,
+            to_owner_only=to_owner_only)
 
         return 201, {
             self.item_result_key: new_review,
