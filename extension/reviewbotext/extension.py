@@ -1,3 +1,8 @@
+"""Main extension for Review Bot."""
+
+from __future__ import annotations
+
+import logging
 from importlib import import_module
 
 from celery import Celery, VERSION as CELERY_VERSION
@@ -12,9 +17,13 @@ from reviewboard.admin.server import get_server_url
 from reviewboard.extensions.base import Extension
 from reviewboard.extensions.hooks import IntegrationHook
 
+from reviewbotext.compat.logs import log_timed
 from reviewbotext.integration import ReviewBotIntegration
 from reviewbotext.resources import (review_bot_review_resource,
                                     tool_resource)
+
+
+logger = logging.getLogger(__name__)
 
 
 class ReviewBotExtension(Extension):
@@ -140,4 +149,8 @@ class ReviewBotExtension(Extension):
             'session': self.login_user(),
             'url': get_server_url(),
         }
-        self.celery.control.broadcast('update_tools_list', payload=payload)
+
+        with log_timed('Refreshing Review Bot tools list',
+                       logger=logger):
+            self.celery.control.broadcast('update_tools_list',
+                                          payload=payload)

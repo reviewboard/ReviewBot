@@ -1,3 +1,8 @@
+"""Views for managing Review Bot."""
+
+from __future__ import annotations
+
+import logging
 import json
 
 from django.contrib.auth.models import User
@@ -5,7 +10,7 @@ from django.db import IntegrityError, transaction
 from django.http import (HttpResponse,
                          HttpResponseBadRequest,
                          HttpResponseForbidden)
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from django.views.generic import TemplateView, View
 from djblets.avatars.services import URLAvatarService
 from djblets.db.query import get_object_or_none
@@ -14,7 +19,11 @@ from reviewboard.admin.server import get_server_url
 from reviewboard.avatars import avatar_services
 from reviewboard.site.urlresolvers import local_site_reverse
 
+from reviewbotext.compat.logs import log_timed
 from reviewbotext.extension import ReviewBotExtension
+
+
+logger = logging.getLogger(__name__)
 
 
 def _serialize_user(request, user):
@@ -273,10 +282,14 @@ class WorkerStatusView(View):
                     'session': extension.login_user(),
                     'url': get_server_url(),
                 }
-                reply = extension.celery.control.broadcast('update_tools_list',
-                                                           payload=payload,
-                                                           reply=True,
-                                                           timeout=10)
+
+                with log_timed('Fetching Review Bot worker status',
+                               logger=logger):
+                    reply = extension.celery.control.broadcast(
+                        'update_tools_list',
+                        payload=payload,
+                        reply=True,
+                        timeout=10)
 
                 state = 'success'
                 error = None
