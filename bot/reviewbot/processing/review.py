@@ -971,7 +971,8 @@ class Review:
             body_top_rich_text=True,
             body_bottom=self.body_bottom,
             diff_comments=json.dumps(self.comments),
-            general_comments=json.dumps(self.general_comments))
+            general_comments=json.dumps(self.general_comments),
+            to_owner_only=self.settings.get('notify_owner_only', False))
 
     @property
     def has_comments(self) -> bool:

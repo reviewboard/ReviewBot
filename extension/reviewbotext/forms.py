@@ -34,10 +34,11 @@ class ReviewBotConfigForm(IntegrationConfigForm):
     """
 
     COMMENT_ON_UNMODIFIED_CODE_DEFAULT = False
-    OPEN_ISSUES_DEFAULT = True
     DROP_OLD_ISSUES_DEFAULT = True
-    RUN_MANUALLY_DEFAULT = False
+    OPEN_ISSUES_DEFAULT = True
     MAX_COMMENTS_DEFAULT = 30
+    NOTIFY_OWNER_ONLY_DEFAULT = False
+    RUN_MANUALLY_DEFAULT = False
 
     #: When to run this configuration.
     conditions = ReviewRequestConditionsField(required=False)
@@ -84,6 +85,19 @@ class ReviewBotConfigForm(IntegrationConfigForm):
                     'and a tool generates a large number of comments, the '
                     'resulting page can be very slow in some browsers.'),
         initial=MAX_COMMENTS_DEFAULT)
+
+    #: Whether to send notifications only to the owner of the review request.
+    #:
+    #: Version Added:
+    #:     4.1
+    notify_owner_only = forms.BooleanField(
+        label=_('Notify only the review request owner'),
+        required=False,
+        help_text=_(
+            'When enabled, e-mail notifications for reviews created by the '
+            'tool will only be sent to the owner of the review request.'
+        ),
+        initial=NOTIFY_OWNER_ONLY_DEFAULT)
 
     def __init__(
         self,
@@ -148,7 +162,7 @@ class ReviewBotConfigForm(IntegrationConfigForm):
 
     def deserialize_tool_field(
         self,
-        value: Sequence[int],
+        value: int,
     ) -> Tool:
         """Deserialize the tool field.
 
@@ -156,7 +170,7 @@ class ReviewBotConfigForm(IntegrationConfigForm):
         object.
 
         Args:
-            value (list of int):
+            value (int):
                 The serialized value.
 
         Returns:
@@ -165,7 +179,7 @@ class ReviewBotConfigForm(IntegrationConfigForm):
 
         Raises:
             django.core.exceptions.ValidationError:
-                The Tool does not exist.
+                The tool does not exist.
         """
         try:
             return Tool.objects.get(pk=value)
@@ -185,12 +199,13 @@ class ReviewBotConfigForm(IntegrationConfigForm):
             (_('What tool should be run?'), {
                 'fields': ('tool',),
             }),
-            (_('Tool options'), {
+            (_('Options'), {
                 'fields': ('comment_on_unmodified_code',
                            'open_issues',
                            'drop_old_issues',
                            'max_comments',
-                           'tool_options',
-                           'run_manually'),
+                           'notify_owner_only',
+                           'run_manually',
+                           'tool_options',),
             }),
         )

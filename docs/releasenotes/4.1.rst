@@ -1,0 +1,75 @@
+.. default-intersphinx reviewbot4.0
+
+============================
+Review Bot 4.1 Release Notes
+============================
+
+**Release date**: April 7, 2026
+
+
+Installation/Upgrade
+====================
+
+Follow our :ref:`installation guide <reviewbot-installation>` for installing
+the Review Bot extension and worker.
+
+To learn more, see:
+
+* :ref:`Documentation <reviewbot-docs>`
+* :pypi:`Review Bot Extension on PyPI <reviewbot-extension>`
+* :pypi:`Review Bot Worker on PyPI <reviewbot-worker>`
+
+
+Compatibility
+=============
+
+Review Bot 4.1 is compatible with Review Board 5.x - 7.x and Python 3.8 - 3.13.
+
+* Fixed compatibility with :pypi:`setuptools` version 82.
+
+  The ``setuptools`` package has removed the ``pkg_resources`` module, which
+  was still used in the Review Bot worker. This has been fixed so that worker
+  installations will work alongside ``setuptools`` version 82 or newer.
+
+
+New Features
+============
+
+* Added a new setting for tools allowing them to notify only the review request
+  author via e-mail.
+
+* Added logging for long-running communication.
+
+  A user recently reported a situation where a networking misconfiguration was
+  causing long communication delays between the Review Bot extension and the
+  RabbitMQ service, which caused the entire Review Board application to seem
+  very slow.
+
+  Communication delays of this sort will now show up as warnings in the Review
+  Board log file if operations exceed 5 seconds, or as critical if operations
+  exceed 15 seconds.
+
+
+Tool Updates
+============
+
+A variety of the tools that Review Bot uses have changed their output format,
+causing either poor display of comments or (in rare cases) parse errors.
+
+* Updated ``cargo clippy`` and ``cargo test`` tools to correctly parse output
+  from versions up to 1.94.
+
+* Updated ``cppcheck`` tool to correctly parse output from versions up to 2.20.
+
+* Updated ``go test`` and ``go vet`` tools to correctly parse output from
+  versions up to 1.26.
+
+* Updated ``rubocop`` tool to correctly parse output from versions up to 1.85.
+
+
+Contributors
+============
+
+* Christian Hammond
+* David Trowbridge
+* Michelle Aubin
