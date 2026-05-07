@@ -70,8 +70,9 @@ RUN    set -ex \
            curl \
            nodejs \
            npm \
-		   patch \
+           patch \
            ruby \
+           ruby-dev \
            software-properties-common \
            unzip \
            virtualenv \
@@ -96,7 +97,7 @@ RUN    set -ex \
            --pre \
            --find-links /tmp/packages \
            reviewbot-worker~=${REVIEWBOT_VERSION} \
-	&& pip3 install \
+    && pip3 install \
            --no-cache-dir \
            'reviewbot-worker[all]' \
     && rm -rf /tmp/packages
